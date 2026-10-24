@@ -346,10 +346,18 @@ def _sync_snapshot_records(doctype, records, *, create_only=False):
         if not name:
             continue
         values = {key: value for key, value in record.items() if key not in {"doctype", "name"}}
-        if frappe.db.exists(doctype, name):
+        existing_name = name if frappe.db.exists(doctype, name) else None
+        if not existing_name and doctype == "Custom Field":
+            # Custom Field names can differ between sites even when the field is
+            # the same. Frappe identifies a field by DocType + fieldname.
+            identity = {key: record.get(key) for key in ("dt", "fieldname")}
+            if all(identity.values()):
+                existing_name = frappe.db.get_value(doctype, identity, "name")
+
+        if existing_name:
             if create_only:
                 continue
-            document = frappe.get_doc(doctype, name)
+            document = frappe.get_doc(doctype, existing_name)
             changed = any(
                 _clean_metadata_value(document.get(key)) != _clean_metadata_value(value)
                 for key, value in values.items()
