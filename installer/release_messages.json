@@ -6,8 +6,9 @@
     "archive": "Archive: {archive}",
     "docker_archive": "Docker deployment archive: {archive}",
     "archive_crlf": "Generated archive contains a shell script with CRLF line endings: {path}",
+    "invalid_frappe_branch": "release-manifest.json must set frappe.branch to a supported branch such as version-16.",
     "checksums": "Checksums: {path}",
-    "published": "Published app repository: {repository}"
+    "published": "Published app repository: {repository} (main, {branch}, and {tag})"
   },
   "vi": {
     "version_mismatch": "Phiên bản app trong release-manifest.json phải trùng với pyproject.toml.",
@@ -16,7 +17,8 @@
     "archive": "Gói nén: {archive}",
     "docker_archive": "Gói triển khai Docker: {archive}",
     "archive_crlf": "Gói được tạo có script shell dùng xuống dòng CRLF: {path}",
+    "invalid_frappe_branch": "frappe.branch trong release-manifest.json phải là nhánh tương thích, ví dụ version-16.",
     "checksums": "Checksum: {path}",
-    "published": "Repo app đã phát hành: {repository}"
+    "published": "Đã phát hành repo app: {repository} (nhánh main, {branch} và tag {tag})"
   }
 }

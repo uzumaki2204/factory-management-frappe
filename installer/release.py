@@ -61,7 +61,11 @@ def clear_checkout(repo: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--publish", action="store_true", help="push the release tag and main branch to the private GitHub repo")
+    parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="push the release tag, main, and supported Frappe version branch to the public GitHub repo",
+    )
     parser.add_argument("--output-dir", type=Path, default=ROOT / "dist")
     args = parser.parse_args()
 
@@ -75,6 +79,9 @@ def main() -> int:
         app_version = tomllib.load(stream)["project"]["version"]
     manifest_path = ROOT / "release-manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    frappe_branch = manifest.get("frappe", {}).get("branch", "")
+    if not re.fullmatch(r"version-\d+", frappe_branch):
+        raise SystemExit(msg("invalid_frappe_branch"))
     app_init = (ROOT / "factory_management" / "__init__.py").read_text(encoding="utf-8")
     version_match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', app_init, re.MULTILINE)
     if not version_match or manifest.get("app_version") != app_version or version_match.group(1) != app_version:
@@ -110,10 +117,12 @@ def main() -> int:
         run("git", "update-index", "--chmod=+x", "install.sh", "install-docker.sh", "release.sh", "installer/setup-bench.sh", cwd=repo)
         run("git", "commit", "--allow-empty", "-m", f"Release {tag}", cwd=repo)
         commit = run("git", "rev-parse", "HEAD", cwd=repo)
+        run("git", "branch", frappe_branch, commit, cwd=repo)
         run("git", "tag", "-a", tag, "-m", f"Factory Management {tag}", cwd=repo)
 
         if args.publish:
             run("git", "push", "origin", "HEAD:refs/heads/main", cwd=repo)
+            run("git", "push", "origin", f"HEAD:refs/heads/{frappe_branch}", cwd=repo)
             run("git", "push", "origin", f"refs/tags/{tag}", cwd=repo)
 
         with archive_path.open("wb") as archive:
@@ -168,7 +177,7 @@ def main() -> int:
     print(msg("docker_archive", archive=docker_archive_path))
     print(msg("checksums", path=args.output_dir / "SHA256SUMS"))
     if args.publish:
-        print(msg("published", repository=REPOSITORY_URL))
+        print(msg("published", repository=REPOSITORY_URL, branch=frappe_branch, tag=tag))
     return 0
 
 

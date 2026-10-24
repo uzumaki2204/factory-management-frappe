@@ -1,15 +1,36 @@
 ﻿# Factory Management cho Frappe
 
-Đây là app Frappe dùng chung cho dữ liệu nhà máy, thiết bị, QC và UQQC. Có hai bộ cài: cài Bench native mới trên máy Ubuntu sạch hoặc bổ sung app vào một stack Frappe Docker đã chạy.
+Đây là app Frappe dùng chung cho dữ liệu nhà máy, thiết bị, QC và UQQC. Phương thức cài đặt chính là lấy app từ [repo GitHub công khai](https://github.com/uzumaki2204/factory-management-frappe) bằng Bench, giống cách cài ERPNext. App này được cài vào Bench và site Frappe đã có sẵn; nó không tự cài hệ điều hành, Bench hoặc tạo site.
 
-## Cài vào stack Frappe Docker hiện có
+## Cài vào Bench đã có sẵn
 
-Tải `factory-management-frappe-docker-v0.1.10.tar.gz` cùng `SHA256SUMS-docker-v0.1.10` lên máy đang chạy Frappe Docker, kiểm tra checksum, giải nén rồi chạy:
+Đảm bảo Bench đang chạy Frappe 16.53.0 trở lên trong nhánh v16, sau đó chạy dưới tài khoản sở hữu Bench:
 
 ```bash
-sha256sum -c SHA256SUMS-docker-v0.1.10
-tar -xzf factory-management-frappe-docker-v0.1.10.tar.gz
-cd factory-management-frappe-docker-v0.1.10
+cd ~/frappe-bench
+bench get-app --branch version-16 factory_management https://github.com/uzumaki2204/factory-management-frappe.git
+bench --site <ten-site> set-config server_script_enabled 1
+bench --site <ten-site> install-app factory_management
+bench --site <ten-site> migrate
+bench --site <ten-site> execute factory_management.provision.ensure_qc_inspection_summary
+bench build --app factory_management
+bench restart
+```
+
+Tên app Frappe là `factory_management`; vì vậy lệnh `get-app` ghi rõ tên này trước URL repo. Repo công khai nên máy cài không cần SSH deploy key để tải mã nguồn. Khi muốn ghim đúng một bản phát hành, thay `version-16` bằng tag, ví dụ `v0.1.11`.
+
+Khi nâng cấp, tạo bản sao lưu trước, lấy mã mới từ `version-16`, rồi chạy migrate, build và restart. App tự chạy `after_install` và `after_migrate` để tạo schema, trang QC/UQQC và API UQQC. Lệnh `ensure_qc_inspection_summary` ở trên tạo Server Script QC còn lại. Server Scripts phải được bật trước khi cài app.
+
+Trên máy mới, cần cài Bench/Frappe và tạo site trước khi chạy các lệnh này. Các bộ cài native và Docker bên dưới vẫn có thể dùng như lựa chọn dựng môi trường hoặc triển khai stack Docker; chúng là bộ cài hạ tầng bổ sung, không phải cách cài app Bench thông thường.
+
+## Bộ cài phụ trợ cho stack Frappe Docker hiện có
+
+Tải `factory-management-frappe-docker-v0.1.11.tar.gz` cùng `SHA256SUMS-docker-v0.1.11` lên máy đang chạy Frappe Docker, kiểm tra checksum, giải nén rồi chạy:
+
+```bash
+sha256sum -c SHA256SUMS-docker-v0.1.11
+tar -xzf factory-management-frappe-docker-v0.1.11.tar.gz
+cd factory-management-frappe-docker-v0.1.11
 sudo ./install-docker.sh
 ```
 
@@ -17,28 +38,30 @@ Bộ cài đọc Compose project và image đang chạy từ metadata Docker, r�
 
 Không dùng gói Docker này cho máy chưa có stack Frappe Docker. Nếu máy có nhiều backend Compose, truyền tên container cần triển khai qua `FRAPPE_BACKEND_CONTAINER`. Gói không tự chạy trên máy Production khi được tạo; quản trị viên chủ động tải lên và chạy lệnh cài đặt.
 
-## Cài mới trên Ubuntu 24.04 trở lên
+## Bộ cài phụ trợ tạo Bench mới trên Ubuntu 24.04 trở lên
 
 Bộ cài native tạo một Bench production mới, cài Frappe 16.53.0 và app Factory Management, rồi tạo site dùng địa chỉ IPv4 của máy làm tên site. Bộ cài không nhập dữ liệu khách hàng, sản phẩm, chuyền, thiết bị, lịch sử kiểm tra hoặc token.
 
-Tải gói `factory-management-frappe-v0.1.10.tar.gz` cùng `SHA256SUMS-native-v0.1.10`, kiểm tra SHA-256, giải nén rồi chạy:
+Tải gói `factory-management-frappe-v0.1.11.tar.gz` cùng `SHA256SUMS-native-v0.1.11`, kiểm tra SHA-256, giải nén rồi chạy:
 
 ```bash
-sha256sum -c SHA256SUMS-native-v0.1.10
-tar -xzf factory-management-frappe-v0.1.10.tar.gz
-cd factory-management-frappe-v0.1.10
+sha256sum -c SHA256SUMS-native-v0.1.11
+tar -xzf factory-management-frappe-v0.1.11.tar.gz
+cd factory-management-frappe-v0.1.11
 sudo ./install.sh
 ```
 
 Bộ cài hỗ trợ Ubuntu 24.04 trở lên, kiến trúc x86_64, và cần Internet để lấy các phụ thuộc hệ điều hành. Nó tạo user Linux `frappe`, Bench tại `/opt/frappe-bench`, MariaDB 11.8, Redis, Nginx và Supervisor. Gói wkhtmltopdf được chọn theo phiên bản Ubuntu và xác minh SHA-256 trước khi cài: bản upstream Jammy trên Ubuntu 24.04, bản Noble tương thích cho Ubuntu 24.10–25.10, và bản Resolute cho Ubuntu 26.04 trở lên. Các bản Noble/Resolute được ghim từ [release 2026-05-06 của newinnovations/wkhtml-packaging](https://github.com/newinnovations/wkhtml-packaging/releases/tag/2026-05-06). Nhập mật khẩu cho tài khoản MariaDB cục bộ khi được hỏi; `bench new-site` sẽ hỏi lại mật khẩu đó và mật khẩu Administrator. Không dùng một Bench hoặc MariaDB đã có dữ liệu: bộ cài từ chối nếu thư mục Bench đích đã tồn tại.
 
-Mở `http://<IP-LAN>/` để truy cập. Nếu firewall của máy đang bật, quản trị viên cần cho phép TCP/80 từ mạng LAN. Để cài từ repo riêng tư, clone tag `v0.1.10` trước rồi chạy cùng `sudo ./install.sh`; GitHub cần được cấu hình SSH deploy key trên máy cài.
+Mở `http://<IP-LAN>/` để truy cập. Nếu firewall của máy đang bật, quản trị viên cần cho phép TCP/80 từ mạng LAN. Repo hiện công khai; bộ cài này tải mã nguồn mà không cần SSH deploy key.
 
 ## Phát hành
 
-Tăng phiên bản trong `pyproject.toml`, `factory_management/__init__.py` và `release-manifest.json` đồng thời, sau đó chạy `./release.sh`. Lệnh tạo hai archive từ cùng một Git tag trong `dist/`: gói cài native và gói cài vào stack Docker hiện có. `SHA256SUMS` ghi cả hai checksum; các tệp `SHA256SUMS-native-<tag>` và `SHA256SUMS-docker-<tag>` dùng khi chỉ chuyển một archive. Dùng `./release.sh --publish` để đẩy cùng tag và nhánh `main` lên repo riêng `uzumaki2204/factory-management-frappe`; cần Git Credential Manager đã đăng nhập tài khoản có quyền ghi và tạo repo đó trước.
+Tăng phiên bản trong `pyproject.toml`, `factory_management/__init__.py` và `release-manifest.json` đồng thời. Sau đó chạy `./release.sh --publish`. Lệnh phát hành cùng commit thành tag `v<version>`, nhánh `main` và nhánh tương thích Frappe đã khai báo trong manifest (hiện là `version-16`) lên repo công khai `uzumaki2204/factory-management-frappe`. Máy cài chỉ cần quyền đọc repo; người phát hành vẫn cần quyền ghi GitHub.
 
-Manifest ghim Frappe 16.53.0 theo revision `e8d41dd0061a32ee781caefe5d0b0d2bb7c15362` ([bản phát hành chính thức](https://github.com/frappe/frappe/releases/tag/v16.53.0)). Các phụ thuộc runtime theo [hướng dẫn cài Frappe](https://docs.frappe.io/framework/user/en/installation). Bench cài app bằng `get-app` rồi `install-app`; migration dùng lệnh `bench --site <site> migrate` theo [hướng dẫn Bench](https://docs.frappe.io/framework/user/en/bench/reference/migrate).
+Script cũng tạo hai archive phụ trợ từ cùng tag trong `dist/`: bộ cài native và bộ triển khai stack Docker. `SHA256SUMS` ghi cả hai checksum; các tệp `SHA256SUMS-native-<tag>` và `SHA256SUMS-docker-<tag>` dùng khi chuyển riêng từng archive. Luồng Bench qua Git là phương thức cài app được khuyến nghị.
+
+Manifest ghi Frappe 16.53.0 làm phiên bản chuẩn kiểm tra theo revision `e8d41dd0061a32ee781caefe5d0b0d2bb7c15362` ([bản phát hành chính thức](https://github.com/frappe/frappe/releases/tag/v16.53.0)). Metadata Bench trong `pyproject.toml` khai báo app tương thích Frappe `>=16.53.0,<17.0.0`. Các phụ thuộc runtime theo [hướng dẫn cài Frappe](https://docs.frappe.io/framework/user/en/installation). Bench tải mã bằng `get-app`, cài app vào site bằng `install-app` và cập nhật schema bằng `migrate` theo [tài liệu Bench](https://docs.frappe.io/framework/user/en/bench/bench-commands).
 
 ## UQQC
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factory-management"
-version = "0.1.10"
+version = "0.1.11"
 description = "Shared factory devices and QC tablet APIs for Frappe"
 requires-python = ">=3.14"
 dependencies = []
@@ -12,6 +12,9 @@ dependencies = []
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["factory_management*"]
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.53.0,<17.0.0"
 
 [tool.setuptools.package-data]
 factory_management = [
