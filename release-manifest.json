@@ -1,6 +1,6 @@
 {
   "app_name": "factory_management",
-  "app_version": "0.1.14",
+  "app_version": "0.1.15",
   "frappe": {
     "version": "16.53.0",
     "git_commit": "e8d41dd0061a32ee781caefe5d0b0d2bb7c15362",

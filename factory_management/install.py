@@ -146,6 +146,12 @@ MASTER_TYPE_MODULES = {
     "Customer": "KTG Master Data",
 }
 
+# Keep shared Customer naming behavior in app metadata so it is identical on
+# every site, even when the DocType already existed before an app upgrade.
+DOCTYPE_SETTINGS = {
+    "Customer": {"autoname": "hash", "allow_rename": 1},
+}
+
 DOCUMENTATION_TYPES = {
     "API Documentation Service": [
         field("service_key", "Service Key", reqd=1, unique=1, in_list_view=1),
@@ -261,11 +267,17 @@ def ensure_module():
 
 
 def ensure_doctype(name, fields, module="Quality Control", is_child=False):
+    settings = {"module": module, **DOCTYPE_SETTINGS.get(name, {})}
     if frappe.db.exists("DocType", name):
-        if frappe.db.get_value("DocType", name, "module") != module:
-            frappe.db.set_value("DocType", name, "module", module)
+        current = frappe.db.get_value("DocType", name, list(settings), as_dict=True)
+        updates = {
+            key: value for key, value in settings.items()
+            if current.get(key) != value
+        }
+        if updates:
+            frappe.db.set_value("DocType", name, updates, update_modified=False)
         return
-    frappe.get_doc({
+    doctype_data = {
         "doctype": "DocType",
         "name": name,
         "module": module,
@@ -283,7 +295,9 @@ def ensure_doctype(name, fields, module="Quality Control", is_child=False):
             "delete": 1,
             "report": 1,
         }],
-    }).insert(ignore_permissions=True)
+    }
+    doctype_data.update(DOCTYPE_SETTINGS.get(name, {}))
+    frappe.get_doc(doctype_data).insert(ignore_permissions=True)
 
 
 def ensure_report_reader_role():
