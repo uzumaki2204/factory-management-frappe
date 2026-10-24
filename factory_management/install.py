@@ -340,13 +340,15 @@ def _metadata_document_data(document):
     return data
 
 
-def _sync_snapshot_records(doctype, records):
+def _sync_snapshot_records(doctype, records, *, create_only=False):
     for record in records:
         name = record.get("name")
         if not name:
             continue
         values = {key: value for key, value in record.items() if key not in {"doctype", "name"}}
         if frappe.db.exists(doctype, name):
+            if create_only:
+                continue
             document = frappe.get_doc(doctype, name)
             changed = any(
                 _clean_metadata_value(document.get(key)) != _clean_metadata_value(value)
@@ -361,25 +363,36 @@ def _sync_snapshot_records(doctype, records):
 
 def _apply_doctype_snapshot(name, snapshot):
     data = snapshot["doctype"]
-    _sync_snapshot_records("Role", snapshot.get("roles", []))
-    if not frappe.db.exists("DocType", name):
-        frappe.get_doc(data).insert(ignore_permissions=True)
-    else:
-        document = frappe.get_doc("DocType", name)
-        changed = False
-        for key, value in data.items():
-            if key in {"doctype", "name"}:
-                continue
-            desired = [_clean_metadata_value(row, child=True) for row in value] if key in DOCTYPE_CHILD_TABLES else value
-            current = [_clean_metadata_value(row, child=True) for row in document.get(key)] if key in DOCTYPE_CHILD_TABLES else document.get(key)
-            if _clean_metadata_value(current) != _clean_metadata_value(desired):
-                document.set(key, desired)
-                changed = True
-        if changed:
-            document.save(ignore_permissions=True)
+    _sync_snapshot_records("Role", snapshot.get("roles", []), create_only=True)
+
+    if data.get("custom"):
+        if not frappe.db.exists("DocType", name):
+            frappe.get_doc(data).insert(ignore_permissions=True)
+        else:
+            document = frappe.get_doc("DocType", name)
+            changed = False
+            for key, value in data.items():
+                if key in {"doctype", "name"}:
+                    continue
+                desired = [_clean_metadata_value(row, child=True) for row in value] if key in DOCTYPE_CHILD_TABLES else value
+                current = [_clean_metadata_value(row, child=True) for row in document.get(key)] if key in DOCTYPE_CHILD_TABLES else document.get(key)
+                if _clean_metadata_value(current) != _clean_metadata_value(desired):
+                    document.set(key, desired)
+                    changed = True
+            if changed:
+                document.save(ignore_permissions=True)
+    elif not frappe.db.exists("DocType", name):
+        from factory_management.device_registry import message
+        frappe.throw(
+            message("error.standard_doctype_missing").format(doctype=name),
+            frappe.ValidationError,
+        )
 
     _sync_snapshot_records("Custom Field", snapshot.get("custom_fields", []))
     _sync_snapshot_records("Property Setter", snapshot.get("property_setters", []))
+    _sync_snapshot_records("Custom DocPerm", snapshot.get("custom_permissions", []))
+    _sync_snapshot_records("DocType Link", snapshot.get("custom_links", []))
+    _sync_snapshot_records("DocType Action", snapshot.get("custom_actions", []))
 
 
 def ensure_doctype(name, fields, module="Quality Control", is_child=False):
@@ -423,23 +436,33 @@ def export_doctype_metadata():
             "doctype": _metadata_document_data(document),
             "custom_fields": [],
             "property_setters": [],
+            "custom_permissions": [],
+            "custom_links": [],
+            "custom_actions": [],
             "roles": [],
         }
-        role_names = sorted({row.role for row in document.permissions if row.role})
-        snapshot["roles"] = [
-            _metadata_document_data(frappe.get_doc("Role", role_name))
-            for role_name in role_names
-            if frappe.db.exists("Role", role_name)
-        ]
         for child_doctype, filters, target in (
             ("Custom Field", {"dt": name}, "custom_fields"),
             ("Property Setter", {"doc_type": name}, "property_setters"),
+            ("Custom DocPerm", {"parent": name}, "custom_permissions"),
+            ("DocType Link", {"parent": name, "custom": 1}, "custom_links"),
+            ("DocType Action", {"parent": name, "custom": 1}, "custom_actions"),
         ):
             records = frappe.get_all(child_doctype, filters=filters, fields=["name"], order_by="name asc")
             snapshot[target] = [
                 _metadata_document_data(frappe.get_doc(child_doctype, row.name))
                 for row in records
             ]
+        role_names = {
+            row.role for row in document.permissions if row.role
+        } | {
+            row.get("role") for row in snapshot["custom_permissions"] if row.get("role")
+        }
+        snapshot["roles"] = [
+            _metadata_document_data(frappe.get_doc("Role", role_name))
+            for role_name in sorted(role_names)
+            if frappe.db.exists("Role", role_name)
+        ]
         path = METADATA_DIRECTORY / _metadata_filename(name)
         path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         exported.append(path.name)

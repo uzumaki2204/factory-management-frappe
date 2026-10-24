@@ -1,5 +1,6 @@
 {
   "vi": {
+    "error.standard_doctype_missing": "Không tìm thấy DocType chuẩn {doctype}; hãy cài ứng dụng Frappe chứa DocType này trước khi đồng bộ.",
     "error.device_uid": "Mã định danh thiết bị không được để trống.",
     "error.duplicate_uid": "Mã định danh thiết bị đã được sử dụng.",
     "error.duplicate_access": "Thiết bị đã có quyền truy cập cho trang này.",
@@ -15,6 +16,7 @@
     "error.legacy_client_unmigrated": "Client trong {doctype} chưa được chuyển đầy đủ; đã dừng việc xóa."
   },
   "en": {
+    "error.standard_doctype_missing": "Standard DocType {doctype} was not found; install the Frappe app that provides it before syncing.",
     "error.device_uid": "Device UID is required.",
     "error.duplicate_uid": "Device UID is already in use.",
     "error.duplicate_access": "This device already has access for this page.",
