@@ -1,4 +1,8 @@
-"""Additive QC schema for the Factory Management Frappe app."""
+"""Install and synchronize app-owned Frappe metadata."""
+import json
+import re
+from pathlib import Path
+
 import frappe
 
 
@@ -152,6 +156,15 @@ DOCTYPE_SETTINGS = {
     "Customer": {"autoname": "hash", "allow_rename": 1},
 }
 
+# Connections is a derived Desk view; its source is the DocType fields and links.
+DOCTYPE_CHILD_TABLES = ("fields", "permissions", "actions", "links", "states")
+DOCTYPE_SYSTEM_FIELDS = {
+    "owner", "creation", "modified", "modified_by", "docstatus", "idx",
+    "_user_tags", "_comments", "_assign", "_liked_by", "_seen",
+}
+CHILD_SYSTEM_FIELDS = DOCTYPE_SYSTEM_FIELDS | {"name", "parent", "parenttype", "parentfield"}
+METADATA_DIRECTORY = Path(__file__).parent / "doctype_metadata"
+
 DOCUMENTATION_TYPES = {
     "API Documentation Service": [
         field("service_key", "Service Key", reqd=1, unique=1, in_list_view=1),
@@ -266,18 +279,32 @@ def ensure_module():
             }).insert(ignore_permissions=True)
 
 
-def ensure_doctype(name, fields, module="Quality Control", is_child=False):
-    settings = {"module": module, **DOCTYPE_SETTINGS.get(name, {})}
-    if frappe.db.exists("DocType", name):
-        current = frappe.db.get_value("DocType", name, list(settings), as_dict=True)
-        updates = {
-            key: value for key, value in settings.items()
-            if current.get(key) != value
+def _metadata_filename(name):
+    return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_") + ".json"
+
+
+def _clean_metadata_value(value, child=False):
+    if isinstance(value, dict):
+        ignored = CHILD_SYSTEM_FIELDS if child else DOCTYPE_SYSTEM_FIELDS
+        return {
+            key: _clean_metadata_value(item, child=child)
+            for key, item in value.items()
+            if key not in ignored and not key.startswith("_") and item is not None
         }
-        if updates:
-            frappe.db.set_value("DocType", name, updates, update_modified=False)
-        return
-    doctype_data = {
+    if isinstance(value, list):
+        return [_clean_metadata_value(item, child=child) for item in value]
+    return value
+
+
+def _load_doctype_snapshot(name):
+    path = METADATA_DIRECTORY / _metadata_filename(name)
+    if not path.is_file():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _doctype_definition(name, fields, module, is_child):
+    data = {
         "doctype": "DocType",
         "name": name,
         "module": module,
@@ -295,9 +322,128 @@ def ensure_doctype(name, fields, module="Quality Control", is_child=False):
             "delete": 1,
             "report": 1,
         }],
+        "actions": [],
+        "links": [],
+        "states": [],
     }
-    doctype_data.update(DOCTYPE_SETTINGS.get(name, {}))
-    frappe.get_doc(doctype_data).insert(ignore_permissions=True)
+    data.update(DOCTYPE_SETTINGS.get(name, {}))
+    return data
+
+
+def _metadata_document_data(document):
+    data = _clean_metadata_value(document.as_dict())
+    data["doctype"] = document.doctype
+    data["name"] = document.name
+    for table in DOCTYPE_CHILD_TABLES:
+        if table in data:
+            data[table] = [_clean_metadata_value(row, child=True) for row in data[table]]
+    return data
+
+
+def _sync_snapshot_records(doctype, records):
+    for record in records:
+        name = record.get("name")
+        if not name:
+            continue
+        values = {key: value for key, value in record.items() if key not in {"doctype", "name"}}
+        if frappe.db.exists(doctype, name):
+            document = frappe.get_doc(doctype, name)
+            changed = any(
+                _clean_metadata_value(document.get(key)) != _clean_metadata_value(value)
+                for key, value in values.items()
+            )
+            if changed:
+                document.update(values)
+                document.save(ignore_permissions=True)
+        else:
+            frappe.get_doc({"doctype": doctype, "name": name, **values}).insert(ignore_permissions=True)
+
+
+def _apply_doctype_snapshot(name, snapshot):
+    data = snapshot["doctype"]
+    _sync_snapshot_records("Role", snapshot.get("roles", []))
+    if not frappe.db.exists("DocType", name):
+        frappe.get_doc(data).insert(ignore_permissions=True)
+    else:
+        document = frappe.get_doc("DocType", name)
+        changed = False
+        for key, value in data.items():
+            if key in {"doctype", "name"}:
+                continue
+            desired = [_clean_metadata_value(row, child=True) for row in value] if key in DOCTYPE_CHILD_TABLES else value
+            current = [_clean_metadata_value(row, child=True) for row in document.get(key)] if key in DOCTYPE_CHILD_TABLES else document.get(key)
+            if _clean_metadata_value(current) != _clean_metadata_value(desired):
+                document.set(key, desired)
+                changed = True
+        if changed:
+            document.save(ignore_permissions=True)
+
+    _sync_snapshot_records("Custom Field", snapshot.get("custom_fields", []))
+    _sync_snapshot_records("Property Setter", snapshot.get("property_setters", []))
+
+
+def ensure_doctype(name, fields, module="Quality Control", is_child=False):
+    snapshot = _load_doctype_snapshot(name)
+    if snapshot:
+        _apply_doctype_snapshot(name, snapshot)
+        return
+
+    settings = {"module": module, **DOCTYPE_SETTINGS.get(name, {})}
+    if frappe.db.exists("DocType", name):
+        # On the first upgrade, keep the existing Desk definition intact. Export it
+        # with export_doctype_metadata() before publishing a snapshot-backed release.
+        current = frappe.db.get_value("DocType", name, list(settings), as_dict=True)
+        updates = {key: value for key, value in settings.items() if current.get(key) != value}
+        if updates:
+            frappe.db.set_value("DocType", name, updates, update_modified=False)
+        return
+
+    frappe.get_doc(_doctype_definition(name, fields, module, is_child)).insert(ignore_permissions=True)
+
+
+def export_doctype_metadata():
+    """Export current app-managed DocType metadata for source-controlled releases."""
+    from factory_management.uqqc.provision import CATALOG_TYPES
+
+    names = (
+        *MASTER_TYPES,
+        *DEVICE_TYPES,
+        *TRANSACTION_TYPES,
+        *DOCUMENTATION_TYPES,
+        *CATALOG_TYPES,
+        "UQQC Inspection Event",
+    )
+    METADATA_DIRECTORY.mkdir(parents=True, exist_ok=True)
+    exported = []
+    for name in names:
+        if not frappe.db.exists("DocType", name):
+            continue
+        document = frappe.get_doc("DocType", name)
+        snapshot = {
+            "doctype": _metadata_document_data(document),
+            "custom_fields": [],
+            "property_setters": [],
+            "roles": [],
+        }
+        role_names = sorted({row.role for row in document.permissions if row.role})
+        snapshot["roles"] = [
+            _metadata_document_data(frappe.get_doc("Role", role_name))
+            for role_name in role_names
+            if frappe.db.exists("Role", role_name)
+        ]
+        for child_doctype, filters, target in (
+            ("Custom Field", {"dt": name}, "custom_fields"),
+            ("Property Setter", {"doc_type": name}, "property_setters"),
+        ):
+            records = frappe.get_all(child_doctype, filters=filters, fields=["name"], order_by="name asc")
+            snapshot[target] = [
+                _metadata_document_data(frappe.get_doc(child_doctype, row.name))
+                for row in records
+            ]
+        path = METADATA_DIRECTORY / _metadata_filename(name)
+        path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        exported.append(path.name)
+    return exported
 
 
 def ensure_report_reader_role():

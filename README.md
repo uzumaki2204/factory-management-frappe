@@ -17,9 +17,23 @@ bench build --app factory_management
 bench restart
 ```
 
-Tên app Frappe là `factory_management`; vì vậy lệnh `get-app` ghi rõ tên này trước URL repo. Repo công khai nên máy cài không cần SSH deploy key để tải mã nguồn. Khi muốn ghim đúng một bản phát hành, thay `version-16` bằng tag, ví dụ `v0.1.15`.
+Tên app Frappe là `factory_management`; vì vậy lệnh `get-app` ghi rõ tên này trước URL repo. Repo công khai nên máy cài không cần SSH deploy key để tải mã nguồn. Khi muốn ghim đúng một bản phát hành, thay `version-16` bằng tag, ví dụ `v0.1.16`.
 
 Khi nâng cấp, tạo bản sao lưu trước, lấy mã mới từ `version-16`, rồi chạy migrate, build và restart. App tự chạy `after_install` và `after_migrate` để tạo schema, trang QC/UQQC và API UQQC. Lệnh `ensure_qc_inspection_summary` ở trên tạo Server Script QC còn lại. Server Scripts phải được bật trước khi cài app.
+
+## Đồng bộ cấu hình DocType giữa các máy
+
+Metadata DocType được quản lý bằng snapshot JSON trong `factory_management/doctype_metadata/`. Snapshot gồm fields, Naming, Settings, Permissions, Actions, Links, States, Custom Fields, Property Setters và các Role được tham chiếu; tab Connections của Frappe được tạo từ các Link/field này. Snapshot không chứa tài khoản người dùng hoặc phân công Role cho người dùng. Khi có snapshot, `bench migrate` áp dụng metadata đó cho các DocType do app quản lý. Bản ghi master, sự kiện và dữ liệu người dùng vẫn được giữ.
+
+Để đưa cấu hình đang có trên máy nguồn vào app, trước hết cài bản app có hỗ trợ xuất metadata lên máy đó và chạy migrate. Lần nâng cấp đầu giữ nguyên metadata hiện tại của DocType đã tồn tại. Sau đó chạy:
+
+```bash
+bench --site <ten-site> execute factory_management.install.export_doctype_metadata
+```
+
+Lệnh tạo JSON trong `apps/factory_management/factory_management/doctype_metadata/`. Lấy các file này về repo, commit và phát hành app. Cài/nâng cấp bản phát hành đó trên máy đích rồi chạy `bench --site <ten-site> migrate` để áp dụng cấu hình nguồn. Các snapshot là nguồn chuẩn sau khi đã xuất; chỉnh sửa DocType trực tiếp trên máy đích cần được xuất về repo nếu muốn giữ qua lần nâng cấp tiếp theo.
+
+Nếu không có snapshot cho một DocType, app giữ định nghĩa đang có trên site; với DocType mới, app tạo theo cấu hình mặc định trong mã nguồn.
 
 Trên máy mới, cần cài Bench/Frappe và tạo site trước khi chạy các lệnh này. Các bộ cài native và Docker bên dưới vẫn có thể dùng như lựa chọn dựng môi trường hoặc triển khai stack Docker; chúng là bộ cài hạ tầng bổ sung, không phải cách cài app Bench thông thường.
 
