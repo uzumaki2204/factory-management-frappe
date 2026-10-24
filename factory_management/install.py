@@ -223,7 +223,10 @@ DEVICE_TYPES = {
         field("last_seen_at", "Last Seen", "Datetime"),
     ],
     "Factory Device Access": [
-        field("access_key", "Access Key", reqd=1, unique=1, read_only=1, hidden=1),
+        # validate_access derives this key from the device and service before save.
+        # Keep it optional in DocType metadata because Frappe forbids a hidden,
+        # mandatory field without a static default.
+        field("access_key", "Access Key", unique=1, read_only=1, hidden=1),
         field("device", "Device", "Link", "Factory Device", reqd=1, in_list_view=1),
         field("service_key", "Service Key", reqd=1, in_list_view=1),
         field("is_enabled", "Enabled", "Check", default="0", in_list_view=1),
