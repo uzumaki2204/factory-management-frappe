@@ -45,11 +45,36 @@ DB_ADMIN_USER="frappe_installer"
 [[ -f /etc/os-release ]] || fail unsupported_os
 # shellcheck disable=SC1091
 source /etc/os-release
-[[ "${ID:-}" == ubuntu && "${VERSION_ID:-}" == "24.04" ]] || fail unsupported_os
+
+version_at_least() {
+    local actual_major actual_minor minimum_major minimum_minor
+
+    [[ "${1:-}" =~ ^([0-9]+)\.([0-9]+)(\.[0-9]+)?$ ]] || return 1
+    actual_major="${BASH_REMATCH[1]}"
+    actual_minor="${BASH_REMATCH[2]}"
+    [[ "${2:-}" =~ ^([0-9]+)\.([0-9]+)$ ]] || return 1
+    minimum_major="${BASH_REMATCH[1]}"
+    minimum_minor="${BASH_REMATCH[2]}"
+
+    (( 10#$actual_major > 10#$minimum_major || (10#$actual_major == 10#$minimum_major && 10#$actual_minor >= 10#$minimum_minor) ))
+}
+
+[[ "${ID:-}" == ubuntu ]] && version_at_least "${VERSION_ID:-}" "24.04" || fail unsupported_os
 [[ "$(uname -m)" == x86_64 ]] || fail unsupported_arch
 [[ -f "$SCRIPT_DIR/factory_management/hooks.py" && -f "$SCRIPT_DIR/pyproject.toml" ]] || fail invalid_bundle
 [[ ! -e "$FRAPPE_BENCH_DIR" ]] || fail bench_exists
 [[ -t 0 ]] || fail interactive_required
+
+if version_at_least "$VERSION_ID" "26.04"; then
+    WKHTMLTOX_URL="https://github.com/newinnovations/wkhtml-packaging/releases/download/2026-05-06/wkhtmltox_0.12.6.1-resolute_amd64.deb"
+    WKHTMLTOX_SHA256="e759ea5856bdb36c909663ace6c51bac1aaa5b294b2c2c9803511b1f4a32978a"
+elif version_at_least "$VERSION_ID" "24.10"; then
+    WKHTMLTOX_URL="https://github.com/newinnovations/wkhtml-packaging/releases/download/2026-05-06/wkhtmltox_0.12.6.1-noble_amd64.deb"
+    WKHTMLTOX_SHA256="9f68c989869640f35d83018e79a4d2197e1d8ec0dffc92ea371090c76260b08e"
+else
+    WKHTMLTOX_URL="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.jammy_amd64.deb"
+    WKHTMLTOX_SHA256="4f723b2691ad8638a9df960e0421d346d7315083e3583a334f33362280ddbba15"
+fi
 
 command -v apt-get >/dev/null || fail missing_apt
 command -v curl >/dev/null || fail missing_curl
@@ -97,11 +122,11 @@ trap cleanup_temp_files EXIT
 
 msg wkhtmltopdf
 WKHTMLTOX_PACKAGE="$(mktemp --suffix=.deb)"
-curl -fsSL \
-    https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.jammy_amd64.deb \
-    -o "$WKHTMLTOX_PACKAGE"
+if ! curl -fsSL "$WKHTMLTOX_URL" -o "$WKHTMLTOX_PACKAGE"; then
+    fail wkhtmltopdf_download
+fi
 printf '%s  %s\n' \
-    '4f723b2691ad8638a9df960e0421d346d7315083e3583a334f33362280ddbba15' \
+    "$WKHTMLTOX_SHA256" \
     "$WKHTMLTOX_PACKAGE" | sha256sum --check --status || fail wkhtmltopdf_checksum
 DEBIAN_FRONTEND=noninteractive apt-get install -y "$WKHTMLTOX_PACKAGE"
 

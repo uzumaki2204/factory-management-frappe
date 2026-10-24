@@ -2,26 +2,26 @@
 
 Đây là app Frappe dùng chung cho dữ liệu nhà máy, thiết bị, QC và UQQC. Bộ cài bên dưới tạo một site mới chỉ có schema và trang mặc định; không chép dữ liệu từ site khác.
 
-## Cài mới trên Ubuntu 24.04
+## Cài mới trên Ubuntu 24.04 trở lên
 
 Bộ cài native tạo một Bench production mới, cài Frappe 16.52.0 và app Factory Management, rồi tạo site dùng địa chỉ IPv4 của máy làm tên site. Bộ cài không nhập dữ liệu khách hàng, sản phẩm, chuyền, thiết bị, lịch sử kiểm tra hoặc token.
 
-Tải gói `factory-management-frappe-v0.1.0.tar.gz`, kiểm tra SHA-256, giải nén rồi chạy:
+Tải gói `factory-management-frappe-v0.1.1.tar.gz`, kiểm tra SHA-256, giải nén rồi chạy:
 
 ```bash
 sha256sum -c SHA256SUMS
-tar -xzf factory-management-frappe-v0.1.0.tar.gz
-cd factory-management-frappe-v0.1.0
+tar -xzf factory-management-frappe-v0.1.1.tar.gz
+cd factory-management-frappe-v0.1.1
 sudo ./install.sh
 ```
 
-Bộ cài chỉ hỗ trợ Ubuntu 24.04 LTS x86_64 và cần Internet để lấy các phụ thuộc hệ điều hành. Nó tạo user Linux `frappe`, Bench tại `/opt/frappe-bench`, MariaDB 11.8, Redis, Nginx và Supervisor. Frappe 16 còn cần wkhtmltopdf; bộ cài tải bản upstream `0.12.6.1-3` cho Ubuntu 22.04 amd64 và xác minh SHA-256 trước khi cài trên Ubuntu 24.04. Nhập mật khẩu cho tài khoản MariaDB cục bộ khi được hỏi; `bench new-site` sẽ hỏi lại mật khẩu đó và mật khẩu Administrator. Không dùng một Bench hoặc MariaDB đã có dữ liệu: bộ cài từ chối nếu thư mục Bench đích đã tồn tại.
+Bộ cài hỗ trợ Ubuntu 24.04 trở lên, kiến trúc x86_64, và cần Internet để lấy các phụ thuộc hệ điều hành. Nó tạo user Linux `frappe`, Bench tại `/opt/frappe-bench`, MariaDB 11.8, Redis, Nginx và Supervisor. Gói wkhtmltopdf được chọn theo phiên bản Ubuntu và xác minh SHA-256 trước khi cài: bản upstream Jammy trên Ubuntu 24.04, bản Noble tương thích cho Ubuntu 24.10–25.10, và bản Resolute cho Ubuntu 26.04 trở lên. Các bản Noble/Resolute được ghim từ [release 2026-05-06 của newinnovations/wkhtml-packaging](https://github.com/newinnovations/wkhtml-packaging/releases/tag/2026-05-06). Nhập mật khẩu cho tài khoản MariaDB cục bộ khi được hỏi; `bench new-site` sẽ hỏi lại mật khẩu đó và mật khẩu Administrator. Không dùng một Bench hoặc MariaDB đã có dữ liệu: bộ cài từ chối nếu thư mục Bench đích đã tồn tại.
 
-Mở `http://<IP-LAN>/` để truy cập. Nếu firewall của máy đang bật, quản trị viên cần cho phép TCP/80 từ mạng LAN. Để cài từ repo riêng tư, clone tag `v0.1.0` trước rồi chạy cùng `sudo ./install.sh`; GitHub cần được cấu hình SSH deploy key trên máy cài.
+Mở `http://<IP-LAN>/` để truy cập. Nếu firewall của máy đang bật, quản trị viên cần cho phép TCP/80 từ mạng LAN. Để cài từ repo riêng tư, clone tag `v0.1.1` trước rồi chạy cùng `sudo ./install.sh`; GitHub cần được cấu hình SSH deploy key trên máy cài.
 
 ## Phát hành
 
-Tăng phiên bản trong `pyproject.toml` và `release-manifest.json` đồng thời, sau đó chạy `./release.sh`. Lệnh tạo app-only archive trong `dist/` từ một Git tag tạm và ghi `SHA256SUMS`. Dùng `./release.sh --publish` để đẩy cùng tag và nhánh `main` lên repo riêng `uzumaki2204/factory-management-frappe`; cần cấu hình SSH key có quyền ghi và tạo repo đó trước.
+Tăng phiên bản trong `pyproject.toml`, `factory_management/__init__.py` và `release-manifest.json` đồng thời, sau đó chạy `./release.sh`. Lệnh tạo app-only archive trong `dist/` từ một Git tag tạm và ghi `SHA256SUMS`. Dùng `./release.sh --publish` để đẩy cùng tag và nhánh `main` lên repo riêng `uzumaki2204/factory-management-frappe`; cần cấu hình SSH key có quyền ghi và tạo repo đó trước.
 
 Manifest pin Frappe theo revision `4515014c87ece6cb20ee91d2cfb121c5cbd1ff4a`, tương ứng phiên bản 16.52.0 hiện dùng. Các phụ thuộc runtime theo [hướng dẫn cài Frappe](https://docs.frappe.io/framework/user/en/installation). Bench cài app bằng `get-app` rồi `install-app`; migration dùng lệnh `bench --site <site> migrate` theo [hướng dẫn Bench](https://docs.frappe.io/framework/user/en/bench/reference/migrate).
 

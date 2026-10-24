@@ -1,6 +1,6 @@
 {
   "app_name": "factory_management",
-  "app_version": "0.1.0",
+  "app_version": "0.1.1",
   "frappe": {
     "version": "16.52.0",
     "git_commit": "4515014c87ece6cb20ee91d2cfb121c5cbd1ff4a",
@@ -18,9 +18,27 @@
     "redis": "6+",
     "yarn": "1.22+",
     "wkhtmltopdf": {
-      "version": "0.12.6.1-3",
-      "package": "wkhtmltox_0.12.6.1-3.jammy_amd64.deb",
-      "sha256": "4f723b2691ad8638a9df960e0421d346d7315083e3583a334f33362280ddbba15"
+      "version": "0.12.6.1",
+      "packages": {
+        "ubuntu_24_04": {
+          "source": "wkhtmltopdf/packaging",
+          "release": "0.12.6.1-3",
+          "package": "wkhtmltox_0.12.6.1-3.jammy_amd64.deb",
+          "sha256": "4f723b2691ad8638a9df960e0421d346d7315083e3583a334f33362280ddbba15"
+        },
+        "ubuntu_24_10_to_25_10": {
+          "source": "newinnovations/wkhtml-packaging",
+          "release": "2026-05-06",
+          "package": "wkhtmltox_0.12.6.1-noble_amd64.deb",
+          "sha256": "9f68c989869640f35d83018e79a4d2197e1d8ec0dffc92ea371090c76260b08e"
+        },
+        "ubuntu_26_04_and_newer": {
+          "source": "newinnovations/wkhtml-packaging",
+          "release": "2026-05-06",
+          "package": "wkhtmltox_0.12.6.1-resolute_amd64.deb",
+          "sha256": "e759ea5856bdb36c909663ace6c51bac1aaa5b294b2c2c9803511b1f4a32978a"
+        }
+      }
     }
   }
 }
