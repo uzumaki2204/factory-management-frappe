@@ -1,0 +1,32 @@
+{
+  "vi": {
+    "error.device_uid": "Mã định danh thiết bị không được để trống.",
+    "error.duplicate_uid": "Mã định danh thiết bị đã được sử dụng.",
+    "error.duplicate_access": "Thiết bị đã có quyền truy cập cho trang này.",
+    "error.service_key": "Mã dịch vụ thiết bị không hợp lệ.",
+    "error.token": "Token thiết bị không hợp lệ.",
+    "error.token_bound": "Token này đã được ghép với thiết bị khác.",
+    "error.target_exists": "DocType Factory Device đã tồn tại; cần xử lý xung đột trước khi chuyển đổi.",
+    "error.namespace_conflict": "Module hoặc DocType thiết bị chung đã thuộc ứng dụng khác.",
+    "error.master_data_module_conflict": "Module KTG Master Data đã được một ứng dụng khác sở hữu.",
+    "error.legacy_client_registry_missing": "Chưa có danh mục thiết bị và client dùng chung; không thể xóa {doctype}.",
+    "error.legacy_client_namespace": "DocType {doctype} không thuộc danh mục cũ dự kiến; đã dừng việc xóa.",
+    "error.legacy_client_referenced": "DocType {doctype} vẫn đang được tham chiếu; đã dừng việc xóa.",
+    "error.legacy_client_unmigrated": "Client trong {doctype} chưa được chuyển đầy đủ; đã dừng việc xóa."
+  },
+  "en": {
+    "error.device_uid": "Device UID is required.",
+    "error.duplicate_uid": "Device UID is already in use.",
+    "error.duplicate_access": "This device already has access for this page.",
+    "error.service_key": "Invalid device service key.",
+    "error.token": "Invalid device token.",
+    "error.token_bound": "This token is paired with another device.",
+    "error.target_exists": "Factory Device already exists; resolve the conflict before migration.",
+    "error.namespace_conflict": "The shared device module or DocType belongs to another application.",
+    "error.master_data_module_conflict": "The KTG Master Data module belongs to another application.",
+    "error.legacy_client_registry_missing": "The shared device and client registry is missing; cannot remove {doctype}.",
+    "error.legacy_client_namespace": "DocType {doctype} is not an expected legacy client; removal stopped.",
+    "error.legacy_client_referenced": "DocType {doctype} is still referenced; removal stopped.",
+    "error.legacy_client_unmigrated": "A client in {doctype} has not been migrated; removal stopped."
+  }
+}

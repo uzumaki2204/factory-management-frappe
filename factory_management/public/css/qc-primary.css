@@ -1,0 +1,47 @@
+/* Frappe Desk primary color matched to the Kim Thanh Group logo. */
+:root {
+  --primary: #195780;
+  --primary-color: #195780;
+  --brand-color: #195780;
+  --btn-primary: #195780;
+}
+
+.btn-primary,
+.btn-primary:focus,
+.btn-primary.focus {
+  background-color: #195780;
+  border-color: #195780;
+}
+
+.btn-primary:hover,
+.btn-primary:not(:disabled):not(.disabled).active,
+.btn-primary:not(:disabled):not(.disabled):active,
+.show > .btn-primary.dropdown-toggle {
+  background-color: #14496b;
+  border-color: #14496b;
+}
+
+/* The Web Page shell must occupy the same viewport as the former /qc page. */
+body.qc-web-page > .navbar,
+body.qc-web-page > .web-footer,
+body.qc-web-page .page-breadcrumbs,
+body.qc-web-page .page-header-wrapper,
+body.qc-web-page .page-footer {
+  display: none;
+}
+
+body.qc-web-page > #page-qc {
+  width: 100%;
+  flex: 1 0 auto;
+}
+
+body.qc-web-page .page-content-wrapper,
+body.qc-web-page .page-content-wrapper > main,
+body.qc-web-page .page_content,
+body.qc-web-page .webpage-content,
+body.qc-web-page .web-page-content {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}

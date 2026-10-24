@@ -1,0 +1,17 @@
+{
+  "name": "Factory Management QC",
+  "short_name": "QC",
+  "lang": "vi",
+  "start_url": "/qc",
+  "scope": "/qc",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/assets/frappe/images/frappe-favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

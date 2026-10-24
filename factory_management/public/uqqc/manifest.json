@@ -1,0 +1,25 @@
+{
+  "id": "/uqqc",
+  "name": "UQQC",
+  "short_name": "UQQC",
+  "lang": "vi",
+  "dir": "ltr",
+  "start_url": "/uqqc",
+  "scope": "/uqqc",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/assets/factory_management/uqqc/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

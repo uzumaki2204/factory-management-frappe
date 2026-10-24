@@ -1,0 +1,5 @@
+@media (min-width: 1200px) {
+    body.desktop-page .icons.factory-management-shortcuts {
+        grid-template-columns: repeat(8, 1fr);
+    }
+}

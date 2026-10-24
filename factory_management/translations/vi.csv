@@ -1,0 +1,157 @@
+QC_REPORT_FORBIDDEN,Người dùng không có vai trò được phép truy cập API báo cáo QC này
+QC_REPORT_SCRIPT_MIGRATION_REQUIRED,Cần cập nhật thủ công phần kiểm tra quyền của Server Script QC Inspection Summary vì nội dung đã được tùy chỉnh
+QC_REPORT_DATES_REQUIRED,Cần nhập đủ ngày bắt đầu và ngày kết thúc
+QC_REPORT_INVALID_DATE,Ngày báo cáo không hợp lệ
+QC_REPORT_RANGE_TOO_LONG,Khoảng ngày báo cáo tối đa 7 ngày
+QC_REPORT_INVALID_QUANTITY,Số lượng tổng hợp không hợp lệ
+QC_WEB_PAGE_NAME_CONFLICT,Tên trang QC đã được dùng cho một Web Page khác
+API Documentation,Tài liệu API
+API Management,Quản lý API
+API Docs,Quản lý API
+Open Desk,Mở Desk
+Company Name,Tên công ty
+Company Code,Mã công ty
+Short Name,Tên viết tắt
+Tax Code,Mã số thuế
+Company Logo,Logo công ty
+Department Code,Mã bộ phận
+Department Name,Tên bộ phận
+Market Code,Mã thị trường
+Market Name,Tên thị trường
+Product Code,Mã hàng
+Product Name,Tên sản phẩm
+Season,Mùa
+Color Code,Mã màu
+Color Name,Tên màu
+Size Code,Mã size
+Size Name,Tên size
+Sort Order,Thứ tự sắp xếp
+Service,Dịch vụ
+Manage services,Quản lý dịch vụ
+Manage endpoints,Quản lý luồng API
+Download OpenAPI,Tải OpenAPI
+Unable to load API documentation,Không thể tải tài liệu API
+Loading API documentation,Đang tải tài liệu API
+No API services are available,Chưa có dịch vụ API
+Invalid API documentation JSON in {0},JSON tài liệu API không hợp lệ ở {0}
+Invalid API documentation route in {0},Đường dẫn tài liệu API không hợp lệ ở {0}
+Duplicate API documentation route in {0},Đường dẫn tài liệu API bị trùng ở {0}
+API documentation service was not found,Không tìm thấy dịch vụ tài liệu API
+Invalid API documentation service key,Mã dịch vụ API không hợp lệ
+Invalid API documentation URL,URL tài liệu API không hợp lệ
+Service Key,Mã dịch vụ
+Service Title,Tên dịch vụ
+Version,Phiên bản
+Active,Hoạt động
+Operation ID,Mã thao tác
+Path,Đường dẫn
+HTTP Method,Phương thức HTTP
+Summary,Tóm tắt
+Description,Mô tả
+Tags JSON,Nhãn JSON
+Parameters JSON,Tham số JSON
+Request Body JSON,Nội dung yêu cầu JSON
+Responses JSON,Phản hồi JSON
+Security JSON,Bảo mật JSON
+Allowed Roles,Các vai trò được phép
+Role,Vai trò
+QC Report Reader,Người đọc báo cáo QC
+Duplicate allowed API role in {0},Vai trò được phép bị trùng trong API {0}
+Base URL,URL máy chủ
+OpenAPI URL,URL OpenAPI
+QC API,API QC
+Quality Control APIs. Contracts are editable in Frappe Desk.,Các API kiểm tra chất lượng. Có thể chỉnh sửa hợp đồng API trong Frappe Desk.
+QC Reports,Báo cáo QC
+QC inspection summary,Tổng hợp kiểm tra QC
+"Groups QC Inspection Event quantity_delta by date, device, company, factory, line, line group, customer, product, color, size and defect. Maximum date range: 7 days.","Tổng hợp quantity_delta của sự kiện kiểm tra QC theo ngày, thiết bị, công ty, xưởng, chuyền, nhóm chuyền, khách hàng, mã hàng, màu, size và lỗi. Khoảng ngày tối đa 7 ngày."
+Grouped inspection events,Các sự kiện kiểm tra đã tổng hợp
+Missing or invalid date range or quantity,Thiếu hoặc sai khoảng ngày hay số lượng
+Role allowed for this QC report API required,Cần vai trò được phép truy cập API báo cáo QC này
+QC report rows,Các dòng báo cáo QC
+QC report summary,Báo cáo tổng hợp QC
+QC report detail,Báo cáo chi tiết QC
+"Groups QC Inspection Event quantities by local date, device, product, line, event type and defect. Maximum date range: 7 days.","Tổng hợp số lượng sự kiện kiểm tra QC theo ngày địa phương, thiết bị, mã hàng, chuyền, loại sự kiện và lỗi. Khoảng ngày tối đa 7 ngày."
+Returns QC Inspection Event rows. Maximum date range: 7 days.,Trả về các dòng sự kiện kiểm tra QC. Khoảng ngày tối đa 7 ngày.
+UTC date of occurred_at,Ngày UTC của thời điểm xảy ra
+Frappe Desk session,Phiên đăng nhập Frappe Desk
+token api_key:api_secret,token api_key:api_secret
+You do not have access to this UQQC API.,Bạn không có quyền gọi API UQQC này.
+The registered device was not found.,Không tìm thấy thiết bị đã đăng ký.
+"The device must be approved, active and assigned to a company.","Thiết bị phải được duyệt, kích hoạt và gán công ty."
+The device token is invalid or has been revoked.,Token thiết bị không hợp lệ hoặc đã bị thu hồi.
+Device ID must be a valid UUID.,Device ID phải là UUID hợp lệ.
+The request data is invalid.,Dữ liệu gửi lên không hợp lệ.
+"Select an active line, product, color, size and market.","Vui lòng chọn đầy đủ chuyền, mã hàng, màu, cỡ và thị trường đang hoạt động."
+The line does not belong to the device company.,Chuyền không thuộc công ty của thiết bị.
+The product variant does not exist or is inactive.,Biến thể sản phẩm không tồn tại hoặc đã ngừng hoạt động.
+An event ID must contain between 1 and 100 characters.,Mã sự kiện phải có từ 1 đến 100 ký tự.
+The event timestamp must be valid and include a time zone.,Thời gian sự kiện phải hợp lệ và có múi giờ.
+The defect or its group does not exist or is inactive.,Lỗi hoặc nhóm lỗi không tồn tại hoặc đã ngừng hoạt động.
+The defect position or piece ID is invalid.,Vị trí lỗi và mã sản phẩm lỗi không hợp lệ.
+A sync request may contain up to 500 events.,Mỗi lần đồng bộ nhận tối đa 500 sự kiện.
+The event ID has already been used for different data. Pending data is retained.,Mã sự kiện đã được sử dụng cho dữ liệu khác. Dữ liệu chờ vẫn được giữ lại.
+The UQQC Server Script name is already in use.,Tên Server Script UQQC đã được sử dụng.
+The UQQC Web Page name is already used by another route.,Tên Web Page UQQC đã được sử dụng cho route khác.
+This HTTP method is not supported.,Không hỗ trợ phương thức HTTP này.
+Sync all pending data and finish the current defective piece before changing devices.,Hãy đồng bộ hết dữ liệu và hoàn tất sản phẩm lỗi trước khi đổi thiết bị.
+Browser,Trình duyệt
+Unable to save data on this device. Check storage capacity and permissions.,Không thể lưu dữ liệu trên thiết bị. Hãy kiểm tra dung lượng và quyền lưu trữ.
+UQQC tablet APIs. Contracts and allowed roles are managed in Frappe Desk.,API tablet UQQC. Hợp đồng và role được quản lý trong Frappe Desk.
+Tablets use X-UQQC-Token. Frappe users may read with a role listed in this endpoint Allowed Roles.,Tablet dùng X-UQQC-Token. User Frappe có thể đọc bằng role trong Allowed Roles của API.
+Requires X-UQQC-Token. Device approval and revocation use the shared QC registry.,Yêu cầu X-UQQC-Token. Việc duyệt và thu hồi thiết bị dùng chung registry QC.
+Response data is returned inside message.,Dữ liệu được trả trong message.
+UQQC bootstrap data,Dữ liệu khởi tạo UQQC
+Pair a UQQC device,Ghép nối thiết bị UQQC
+Check a UQQC device,Kiểm tra thiết bị UQQC
+Sync UQQC events,Đồng bộ sự kiện UQQC
+UQQC daily scope snapshot,Tổng hợp UQQC theo lựa chọn trong ngày
+UQQC daily device detail snapshot,Chi tiết UQQC trong ngày của thiết bị
+Event UID,Mã sự kiện duy nhất
+Local Event ID,Mã sự kiện cục bộ
+Fingerprint,Dấu vân tay dữ liệu
+Device,Thiết bị
+Event Kind,Loại sự kiện
+Line,Chuyền
+Product,Mã hàng
+Color,Màu
+Size,Cỡ
+Market,Thị trường
+Defect,Lỗi
+Defect Position,Vị trí lỗi
+Defect Piece ID,Mã sản phẩm lỗi
+Schema Version,Phiên bản schema
+Quantity,Số lượng
+Occurred At,Thời gian phát sinh
+Synced At,Thời gian đồng bộ
+Server Date Key,Ngày tại site
+The UQQC module or DocType is already used by another application.,Module hoặc DocType UQQC đã được sử dụng bởi ứng dụng khác.
+Status,Trạng thái
+Token Hash,Băm token
+Operating System,Hệ điều hành
+pass,Đạt
+rework,Làm lại
+defect,Lỗi
+UQQC Inspection Event,Sự kiện kiểm tra UQQC
+Factory Management,Quản lý nhà máy
+Factory Device,Thiết bị nhà máy
+Factory Device Access,Quyền truy cập thiết bị
+Factory Device Client,Client thiết bị nhà máy
+Access Key,Khóa quyền truy cập
+Service Key,Mã dịch vụ
+Enabled,Đã bật
+Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.,Yêu cầu X-UQQC-Token. Thiết bị phải có quyền UQQC; token được lưu tại Factory Device Client.
+The sync transaction conflicted. Pending data is retained and will be retried automatically.,Giao dịch đồng bộ đang xung đột. Dữ liệu chờ được giữ lại và sẽ tự động thử lại.
+UQQC Defect Group,Nhóm lỗi UQQC
+UQQC Defect,Lỗi UQQC
+UQQC Defect Position Group,Nhóm vị trí lỗi UQQC
+UQQC Defect Position,Vị trí lỗi UQQC
+UQQC Catalog Manager,Người quản lý danh mục UQQC
+Code,Mã
+Title,Tên
+Defect Group,Nhóm lỗi
+Defect Position Group,Nhóm vị trí lỗi
+Position Group,Nhóm vị trí lỗi
+Severity,Mức độ nghiêm trọng
+Legacy ID,ID dữ liệu gốc
+Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position catalogs come from four independent UQQC DocTypes; production masters remain shared.,Tablet dùng X-UQQC-Token; User Frappe cần role trong Allowed Roles. Danh mục lỗi và vị trí lấy từ bốn DocType UQQC riêng; dữ liệu sản xuất tiếp tục dùng chung.
+Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.,Yêu cầu X-UQQC-Token. defectId và defectPositionId phải tham chiếu danh mục UQQC đang hoạt động; ID và cấu trúc payload tablet được giữ nguyên.

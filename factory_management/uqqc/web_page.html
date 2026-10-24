@@ -1,0 +1,105 @@
+<script type="application/json" id="uqqc-clientConfig">{"liveBootstrapEnabled":true,"liveBootstrapPollingSeconds":10,"syncWatchdogSeconds":5,"apiReachable":true}</script>
+<section id="uqqc-app" class="container-fluid py-4" aria-busy="true">
+<header class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+<div class="d-flex align-items-center mb-2"><img class="d-none d-md-inline-block mr-3" src="/assets/factory_management/images/qc-logo.png" width="120" height="30" data-i18n-alt="companyLogoAlt"><h3 id="uqqc-clientHeaderTitle" class="mb-0" data-i18n="appName"></h3></div>
+<div class="d-flex flex-wrap align-items-center mb-2">
+<button id="uqqc-scrollDirectionButton" type="button" class="btn btn-default btn-sm mr-2" data-i18n-aria="scrollDirection" data-i18n-title="scrollDirection"><svg class="icon icon-sm" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 9 2 12 5 15"></polyline><polyline points="9 5 12 2 15 5"></polyline><polyline points="15 19 12 22 9 19"></polyline><polyline points="19 9 22 12 19 15"></polyline><line x1="2" y1="12" x2="22" y2="12"></line><line x1="12" y1="2" x2="12" y2="22"></line></svg></button>
+<button id="uqqc-fullscreenButton" type="button" class="btn btn-default btn-sm mr-2" data-i18n-aria="fullscreen" data-i18n-title="fullscreen"><svg class="icon icon-sm uqqc-fullscreen-expand" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg><svg class="icon icon-sm uqqc-fullscreen-collapse d-none" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" x2="21" y1="10" y2="3"></line><line x1="3" x2="10" y1="21" y2="14"></line></svg></button>
+<span id="uqqc-networkStatus" class="btn btn-default btn-sm p-1 mr-2" role="status" aria-live="polite"><svg class="uqqc-network-online" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.9a10 10 0 0 1 14 0M8.5 16.4a6 6 0 0 1 7 0M12 20h.01"></path></svg><svg class="uqqc-network-offline d-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.9a10 10 0 0 1 14 0M8.5 16.4a6 6 0 0 1 7 0M12 20h.01M3 3l18 18"></path></svg></span>
+<button id="uqqc-deviceSettingsButton" type="button" class="btn btn-default btn-sm" data-i18n-aria="deviceSettings" data-i18n-title="deviceSettings"><svg class="icon icon-sm" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+</div></header>
+<div class="row align-items-start mb-3">
+  <div class="col"><div id="uqqc-quickFilters" class="d-flex flex-wrap align-items-center"></div></div>
+  <div class="col-auto"><button id="uqqc-defectArrangeToggle" type="button" class="btn btn-default btn-sm mb-2" data-i18n-aria="arrangeModeOff" aria-pressed="false"><span id="uqqc-defectArrangeToggleLabel" data-i18n="arrangeModeOff"></span></button></div>
+</div><div id="uqqc-inspectionPanel" class="row"><aside class="col-12 col-md-4 col-lg-3 col-2xl-2"><div class="frappe-card p-3 mb-3">
+<div class="form-group"><label class="control-label" for="uqqc-linePickerButton" data-i18n="line"></label><select id="uqqc-lineSelect" class="form-control d-none" tabindex="-1" aria-hidden="true"></select><button id="uqqc-linePickerButton" type="button" class="btn btn-default btn-block text-left" data-i18n-aria="selectLine" data-scope-picker="line" aria-haspopup="dialog"><span data-i18n="selectLine"></span></button></div>
+<div class="form-group"><label class="control-label" for="uqqc-productPickerButton" data-i18n="product"></label><select id="uqqc-productSelect" class="form-control d-none" tabindex="-1" aria-hidden="true" disabled></select><button id="uqqc-productPickerButton" type="button" class="btn btn-default btn-block text-left" data-i18n-aria="selectProduct" data-scope-picker="product" aria-haspopup="dialog" disabled><span data-i18n="selectProduct"></span></button></div>
+<div class="form-group"><label class="control-label" for="uqqc-marketPickerButton" data-i18n="market"></label><select id="uqqc-marketSelect" class="form-control d-none" tabindex="-1" aria-hidden="true" disabled></select><button id="uqqc-marketPickerButton" type="button" class="btn btn-default btn-block text-left" data-i18n-aria="selectMarket" data-scope-picker="market" aria-haspopup="dialog" disabled><span data-i18n="selectMarket"></span></button></div>
+<div class="uqqc-two-column-controls mb-3">
+<div class="form-group mb-0"><label class="control-label" for="uqqc-colorPickerButton" data-i18n="color"></label><select id="uqqc-colorSelect" class="form-control d-none" tabindex="-1" aria-hidden="true" disabled></select><button id="uqqc-colorPickerButton" type="button" class="btn btn-default btn-block text-left" data-i18n-aria="selectColor" data-scope-picker="color" aria-haspopup="dialog" disabled><span data-i18n="selectColor"></span></button></div>
+<div class="form-group mb-0"><label class="control-label" for="uqqc-sizePickerButton" data-i18n="size"></label><select id="uqqc-sizeSelect" class="form-control d-none" tabindex="-1" aria-hidden="true" disabled></select><button id="uqqc-sizePickerButton" type="button" class="btn btn-default btn-block text-left" data-i18n-aria="selectSize" data-scope-picker="size" aria-haspopup="dialog" disabled><span data-i18n="selectSize"></span></button></div>
+</div>
+<div class="uqqc-two-column-controls uqqc-action-buttons mb-3">
+<button id="uqqc-confirmPassButton" type="button" class="btn btn-primary btn-block py-2 h-100 d-flex align-items-center justify-content-center" data-i18n-aria="passAction" data-i18n-title="confirmPass" disabled><svg class="icon icon-sm flex-shrink-0 ml-0 mr-1" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg><span data-i18n="passAction"></span></button>
+<button id="uqqc-confirmReworkButton" type="button" class="btn btn-default btn-block py-2 h-100 d-flex align-items-center justify-content-center" data-i18n-aria="reworkAction" data-i18n-title="confirmRework" disabled><svg class="icon icon-sm flex-shrink-0 ml-0 mr-1" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path></svg><span data-i18n="reworkAction"></span></button>
+</div>
+<div class="row no-gutters" aria-live="polite">
+<div class="col-4 mb-3 px-1 d-flex flex-column"><span class="text-muted small d-block flex-grow-1" data-i18n="passTotal"></span><strong id="uqqc-passTotal" class="h4">0</strong></div>
+<div class="col-4 mb-3 px-1 d-flex flex-column"><span class="text-muted small d-block flex-grow-1" data-i18n="reworkTotal"></span><strong id="uqqc-reworkTotal" class="h4">0</strong></div>
+<div class="col-4 mb-3 px-1 d-flex flex-column"><span class="text-muted small d-block flex-grow-1" data-i18n="totalInspected"></span><strong id="uqqc-inspectionTotal" class="h4">0</strong></div>
+<div class="col-4 mb-3 px-1 d-flex flex-column"><span class="text-muted small d-block flex-grow-1" data-i18n="passRate"></span><strong id="uqqc-passRate" class="h4">0.0%</strong></div>
+<div class="col-4 mb-3 px-1 d-flex flex-column"><span class="text-muted small d-block flex-grow-1" data-i18n="defectPcs"></span><strong id="uqqc-defectPcs" class="h4">0</strong></div>
+<div class="col-4 mb-3 px-1 d-flex flex-column"><span class="text-muted small d-block flex-grow-1" data-i18n="defectNo"></span><strong id="uqqc-defectNo" class="h4">0</strong></div>
+</div>
+<button id="uqqc-openDetailButton" type="button" class="btn btn-default btn-block" data-i18n-aria="detailButton" aria-haspopup="dialog"><span data-i18n="detailButton"></span></button>
+<p id="uqqc-scopeHint" class="text-muted small mt-3 mb-0"></p></div></aside><main class="col-12 col-md-8 col-lg-9 col-2xl-10"><div id="uqqc-defectGrid" class="row" aria-live="polite"></div></main></div></section>
+
+<section id="uqqc-detailPanel" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+    <header class="modal-header"><h4 class="modal-title"><span id="uqqc-detailPanelTitle" data-i18n="detailTitle"></span> <span id="uqqc-detailMachineName" class="text-muted"></span></h4><button id="uqqc-detailCloseButton" type="button" class="btn btn-modal-close" data-i18n-aria="close"><svg class="icon icon-sm" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></header>
+    <div class="modal-body"><div class="row"><div class="col-sm-6 form-group"><label class="control-label" for="uqqc-detailProductFilter" data-i18n="product"></label><select id="uqqc-detailProductFilter" class="form-control" data-i18n-aria="detailFilterProduct"></select></div><div class="col-sm-6 form-group"><label class="control-label" for="uqqc-detailLineFilter" data-i18n="line"></label><select id="uqqc-detailLineFilter" class="form-control" data-i18n-aria="detailFilterLine"></select></div></div><div class="table-responsive"><div class="mb-2"><span id="uqqc-detailStatus" role="status" hidden></span><button id="uqqc-detailRetryButton" type="button" class="btn btn-default btn-sm" data-i18n-aria="detailRetry" hidden><span data-i18n="detailRetry"></span></button></div><table class="table table-bordered"><thead><tr><th scope="col" data-i18n="product"></th><th scope="col" data-i18n="line"></th><th scope="col" data-i18n="detailInspected"></th><th scope="col" data-i18n="detailPassQuantity"></th><th scope="col" data-i18n="detailReworkQuantity"></th><th scope="col" data-i18n="detailDefectQuantity"></th><th scope="col" data-i18n="detailRate"></th></tr></thead><tbody id="uqqc-detailTableBody"></tbody><tfoot id="uqqc-detailTableFoot"></tfoot></table></div></div>
+  </div></div>
+</section>
+
+
+<section id="uqqc-scopePickerPanel" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+    <header class="modal-header"><h4 class="modal-title"><span id="uqqc-scopePickerTitle"></span></h4><button id="uqqc-scopePickerCloseButton" type="button" class="btn btn-modal-close" data-i18n-aria="close"><svg class="icon icon-sm" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></header>
+    <div class="modal-body"><div id="uqqc-scopePickerFilters" class="d-flex flex-wrap mb-2" hidden></div><hr id="uqqc-scopePickerDivider" class="my-3" hidden><div id="uqqc-scopePickerGrid" class="row no-gutters"></div></div>
+  </div></div>
+</section>
+
+
+<section id="uqqc-defectPositionPanel" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+    <header class="modal-header"><h4 class="modal-title"><span id="uqqc-defectPositionTitle" data-i18n="chooseDefectPositionTitle"></span></h4><button id="uqqc-defectPositionCloseButton" type="button" class="btn btn-modal-close" data-i18n-aria="close"><svg class="icon icon-sm" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></header>
+    <div class="modal-body"><div id="uqqc-defectPositionFilters" class="d-flex flex-nowrap overflow-auto mb-2"></div><hr class="my-3"><div id="uqqc-defectPositionGrid" class="row no-gutters"></div></div>
+  </div></div>
+</section>
+
+
+<section id="uqqc-moreDefectPanel" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+    <header class="modal-header"><h4 class="modal-title"><span id="uqqc-moreDefectTitle" data-i18n="inputMoreDefectTitle"></span></h4></header>
+    <div class="modal-body"><div class="row justify-content-center"><div class="col-6 col-md-4 px-2"><button id="uqqc-moreDefectNoButton" type="button" class="btn btn-danger btn-block" data-i18n-aria="inputMoreDefectNo"><span data-i18n="inputMoreDefectNo"></span></button></div><div class="col-6 col-md-4 px-2"><button id="uqqc-moreDefectYesButton" type="button" class="btn btn-primary btn-block" data-i18n-aria="inputMoreDefectYes"><span data-i18n="inputMoreDefectYes"></span></button></div></div></div>
+  </div></div>
+</section>
+
+
+<section id="uqqc-settingsPanel" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+    <header class="modal-header"><h4 class="modal-title"><span id="uqqc-settingsPanelTitle" data-i18n="statusAndSync"></span></h4><button id="uqqc-settingsCloseButton" type="button" class="btn btn-modal-close" data-i18n-aria="close"><svg class="icon icon-sm" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></header>
+    <div class="modal-body"><dl class="row"><dt class="col-6" data-i18n="pendingSync"></dt><dd id="uqqc-pendingCount" class="col-6">0</dd><dt class="col-6" data-i18n="lastSync"></dt><dd id="uqqc-lastSyncTime" class="col-6">--:--</dd><dt class="col-6" data-i18n="device"></dt><dd class="col-6"><span id="uqqc-settingsDeviceBadge" class="indicator-pill gray" data-i18n="unregistered"></span><span id="uqqc-settingsDeviceCompany" class="text-muted d-block"></span></dd></dl><div class="d-flex flex-wrap mb-3"><button id="uqqc-syncNowButton" type="button" class="btn btn-primary mr-2 mb-2" data-i18n-aria="syncNow" ><span data-i18n="syncNow"></span></button><button id="uqqc-openDeviceSettingsButton" type="button" class="btn btn-default mb-2" data-i18n-aria="deviceSettings" ><span data-i18n="deviceSettings"></span></button></div><h5 data-i18n="syncErrorsTitle"></h5><pre id="uqqc-syncErrors" class="text-muted" data-i18n="noSyncErrors"></pre></div>
+  </div></div>
+</section>
+
+
+<section id="uqqc-devicePanel" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="uqqc-devicePanelTitle">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+    <header class="modal-header">
+      <h4 class="modal-title" id="uqqc-devicePanelTitle" data-i18n="deviceSettings"></h4>
+      <button id="uqqc-deviceCloseButton" type="button" class="btn btn-modal-close" data-i18n-aria="close"><svg class="icon icon-sm" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+    </header>
+    <div class="modal-body">
+      <p class="text-muted" data-i18n="deviceInstructions"></p>
+      <div class="form-group">
+        <label for="uqqc-deviceNameInput" class="control-label" data-i18n="deviceName"></label>
+        <input id="uqqc-deviceNameInput" class="form-control" readonly>
+      </div>
+      <div class="form-group">
+        <label for="uqqc-manualDeviceIdInput" class="control-label" data-i18n="manualDeviceId"></label>
+        <input id="uqqc-manualDeviceIdInput" class="form-control" data-i18n-placeholder="deviceIdPlaceholder" autocomplete="off" autocapitalize="off">
+      </div>
+      <video id="uqqc-qrScannerVideo" class="w-100" playsinline muted hidden></video>
+      <p id="uqqc-qrScannerStatus" class="text-muted small" data-i18n="cameraIdle" hidden></p>
+      <div id="uqqc-deviceMessage" class="text-muted mb-3" aria-live="polite"></div>
+      <div class="row mb-3">
+        <div class="col-6"><button id="uqqc-scanQrButton" type="button" class="btn btn-default btn-block h-100" data-i18n="scanQr"></button></div>
+        <div class="col-6"><button id="uqqc-activateDeviceButton" type="button" class="btn btn-primary btn-block h-100" data-i18n="activateSync"></button></div>
+      </div>
+      <button id="uqqc-clearClientCacheButton" type="button" class="btn btn-default btn-block" data-i18n="clearCache"></button>
+    </div>
+  </div></div>
+</section>
+
+<div id="uqqc-toast" class="alert" role="status" aria-live="polite" hidden></div>

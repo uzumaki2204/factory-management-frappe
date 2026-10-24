@@ -1,0 +1,570 @@
+/* Brand accents for the UQQC route only; the rest of the page uses Desk styles. */
+:root {
+  --primary: #195780;
+  --primary-color: #195780;
+  --brand-color: #195780;
+  --btn-primary: #195780;
+}
+
+.uqqc-two-column-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 4px;
+}
+
+.uqqc-two-column-controls > * {
+  min-width: 0;
+}
+
+#uqqc-app .btn-primary,
+#uqqc-app .btn-primary:focus,
+#uqqc-app .btn-primary.focus,
+#uqqc-devicePanel .btn-primary,
+#uqqc-settingsPanel .btn-primary,
+#uqqc-moreDefectPanel .btn-primary {
+  background-color: #195780;
+  border-color: #195780;
+}
+
+#uqqc-app .btn-primary:hover,
+#uqqc-app .btn-primary:not(:disabled):not(.disabled).active,
+#uqqc-app .btn-primary:not(:disabled):not(.disabled):active,
+#uqqc-app .show > .btn-primary.dropdown-toggle,
+#uqqc-devicePanel .btn-primary:hover,
+#uqqc-settingsPanel .btn-primary:hover,
+#uqqc-moreDefectPanel .btn-primary:hover {
+  background-color: #14496b;
+  border-color: #14496b;
+}
+
+#uqqc-defectGrid .uqqc-defect-name,
+#uqqc-defectGrid .uqqc-defect-name:hover,
+#uqqc-defectGrid .uqqc-defect-name:focus,
+#uqqc-defectGrid .uqqc-defect-name:active,
+#uqqc-defectGrid .uqqc-defect-name:disabled {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: inherit;
+  text-align: left;
+}
+
+#uqqc-app .btn-default:focus,
+#uqqc-app .btn-default.focus,
+#uqqc-app .btn-default:focus-visible,
+#uqqc-app .uqqc-filter-chip.active,
+#uqqc-scopePickerPanel .btn-default:focus,
+#uqqc-scopePickerPanel .btn-default.focus,
+#uqqc-scopePickerPanel .btn-default:focus-visible,
+#uqqc-scopePickerPanel .uqqc-scope-picker-filter.active,
+#uqqc-scopePickerPanel .uqqc-scope-picker-option.active,
+#uqqc-defectPositionPanel .btn-default:focus,
+#uqqc-defectPositionPanel .btn-default.focus,
+#uqqc-defectPositionPanel .btn-default:focus-visible,
+#uqqc-defectPositionPanel .uqqc-scope-picker-filter.active,
+#uqqc-defectPositionPanel .uqqc-scope-picker-option.active,
+#uqqc-detailPanel .btn-default:focus,
+#uqqc-detailPanel .btn-default.focus,
+#uqqc-settingsPanel .btn-default:focus,
+#uqqc-settingsPanel .btn-default.focus,
+#uqqc-moreDefectPanel .btn-default:focus,
+#uqqc-moreDefectPanel .btn-default.focus {
+  background-color: #195780;
+  border-color: #195780;
+  color: #fff;
+  box-shadow: 0 0 0 0.2rem rgba(25, 87, 128, 0.2);
+}
+
+#uqqc-app .uqqc-favorite-button,
+#uqqc-app .uqqc-favorite-button:hover,
+#uqqc-app .uqqc-favorite-button:focus,
+#uqqc-app .uqqc-favorite-button:focus-visible,
+#uqqc-app .uqqc-favorite-button:active,
+#uqqc-defectPositionPanel .uqqc-position-favorite-button,
+#uqqc-defectPositionPanel .uqqc-position-favorite-button:hover,
+#uqqc-defectPositionPanel .uqqc-position-favorite-button:focus,
+#uqqc-defectPositionPanel .uqqc-position-favorite-button:focus-visible,
+#uqqc-defectPositionPanel .uqqc-position-favorite-button:active {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  color: inherit;
+  line-height: 1;
+}
+
+#uqqc-app .uqqc-favorite-button.active,
+#uqqc-defectPositionPanel .uqqc-position-favorite-button.active {
+  color: #f1c40f !important;
+}
+
+#uqqc-app .uqqc-favorite-button:focus-visible,
+#uqqc-defectPositionPanel .uqqc-position-favorite-button:focus-visible {
+  outline: 2px solid #195780;
+  outline-offset: 1px;
+}
+
+#uqqc-app .form-control:focus {
+  background-color: #195780;
+  border-color: #195780;
+  color: #fff;
+  box-shadow: 0 0 0 0.2rem rgba(25, 87, 128, 0.2);
+}
+
+#uqqc-app .uqqc-action-buttons {
+  align-items: stretch;
+}
+
+#uqqc-app #uqqc-confirmPassButton,
+#uqqc-app #uqqc-confirmReworkButton {
+  align-self: stretch;
+  box-sizing: border-box;
+  height: 44px;
+  margin: 0 !important;
+}
+
+#uqqc-defectPositionPanel .uqqc-defect-name,
+#uqqc-defectPositionPanel .uqqc-defect-name:hover,
+#uqqc-defectPositionPanel .uqqc-defect-name:focus,
+#uqqc-defectPositionPanel .uqqc-defect-name:active,
+#uqqc-defectPositionPanel .uqqc-defect-name:disabled {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: inherit;
+}
+
+#uqqc-defectPositionGrid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+#uqqc-defectPositionGrid > .uqqc-position-card {
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+
+#uqqc-defectPositionGrid .frappe-card {
+  position: relative;
+  min-height: 84px;
+  padding: 4px !important;
+}
+
+#uqqc-defectPositionGrid .uqqc-position-card-tools {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+}
+
+#uqqc-defectPositionGrid .uqqc-position-favorite-button {
+  margin: 0;
+}
+
+#uqqc-defectPositionGrid .uqqc-defect-name {
+  width: 100%;
+  min-height: 64px;
+  margin: 0;
+  padding: 2px 20px 2px 2px !important;
+  font-weight: 700;
+  text-align: center;
+  white-space: normal;
+}
+
+#uqqc-scopePickerPanel .uqqc-scope-picker-option,
+#uqqc-scopePickerPanel .uqqc-scope-picker-filter {
+  font-weight: 700;
+}
+
+#uqqc-app .uqqc-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  margin: 0 0 12px;
+  border: 1px solid var(--border-color, #d1d8dd);
+  border-radius: 4px;
+}
+
+#uqqc-app .uqqc-metrics-grid > div {
+  box-sizing: border-box;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  flex: none;
+  margin: 0;
+  margin-bottom: 0 !important;
+  padding: 8px;
+  border-right: 1px solid var(--border-color, #d1d8dd);
+  border-bottom: 1px solid var(--border-color, #d1d8dd);
+}
+
+#uqqc-app .uqqc-metrics-grid > div > strong {
+  margin-bottom: 0 !important;
+}
+
+#uqqc-app .uqqc-metrics-grid > div:nth-child(3n) {
+  border-right: 0;
+}
+
+#uqqc-app .uqqc-metrics-grid > div:nth-last-child(-n + 3) {
+  border-bottom: 0;
+}
+
+#uqqc-app #uqqc-passTotal,
+#uqqc-app #uqqc-passRate {
+  color: #198754;
+  font-variant-numeric: tabular-nums;
+}
+
+#uqqc-app #uqqc-reworkTotal,
+#uqqc-app #uqqc-defectPcs {
+  color: #e67e22;
+  font-variant-numeric: tabular-nums;
+}
+
+#uqqc-app #uqqc-inspectionTotal,
+#uqqc-app #uqqc-defectNo {
+  color: #195780;
+  font-variant-numeric: tabular-nums;
+}
+
+#uqqc-app #uqqc-confirmReworkButton,
+#uqqc-app #uqqc-confirmReworkButton:focus,
+#uqqc-app #uqqc-confirmReworkButton.focus,
+#uqqc-app #uqqc-confirmReworkButton:focus-visible {
+  background-color: #e67e22;
+  border-color: #e67e22;
+  color: #fff;
+}
+
+#uqqc-app #uqqc-confirmReworkButton:hover,
+#uqqc-app #uqqc-confirmReworkButton:not(:disabled):not(.disabled).active,
+#uqqc-app #uqqc-confirmReworkButton:not(:disabled):not(.disabled):active {
+  background-color: #d35400;
+  border-color: #d35400;
+  color: #fff;
+}
+
+#uqqc-app > header {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto minmax(120px, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+#uqqc-app {
+  padding-top: 0 !important;
+}
+
+#uqqc-app > header.mb-3 {
+  margin-bottom: 8px !important;
+}
+
+#uqqc-app > header > div:first-child {
+  display: contents;
+}
+
+#uqqc-app > header > div:first-child > img {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0 !important;
+}
+
+#uqqc-app > header > div:first-child > #uqqc-clientHeaderTitle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  width: max-content;
+  max-width: calc(100% - 200px);
+  margin: 0 !important;
+  color: #d62828;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+
+#uqqc-app > header > div:nth-child(2) {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  margin: 0 !important;
+  flex-wrap: nowrap !important;
+}
+
+@media (max-width: 767px) {
+  #uqqc-app > header {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+
+  #uqqc-app > header > div:first-child > #uqqc-clientHeaderTitle {
+    grid-column: 2;
+    justify-self: center;
+  }
+
+  #uqqc-app > header > div:nth-child(2) {
+    grid-column: 3;
+  }
+}
+
+#uqqc-app > .row.align-items-start.mb-3 {
+  margin-bottom: 4px !important;
+}
+
+#uqqc-inspectionPanel > aside {
+  padding-right: 4px !important;
+}
+
+#uqqc-inspectionPanel > main {
+  padding-left: 4px !important;
+}
+
+#uqqc-defectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 7px 2px;
+  margin: 0;
+}
+
+#uqqc-defectGrid > .uqqc-defect-card {
+  box-sizing: border-box;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  margin-bottom: 0 !important;
+}
+
+#uqqc-defectGrid > .col-12 {
+  grid-column: 1 / -1;
+}
+
+#uqqc-defectGrid .frappe-card {
+  min-width: 0;
+  padding: 4px !important;
+}
+
+#uqqc-defectGrid .uqqc-defect-code {
+  font-weight: 700;
+}
+
+#uqqc-app > .row.align-items-start {
+  flex-wrap: nowrap;
+}
+
+#uqqc-app > .row.align-items-start > .col {
+  min-width: 0;
+}
+
+#uqqc-quickFilters {
+  display: flex;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+#uqqc-quickFilters > .uqqc-filter-chip {
+  flex: 0 0 auto;
+  margin-bottom: 0 !important;
+}
+
+#uqqc-scopePickerFilters:not([hidden]) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+
+#uqqc-scopePickerFilters > .uqqc-scope-picker-filter {
+  flex: 0 0 auto;
+  margin: 0 !important;
+}
+
+#uqqc-scopePickerGrid > div {
+  margin-bottom: 4px !important;
+}
+
+#uqqc-scopePickerGrid .uqqc-scope-picker-option {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+#uqqc-inspectionPanel .form-group:not(.mb-0),
+#uqqc-inspectionPanel .uqqc-two-column-controls,
+#uqqc-inspectionPanel .uqqc-action-buttons {
+  margin-bottom: 8px !important;
+}
+
+#uqqc-inspectionPanel .form-group > .control-label {
+  display: block;
+  margin-bottom: 2px !important;
+}
+
+#uqqc-defectGrid {
+  height: 500px;
+  grid-auto-rows: 96px;
+  row-gap: 5px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+#uqqc-defectGrid.uqqc-scroll-horizontal {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-template-rows: repeat(5, 96px);
+  grid-auto-columns: 180px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+#uqqc-defectGrid > .uqqc-defect-card {
+  height: 96px;
+  margin-bottom: 0 !important;
+}
+
+#uqqc-defectGrid .uqqc-defect-name {
+  margin-top: 2px !important;
+  padding: 0 !important;
+  font-weight: 700;
+}
+
+#uqqc-defectGrid .badge-secondary {
+  background-color: #195780 !important;
+  color: #fff !important;
+}
+
+#uqqc-inspectionPanel {
+  display: grid !important;
+  grid-template-columns: clamp(220px, 24vw, 340px) minmax(0, 1fr);
+  column-gap: 8px;
+  margin-right: 0;
+  margin-left: 0;
+}
+
+#uqqc-inspectionPanel > aside,
+#uqqc-inspectionPanel > main {
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+#uqqc-inspectionPanel > aside > .frappe-card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#uqqc-defectGrid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, clamp(150px, 16vw, 195px)), 1fr));
+  column-gap: clamp(2px, 0.35vw, 6px);
+}
+
+@media (max-width: 767px) {
+  #uqqc-inspectionPanel {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 8px;
+  }
+
+  #uqqc-defectGrid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  }
+}
+
+#uqqc-defectGrid {
+  --uqqc-defect-row-gap: 5px;
+  --uqqc-defect-card-height: clamp(88px, min(14vh, 9vw), 112px);
+  --uqqc-defect-card-height: clamp(88px, min(14dvh, 9vw), 112px);
+  height: calc(5 * var(--uqqc-defect-card-height) + 4 * var(--uqqc-defect-row-gap));
+  grid-auto-rows: var(--uqqc-defect-card-height);
+  row-gap: var(--uqqc-defect-row-gap);
+}
+
+#uqqc-defectGrid > .uqqc-defect-card {
+  height: var(--uqqc-defect-card-height);
+}
+
+#uqqc-defectGrid.uqqc-scroll-horizontal {
+  grid-template-rows: repeat(5, var(--uqqc-defect-card-height));
+  grid-auto-columns: clamp(160px, 18vw, 220px);
+}
+
+@media (min-width: 768px) {
+  #uqqc-app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding-bottom: 0 !important;
+    overflow: hidden;
+  }
+
+  #uqqc-app > header,
+  #uqqc-app > .row.align-items-start.mb-3 {
+    flex: 0 0 auto;
+  }
+
+  #uqqc-app > #uqqc-inspectionPanel {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  #uqqc-inspectionPanel > main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  #uqqc-defectGrid {
+    --uqqc-defect-card-height: max(88px, calc((100% - 20px) / 5));
+    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-auto-rows: var(--uqqc-defect-card-height);
+  }
+
+  #uqqc-defectGrid > .uqqc-defect-card {
+    height: 100%;
+  }
+
+  #uqqc-defectGrid.uqqc-scroll-horizontal {
+    grid-template-rows: repeat(5, var(--uqqc-defect-card-height));
+  }
+}

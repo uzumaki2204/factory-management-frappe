@@ -1,0 +1,157 @@
+QC_REPORT_FORBIDDEN,This user does not have a role allowed for this QC report API
+QC_REPORT_SCRIPT_MIGRATION_REQUIRED,The customized QC Inspection Summary Server Script requires a manual access guard update
+QC_REPORT_DATES_REQUIRED,Both start and end dates are required
+QC_REPORT_INVALID_DATE,Invalid report date
+QC_REPORT_RANGE_TOO_LONG,Report date range cannot exceed 7 days
+QC_REPORT_INVALID_QUANTITY,Invalid summary quantity
+QC_WEB_PAGE_NAME_CONFLICT,The QC page name is already used by another Web Page
+API Documentation,API Documentation
+API Management,API Management
+API Docs,API Docs
+Open Desk,Open Desk
+Company Name,Company Name
+Company Code,Company Code
+Short Name,Short Name
+Tax Code,Tax Code
+Company Logo,Company Logo
+Department Code,Department Code
+Department Name,Department Name
+Market Code,Market Code
+Market Name,Market Name
+Product Code,Product Code
+Product Name,Product Name
+Season,Season
+Color Code,Color Code
+Color Name,Color Name
+Size Code,Size Code
+Size Name,Size Name
+Sort Order,Sort Order
+Service,Service
+Manage services,Manage services
+Manage endpoints,Manage endpoints
+Download OpenAPI,Download OpenAPI
+Unable to load API documentation,Unable to load API documentation
+Loading API documentation,Loading API documentation
+No API services are available,No API services are available
+Invalid API documentation JSON in {0},Invalid API documentation JSON in {0}
+Invalid API documentation route in {0},Invalid API documentation route in {0}
+Duplicate API documentation route in {0},Duplicate API documentation route in {0}
+API documentation service was not found,API documentation service was not found
+Invalid API documentation service key,Invalid API documentation service key
+Invalid API documentation URL,Invalid API documentation URL
+Service Key,Service Key
+Service Title,Service Title
+Version,Version
+Active,Active
+Operation ID,Operation ID
+Path,Path
+HTTP Method,HTTP Method
+Summary,Summary
+Description,Description
+Tags JSON,Tags JSON
+Parameters JSON,Parameters JSON
+Request Body JSON,Request Body JSON
+Responses JSON,Responses JSON
+Security JSON,Security JSON
+Allowed Roles,Allowed Roles
+Role,Role
+QC Report Reader,QC Report Reader
+Duplicate allowed API role in {0},Duplicate allowed API role in {0}
+Base URL,Base URL
+OpenAPI URL,OpenAPI URL
+QC API,QC API
+Quality Control APIs. Contracts are editable in Frappe Desk.,Quality Control APIs. Contracts are editable in Frappe Desk.
+QC Reports,QC Reports
+QC inspection summary,QC inspection summary
+"Groups QC Inspection Event quantity_delta by date, device, company, factory, line, line group, customer, product, color, size and defect. Maximum date range: 7 days.","Groups QC Inspection Event quantity_delta by date, device, company, factory, line, line group, customer, product, color, size and defect. Maximum date range: 7 days."
+Grouped inspection events,Grouped inspection events
+Missing or invalid date range or quantity,Missing or invalid date range or quantity
+Role allowed for this QC report API required,Role allowed for this QC report API required
+QC report rows,QC report rows
+QC report summary,QC report summary
+QC report detail,QC report detail
+"Groups QC Inspection Event quantities by local date, device, product, line, event type and defect. Maximum date range: 7 days.","Groups QC Inspection Event quantities by local date, device, product, line, event type and defect. Maximum date range: 7 days."
+Returns QC Inspection Event rows. Maximum date range: 7 days.,Returns QC Inspection Event rows. Maximum date range: 7 days.
+UTC date of occurred_at,UTC date of occurred_at
+Frappe Desk session,Frappe Desk session
+token api_key:api_secret,token api_key:api_secret
+You do not have access to this UQQC API.,You do not have access to this UQQC API.
+The registered device was not found.,The registered device was not found.
+"The device must be approved, active and assigned to a company.","The device must be approved, active and assigned to a company."
+The device token is invalid or has been revoked.,The device token is invalid or has been revoked.
+Device ID must be a valid UUID.,Device ID must be a valid UUID.
+The request data is invalid.,The request data is invalid.
+"Select an active line, product, color, size and market.","Select an active line, product, color, size and market."
+The line does not belong to the device company.,The line does not belong to the device company.
+The product variant does not exist or is inactive.,The product variant does not exist or is inactive.
+An event ID must contain between 1 and 100 characters.,An event ID must contain between 1 and 100 characters.
+The event timestamp must be valid and include a time zone.,The event timestamp must be valid and include a time zone.
+The defect or its group does not exist or is inactive.,The defect or its group does not exist or is inactive.
+The defect position or piece ID is invalid.,The defect position or piece ID is invalid.
+A sync request may contain up to 500 events.,A sync request may contain up to 500 events.
+The event ID has already been used for different data. Pending data is retained.,The event ID has already been used for different data. Pending data is retained.
+The UQQC Server Script name is already in use.,The UQQC Server Script name is already in use.
+The UQQC Web Page name is already used by another route.,The UQQC Web Page name is already used by another route.
+This HTTP method is not supported.,This HTTP method is not supported.
+Sync all pending data and finish the current defective piece before changing devices.,Sync all pending data and finish the current defective piece before changing devices.
+Browser,Browser
+Unable to save data on this device. Check storage capacity and permissions.,Unable to save data on this device. Check storage capacity and permissions.
+UQQC tablet APIs. Contracts and allowed roles are managed in Frappe Desk.,UQQC tablet APIs. Contracts and allowed roles are managed in Frappe Desk.
+Tablets use X-UQQC-Token. Frappe users may read with a role listed in this endpoint Allowed Roles.,Tablets use X-UQQC-Token. Frappe users may read with a role listed in this endpoint Allowed Roles.
+Requires X-UQQC-Token. Device approval and revocation use the shared QC registry.,Requires X-UQQC-Token. Device approval and revocation use the shared QC registry.
+Response data is returned inside message.,Response data is returned inside message.
+UQQC bootstrap data,UQQC bootstrap data
+Pair a UQQC device,Pair a UQQC device
+Check a UQQC device,Check a UQQC device
+Sync UQQC events,Sync UQQC events
+UQQC daily scope snapshot,UQQC daily scope snapshot
+UQQC daily device detail snapshot,UQQC daily device detail snapshot
+Event UID,Event UID
+Local Event ID,Local Event ID
+Fingerprint,Fingerprint
+Device,Device
+Event Kind,Event Kind
+Line,Line
+Product,Product
+Color,Color
+Size,Size
+Market,Market
+Defect,Defect
+Defect Position,Defect Position
+Defect Piece ID,Defect Piece ID
+Schema Version,Schema Version
+Quantity,Quantity
+Occurred At,Occurred At
+Synced At,Synced At
+Server Date Key,Server Date Key
+The UQQC module or DocType is already used by another application.,The UQQC module or DocType is already used by another application.
+Status,Status
+Token Hash,Token Hash
+Operating System,Operating System
+pass,pass
+rework,rework
+defect,defect
+UQQC Inspection Event,UQQC Inspection Event
+Factory Management,Factory Management
+Factory Device,Factory Device
+Factory Device Access,Factory Device Access
+Factory Device Client,Factory Device Client
+Access Key,Access Key
+Service Key,Service Key
+Enabled,Enabled
+Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.,Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.
+The sync transaction conflicted. Pending data is retained and will be retried automatically.,The sync transaction conflicted. Pending data is retained and will be retried automatically.
+UQQC Defect Group,UQQC Defect Group
+UQQC Defect,UQQC Defect
+UQQC Defect Position Group,UQQC Defect Position Group
+UQQC Defect Position,UQQC Defect Position
+UQQC Catalog Manager,UQQC Catalog Manager
+Code,Code
+Title,Title
+Defect Group,Defect Group
+Defect Position Group,Defect Position Group
+Position Group,Position Group
+Severity,Severity
+Legacy ID,Legacy ID
+Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position catalogs come from four independent UQQC DocTypes; production masters remain shared.,Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position catalogs come from four independent UQQC DocTypes; production masters remain shared.
+Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.,Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.

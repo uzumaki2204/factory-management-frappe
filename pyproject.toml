@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "factory-management"
+version = "0.1.0"
+description = "Shared factory devices and QC tablet APIs for Frappe"
+requires-python = ">=3.14"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["factory_management*"]
+
+[tool.setuptools.package-data]
+factory_management = [
+    "*.txt",
+    "*.json",
+    "www/*.html",
+    "www/*.py",
+    "www/*.js",
+    "server_scripts/*.py",
+    "public/*.json",
+    "public/js/*.js",
+    "public/js/*.json",
+    "public/css/*.css",
+    "public/images/*",
+    "public/vendor/swagger-ui/*",
+    "web_pages/*.html",
+    "templates/*.html",
+    "templates/includes/*.html",
+    "translations/*.csv",
+    "api_management/page/qc_api_docs/*.js",
+    "uqqc/*.html",
+    "uqqc/server_scripts/*.py",
+    "public/uqqc/*",
+]

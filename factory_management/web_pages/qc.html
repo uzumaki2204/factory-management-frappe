@@ -1,0 +1,214 @@
+<div id="qc-app" class="container-fluid my-3">
+    <header class="row align-items-center mb-2">
+        <div class="col-3 col-md-4"><img class="d-none d-md-inline-block" src="/assets/factory_management/images/qc-logo.png" width="120" height="30" alt="Kim Thanh Group"></div>
+        <h1 id="page-title" class="col-4 h4 text-center mb-0" data-i18n="ui.title"></h1>
+        <div class="col-5 col-md-4 d-flex justify-content-end align-items-center gap-1">
+            <button id="scroll-direction" type="button" class="btn btn-default btn-sm p-1" aria-pressed="false" data-i18n-aria="ui.scroll_horizontal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18M15 3v18"></path></svg>
+            </button>
+            <button id="fullscreen" type="button" class="btn btn-default btn-sm p-1" aria-pressed="false" data-i18n-aria="ui.enter_fullscreen">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+            </button>
+            <span id="network" class="btn btn-default btn-sm p-1" role="status" aria-live="polite">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.9a10 10 0 0 1 14 0M8.5 16.4a6 6 0 0 1 7 0M12 20h.01"></path></svg>
+            </span>
+            <button id="open-settings" type="button" class="btn btn-default btn-sm p-1" data-i18n-aria="ui.settings">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.3a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.3a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.3a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.3a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+        </div>
+    </header>
+
+    <dialog id="device-dialog" class="p-0 border-0 bg-transparent" aria-labelledby="device-heading">
+        <div class="modal-dialog m-0">
+            <div class="modal-content border-0 shadow-sm">
+                <div class="modal-header">
+                    <h2 id="device-heading" class="modal-title h5" data-i18n="ui.device"></h2>
+                    <button id="close-device" type="button" class="btn btn-lg btn-default" data-i18n="ui.close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="device-id" data-i18n="ui.device_id"></label>
+                        <input id="device-id" class="form-control" autocomplete="off" spellcheck="false">
+                    </div>
+                    <div class="form-group">
+                        <label for="device-name" data-i18n="ui.device_name"></label>
+                        <input id="device-name" class="form-control" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="device-status" data-i18n="ui.status"></label>
+                        <output id="device-status" class="form-control"></output>
+                    </div>
+                    <p id="pairing-status" class="text-muted" role="status" aria-live="polite"></p>
+                    <video id="camera" class="w-100 mb-3" playsinline muted hidden></video>
+                </div>
+                <div class="modal-footer">
+                    <div class="row w-100">
+                        <div class="col-6 mb-2 d-flex">
+                            <button id="register" type="button" class="btn btn-primary w-100 py-2 px-1" data-i18n="ui.register"></button>
+                        </div>
+                        <div class="col-6 mb-2 d-flex">
+                            <button id="check" type="button" class="btn btn-default w-100 py-2 px-1" data-i18n="ui.check"></button>
+                        </div>
+                        <div class="col-6 d-flex">
+                            <button id="scan" type="button" class="btn btn-default w-100 py-2 px-1" data-i18n="ui.scan"></button>
+                        </div>
+                        <div id="clear-device-cache-panel" class="col-6" hidden>
+                            <div class="d-flex h-100">
+                                <button id="clear-device-cache" type="button" class="btn btn-default text-danger w-100 py-2 px-1" data-i18n="ui.clear_device_cache"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <section id="entry-panel" aria-label="QC" hidden>
+        <div class="frappe-card p-2 mb-2">
+            <div class="d-flex align-items-center gap-1">
+                <div class="flex-grow-1 overflow-auto">
+                    <div id="quick-filters" class="d-flex flex-nowrap gap-1" role="group"></div>
+                </div>
+                <button id="arrange-toggle" type="button" class="btn btn-sm btn-default text-nowrap flex-shrink-0" aria-pressed="false"><span aria-hidden="true">&#10303;</span> <span id="arrange-label" data-i18n="ui.arrange_off"></span></button>
+            </div>
+        </div>
+        <div class="row">
+            <aside class="col-12 col-lg-2 mb-2">
+                <div class="frappe-card p-2">
+                    <div class="form-group mb-2">
+                        <label for="product-picker" data-i18n="ui.product"></label>
+                        <button id="product-picker" type="button" class="btn btn-default w-100 text-left" data-i18n="ui.choose_product"></button>
+                        <select id="product" hidden aria-hidden="true"></select>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="line-picker" data-i18n="ui.line"></label>
+                        <button id="line-picker" type="button" class="btn btn-default w-100 text-left" data-i18n="ui.choose_line"></button>
+                        <select id="line" hidden aria-hidden="true"></select>
+                    </div>
+                    <details id="variant-details" class="mb-2" hidden>
+                        <summary data-i18n="ui.variant"></summary>
+                        <div class="form-group mt-2"><label for="color" data-i18n="ui.color"></label><select id="color" class="form-control"></select></div>
+                        <div class="form-group"><label for="size" data-i18n="ui.size"></label><select id="size" class="form-control"></select></div>
+                    </details>
+                    <div class="form-group mb-2">
+                        <label for="quantity" data-i18n="ui.quick_quantity"></label>
+                        <div class="row g-1">
+                            <div id="quantity-presets" class="col-8 d-flex" role="group"></div>
+                            <div class="col-4">
+                                <input id="quantity" class="form-control h-100" type="number" inputmode="numeric" min="1" step="1" value="1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-1 mb-2">
+                        <div class="col-6">
+                            <button id="received-add" type="button" class="btn btn-primary w-100 py-2" data-i18n="ui.received_add"></button>
+                        </div>
+                        <div class="col-6">
+                            <button id="received-subtract" type="button" class="btn btn-default w-100 py-2" data-i18n="ui.received_subtract"></button>
+                        </div>
+                    </div>
+                    <div class="row mb-1" aria-live="polite">
+                        <div class="col-6 mb-1"><small data-i18n="ui.received"></small><div><strong id="received-total">0</strong></div></div>
+                        <div class="col-6 mb-1"><small data-i18n="ui.pass"></small><div><strong id="pass-total">0</strong></div></div>
+                        <div class="col-6 mb-1"><small data-i18n="ui.defects"></small><div><strong id="defect-total">0</strong></div></div>
+                        <div class="col-6 mb-1"><small data-i18n="ui.defect_rate"></small><div><strong id="defect-rate">0.0%</strong></div></div>
+                    </div>
+                    <button id="open-detail" type="button" class="btn btn-default w-100" data-i18n="ui.detail"></button>
+                </div>
+            </aside>
+            <div class="col-12 col-lg-10">
+                <div id="defect-grid" aria-live="polite"></div>
+            </div>
+        </div>
+    </section>
+
+    <dialog id="settings-dialog" class="p-0 border-0 bg-transparent" aria-labelledby="settings-heading">
+        <div class="modal-dialog modal-lg m-0"><div class="modal-content border-0 shadow-sm">
+            <div class="modal-header"><h2 id="settings-heading" class="modal-title h5" data-i18n="ui.settings"></h2><button type="button" class="btn btn-default" data-close="settings-dialog" data-i18n="ui.close"></button></div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap gap-4 mb-3">
+                    <div><span data-i18n="ui.pending"></span>: <strong id="pending-total">0</strong></div>
+                    <div><span data-i18n="ui.last_sync"></span>: <strong id="last-sync"></strong></div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button id="sync" type="button" class="btn btn-lg btn-primary" data-i18n="ui.sync"></button>
+                    <button id="refresh" type="button" class="btn btn-lg btn-default" data-i18n="ui.refresh"></button>
+                    <button id="open-device" type="button" class="btn btn-lg btn-default" data-i18n="ui.device"></button>
+                </div>
+            </div>
+        </div></div>
+    </dialog>
+
+    <dialog id="product-dialog" class="p-0 border-0 bg-transparent w-100" aria-labelledby="product-heading">
+        <div class="modal-dialog modal-xl mx-auto my-0"><div class="modal-content border-0 shadow-sm">
+            <div class="modal-header"><h2 id="product-heading" class="modal-title h5" data-i18n="ui.choose_product"></h2><button type="button" class="btn btn-default" data-close="product-dialog" data-i18n="ui.close"></button></div>
+            <div class="modal-body">
+                <div id="product-customers" class="d-flex flex-nowrap overflow-auto text-nowrap mb-2" role="group"></div>
+                <hr class="my-2">
+                <div id="product-seasons" class="d-flex flex-nowrap overflow-auto mb-2" role="group"></div>
+                <hr class="my-2">
+                <div id="product-grid" class="row"></div>
+            </div>
+        </div></div>
+    </dialog>
+
+    <dialog id="line-dialog" class="p-0 border-0 bg-transparent w-100" aria-labelledby="line-heading">
+        <div class="modal-dialog modal-xl mx-auto my-0"><div class="modal-content border-0 shadow-sm">
+            <div class="modal-header"><h2 id="line-heading" class="modal-title h5" data-i18n="ui.choose_line"></h2><button type="button" class="btn btn-default" data-close="line-dialog" data-i18n="ui.close"></button></div>
+            <div class="modal-body">
+                <div id="line-factories" class="d-flex flex-nowrap overflow-auto mb-2" role="group"></div>
+                <hr class="my-2">
+                <div id="line-grid" class="row"></div>
+            </div>
+        </div></div>
+    </dialog>
+
+    <dialog id="detail-dialog" class="p-0 border-0 bg-transparent w-100" aria-labelledby="detail-heading">
+        <div class="modal-dialog modal-xl mx-auto my-0"><div class="modal-content border-0 shadow-sm">
+            <div class="modal-header"><h2 id="detail-heading" class="modal-title h5" data-i18n="ui.detail_title"></h2><button type="button" class="btn btn-default" data-close="detail-dialog" data-i18n="ui.close"></button></div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12 col-md-4 form-group"><label for="detail-product" data-i18n="ui.product"></label><select id="detail-product" class="form-control"></select></div>
+                    <div class="col-12 col-md-4 form-group"><label for="detail-line" data-i18n="ui.line"></label><select id="detail-line" class="form-control"></select></div>
+                    <div class="col-12 col-md-4 form-group"><label for="detail-defect" data-i18n="ui.defect"></label><select id="detail-defect" class="form-control"></select></div>
+                </div>
+                <hr class="my-2">
+                <div class="table-responsive"><table class="table table-striped table-sm">
+                    <thead><tr>
+                        <th data-i18n="ui.product"></th><th data-i18n="ui.line"></th>
+                        <th data-i18n="ui.defect_group"></th><th data-i18n="ui.defect"></th>
+                        <th class="text-right" data-i18n="ui.received"></th>
+                        <th class="text-right" data-i18n="ui.defect_quantity"></th>
+                        <th class="text-right" data-i18n="ui.rate"></th>
+                    </tr></thead>
+                    <tbody id="detail-body"></tbody>
+                    <tfoot id="detail-foot"></tfoot>
+                </table></div>
+            </div>
+        </div></div>
+    </dialog>
+</div>
+<dialog id="page-lock-dialog" class="p-0 border-0 bg-transparent" aria-labelledby="page-lock-heading">
+    <div class="modal-dialog m-0">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header">
+                <h2 id="page-lock-heading" class="modal-title h5" data-i18n="ui.page_lock_title"></h2>
+            </div>
+            <form id="page-lock-form" class="modal-body" novalidate>
+                <div class="form-group mb-2">
+                    <label for="page-lock-code" data-i18n="ui.page_lock_code"></label>
+                    <input id="page-lock-code" class="form-control" type="password" inputmode="numeric"
+                        pattern="[0-9]*" maxlength="4" autocomplete="off" aria-describedby="page-lock-error">
+                </div>
+                <p id="page-lock-error" class="text-danger mb-2" role="alert" aria-live="assertive" hidden
+                    data-i18n="error.page_lock_code"></p>
+                <button type="submit" class="btn btn-primary btn-lg w-100" data-i18n="ui.page_lock_submit"></button>
+            </form>
+        </div>
+    </div>
+</dialog>
+<div id="qc-toast" class="fixed-top p-3" hidden>
+    <div id="qc-toast-surface" class="toast show mx-auto" role="status" aria-live="polite" aria-atomic="true">
+        <div id="qc-toast-body" class="toast-body"></div>
+    </div>
+</div>

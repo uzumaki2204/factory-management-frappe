@@ -1,0 +1,8 @@
+[pre_model_sync]
+
+[post_model_sync]
+factory_management.patches.add_qc_report_reader
+factory_management.patches.shared_device_registry
+factory_management.patches.remove_legacy_device_clients
+factory_management.patches.separate_uqqc_defects
+factory_management.patches.remove_qc_admin_unlock

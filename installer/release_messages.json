@@ -1,0 +1,18 @@
+{
+  "en": {
+    "version_mismatch": "App version in release-manifest.json must match pyproject.toml.",
+    "tag": "App tag: {tag}",
+    "commit": "Source commit: {commit}",
+    "archive": "Archive: {archive}",
+    "checksum": "SHA-256: {checksum}",
+    "published": "Published app repository: {repository}"
+  },
+  "vi": {
+    "version_mismatch": "Phiên bản app trong release-manifest.json phải trùng với pyproject.toml.",
+    "tag": "Tag app: {tag}",
+    "commit": "Commit nguồn: {commit}",
+    "archive": "Gói nén: {archive}",
+    "checksum": "SHA-256: {checksum}",
+    "published": "Repo app đã phát hành: {repository}"
+  }
+}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="{{ frappe.local.lang or 'en' }}"{% if frappe.form_dict.get("embedded") %} class="embedded"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f7fc">
+  <title>{{ _("API Documentation") }} | Frappe</title>
+  <link rel="stylesheet" href="/assets/factory_management/vendor/swagger-ui/swagger-ui.css">
+  <link rel="stylesheet" href="/assets/factory_management/css/qc-api-docs.css?v=3">
+  <script src="/assets/factory_management/vendor/swagger-ui/swagger-ui-bundle.js" defer></script>
+  <script src="/assets/factory_management/js/qc-api-docs.js?v=4" defer></script>
+</head>
+<body data-load-error="{{ _("Unable to load API documentation") }}" data-loading="{{ _("Loading API documentation") }}" data-no-services="{{ _("No API services are available") }}">
+  <header class="topbar">
+    <div class="brand"><img src="/assets/factory_management/images/qc-logo.png" alt="Kim Thanh Group"><span class="brand-divider" aria-hidden="true"></span><h1>{{ _("API Documentation") }}</h1></div>
+    <a class="desk-link" href="/desk" target="_top">{{ _("Open Desk") }}</a>
+  </header>
+  <main class="page-shell">
+    <div class="toolbar">
+      <div class="service-picker"><label for="service">{{ _("Service") }}</label><select id="service" aria-label="{{ _("Service") }}"></select></div>
+      <div class="actions">
+        <a class="action-link" href="/desk/api-documentation-service" target="_top">{{ _("Manage services") }}</a>
+        <a class="action-link" href="/desk/api-documentation-endpoint" target="_top">{{ _("Manage endpoints") }}</a>
+        <button id="download" class="action-button" type="button" disabled>{{ _("Download OpenAPI") }}</button>
+      </div>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <section class="spec-panel" aria-label="{{ _("API Documentation") }}"><div id="swagger-ui"></div></section>
+  </main>
+</body>
+</html>
