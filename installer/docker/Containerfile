@@ -10,7 +10,13 @@ WORKDIR /home/frappe/frappe-bench
 
 RUN ./env/bin/pip install --no-cache-dir -e apps/factory_management \
     && PYTHONPATH="/home/frappe/frappe-bench/apps${PYTHONPATH:+:$PYTHONPATH}" bench build --apps frappe,factory_management \
+    && rm -rf sites/assets/factory_management \
+    && mkdir -p sites/assets/factory_management \
+    && cp -a apps/factory_management/factory_management/public/. sites/assets/factory_management/ \
     && mkdir -p assets \
     && cp -a sites/assets/. assets/ \
     && rm -rf sites/assets \
+    && test -s assets/factory_management/uqqc/brand.css \
+    && test -s assets/factory_management/uqqc/client.js \
+    && test -s assets/factory_management/images/qc-logo.png \
     && chmod -R g=u apps/factory_management assets

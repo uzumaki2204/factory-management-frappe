@@ -17,7 +17,7 @@ bench build --app factory_management
 bench restart
 ```
 
-Tên app Frappe là `factory_management`; vì vậy lệnh `get-app` ghi rõ tên này trước URL repo. Repo công khai nên máy cài không cần SSH deploy key để tải mã nguồn. Khi muốn ghim đúng một bản phát hành, thay `version-16` bằng tag, ví dụ `v0.1.12`.
+Tên app Frappe là `factory_management`; vì vậy lệnh `get-app` ghi rõ tên này trước URL repo. Repo công khai nên máy cài không cần SSH deploy key để tải mã nguồn. Khi muốn ghim đúng một bản phát hành, thay `version-16` bằng tag, ví dụ `v0.1.13`.
 
 Khi nâng cấp, tạo bản sao lưu trước, lấy mã mới từ `version-16`, rồi chạy migrate, build và restart. App tự chạy `after_install` và `after_migrate` để tạo schema, trang QC/UQQC và API UQQC. Lệnh `ensure_qc_inspection_summary` ở trên tạo Server Script QC còn lại. Server Scripts phải được bật trước khi cài app.
 
@@ -25,12 +25,12 @@ Trên máy mới, cần cài Bench/Frappe và tạo site trước khi chạy cá
 
 ## Bộ cài phụ trợ cho stack Frappe Docker hiện có
 
-Tải `factory-management-frappe-docker-v0.1.12.tar.gz` cùng `SHA256SUMS-docker-v0.1.12` lên máy đang chạy Frappe Docker, kiểm tra checksum, giải nén rồi chạy:
+Tải `factory-management-frappe-docker-v0.1.13.tar.gz` cùng `SHA256SUMS-docker-v0.1.13` lên máy đang chạy Frappe Docker, kiểm tra checksum, giải nén rồi chạy:
 
 ```bash
-sha256sum -c SHA256SUMS-docker-v0.1.12
-tar -xzf factory-management-frappe-docker-v0.1.12.tar.gz
-cd factory-management-frappe-docker-v0.1.12
+sha256sum -c SHA256SUMS-docker-v0.1.13
+tar -xzf factory-management-frappe-docker-v0.1.13.tar.gz
+cd factory-management-frappe-docker-v0.1.13
 sudo ./install-docker.sh
 ```
 
@@ -42,12 +42,12 @@ Không dùng gói Docker này cho máy chưa có stack Frappe Docker. Nếu máy
 
 Bộ cài native tạo một Bench production mới, cài Frappe 16.53.0 và app Factory Management, rồi tạo site dùng địa chỉ IPv4 của máy làm tên site. Bộ cài không nhập dữ liệu khách hàng, sản phẩm, chuyền, thiết bị, lịch sử kiểm tra hoặc token.
 
-Tải gói `factory-management-frappe-v0.1.12.tar.gz` cùng `SHA256SUMS-native-v0.1.12`, kiểm tra SHA-256, giải nén rồi chạy:
+Tải gói `factory-management-frappe-v0.1.13.tar.gz` cùng `SHA256SUMS-native-v0.1.13`, kiểm tra SHA-256, giải nén rồi chạy:
 
 ```bash
-sha256sum -c SHA256SUMS-native-v0.1.12
-tar -xzf factory-management-frappe-v0.1.12.tar.gz
-cd factory-management-frappe-v0.1.12
+sha256sum -c SHA256SUMS-native-v0.1.13
+tar -xzf factory-management-frappe-v0.1.13.tar.gz
+cd factory-management-frappe-v0.1.13
 sudo ./install.sh
 ```
 
