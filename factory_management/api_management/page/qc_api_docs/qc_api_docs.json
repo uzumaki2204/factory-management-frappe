@@ -1,0 +1,13 @@
+{
+  "doctype": "Page",
+  "name": "qc-api-docs",
+  "page_name": "qc-api-docs",
+  "title": "API Documentation",
+  "module": "API Management",
+  "standard": "Yes",
+  "roles": [
+    {
+      "role": "System Manager"
+    }
+  ]
+}

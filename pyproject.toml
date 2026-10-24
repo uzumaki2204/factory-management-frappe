@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factory-management"
-version = "0.1.1"
+version = "0.1.9"
 description = "Shared factory devices and QC tablet APIs for Frappe"
 requires-python = ">=3.14"
 dependencies = []
@@ -32,6 +32,7 @@ factory_management = [
     "templates/includes/*.html",
     "translations/*.csv",
     "api_management/page/qc_api_docs/*.js",
+    "api_management/page/qc_api_docs/*.json",
     "uqqc/*.html",
     "uqqc/server_scripts/*.py",
     "public/uqqc/*",

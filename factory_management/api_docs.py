@@ -247,24 +247,34 @@ def ensure_catalog():
         }).insert(ignore_permissions=True).name
     _seed_summary_contract(service_name)
     _seed_python_reports(service_name)
-    if not frappe.db.exists("Page", "qc-api-docs"):
-        frappe.get_doc({
+    if frappe.db.exists("Page", "qc-api-docs"):
+        page = frappe.get_doc("Page", "qc-api-docs")
+        changed = False
+        if page.module != "API Management":
+            page.module = "API Management"
+            changed = True
+        if not any(row.role == "System Manager" for row in page.roles):
+            page.append("roles", {"role": "System Manager"})
+            changed = True
+        if changed:
+            page.flags.do_not_update_json = True
+            page.save(ignore_permissions=True)
+    else:
+        # Standard Desk Pages must also be seeded on production sites where
+        # Developer Mode is disabled. Frappe's standard-file importer uses
+        # the same validation bypass for app-owned page definitions.
+        page = frappe.get_doc({
             "doctype": "Page",
+            "name": "qc-api-docs",
             "page_name": "qc-api-docs",
             "title": "API Documentation",
             "module": "API Management",
-            "standard": "No",
-        }).insert(ignore_permissions=True)
-    page = frappe.get_doc("Page", "qc-api-docs")
-    changed = False
-    if page.module != "API Management":
-        page.module = "API Management"
-        changed = True
-    if not any(row.role == "System Manager" for row in page.roles):
-        page.append("roles", {"role": "System Manager"})
-        changed = True
-    if changed:
-        page.save(ignore_permissions=True)
+            "standard": "Yes",
+            "roles": [{"role": "System Manager"}],
+        })
+        page.flags.ignore_validate = True
+        page.flags.do_not_update_json = True
+        page.insert(ignore_permissions=True)
 
 
 def validate_service(doc, method=None):

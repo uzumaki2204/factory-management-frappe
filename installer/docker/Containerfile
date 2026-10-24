@@ -1,0 +1,16 @@
+ARG BASE_IMAGE=local/frappe:v16.53.0
+FROM ${BASE_IMAGE}
+
+USER root
+COPY --chown=frappe:0 factory_management /home/frappe/frappe-bench/apps/factory_management/factory_management
+COPY --chown=frappe:0 pyproject.toml /home/frappe/frappe-bench/apps/factory_management/pyproject.toml
+
+USER frappe
+WORKDIR /home/frappe/frappe-bench
+
+RUN ./env/bin/pip install --no-cache-dir -e apps/factory_management \
+    && PYTHONPATH="/home/frappe/frappe-bench/apps${PYTHONPATH:+:$PYTHONPATH}" bench build --app factory_management \
+    && mkdir -p assets \
+    && cp -a sites/assets/. assets/ \
+    && rm -rf sites/assets \
+    && chmod -R g=u apps/factory_management assets

@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import tomllib
 from pathlib import Path
@@ -41,6 +42,11 @@ def copy_source(destination: Path) -> None:
         return ignored
 
     shutil.copytree(ROOT, destination, ignore=ignore, dirs_exist_ok=True)
+    for shell_script in destination.rglob("*.sh"):
+        contents = shell_script.read_bytes()
+        normalized = contents.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        if normalized != contents:
+            shell_script.write_bytes(normalized)
 
 
 def clear_checkout(repo: Path) -> None:
@@ -78,6 +84,8 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     archive_name = f"factory-management-frappe-{tag}.tar.gz"
     archive_path = args.output_dir / archive_name
+    docker_archive_name = f"factory-management-frappe-docker-{tag}.tar.gz"
+    docker_archive_path = args.output_dir / docker_archive_name
 
     with tempfile.TemporaryDirectory(prefix="factory-management-release-") as temp:
         repo = Path(temp) / "repo"
@@ -97,8 +105,9 @@ def main() -> int:
         copy_source(repo)
         run("git", "config", "user.name", "Factory Management Release", cwd=repo)
         run("git", "config", "user.email", "release@localhost", cwd=repo)
+        run("git", "config", "core.autocrlf", "false", cwd=repo)
         run("git", "add", "--all", cwd=repo)
-        run("git", "update-index", "--chmod=+x", "install.sh", "release.sh", "installer/setup-bench.sh", cwd=repo)
+        run("git", "update-index", "--chmod=+x", "install.sh", "install-docker.sh", "release.sh", "installer/setup-bench.sh", cwd=repo)
         run("git", "commit", "--allow-empty", "-m", f"Release {tag}", cwd=repo)
         commit = run("git", "rev-parse", "HEAD", cwd=repo)
         run("git", "tag", "-a", tag, "-m", f"Factory Management {tag}", cwd=repo)
@@ -118,14 +127,46 @@ def main() -> int:
                 stdout=archive,
             )
 
-    digest = hashlib.sha256(archive_path.read_bytes()).hexdigest()
+        with docker_archive_path.open("wb") as archive:
+            run(
+                "git",
+                "archive",
+                "--format=tar.gz",
+                f"--prefix=factory-management-frappe-docker-{tag}/",
+                tag,
+                cwd=repo,
+                stdout=archive,
+            )
+
+        for release_archive in (archive_path, docker_archive_path):
+            with tarfile.open(release_archive, "r:gz") as archive:
+                for member in archive.getmembers():
+                    if not member.isfile() or not member.name.endswith(".sh"):
+                        continue
+                    script = archive.extractfile(member)
+                    if script is not None and b"\r" in script.read():
+                        raise SystemExit(msg("archive_crlf", path=member.name))
+
+    digests = {
+        archive_name: hashlib.sha256(archive_path.read_bytes()).hexdigest(),
+        docker_archive_name: hashlib.sha256(docker_archive_path.read_bytes()).hexdigest(),
+    }
     (args.output_dir / "SHA256SUMS").write_text(
-        f"{digest}  {archive_name}\n", encoding="utf-8", newline="\n"
+        "".join(f"{digest}  {name}\n" for name, digest in digests.items()),
+        encoding="utf-8",
+        newline="\n",
     )
+    for name, digest in digests.items():
+        suffix = "docker" if name == docker_archive_name else "native"
+        checksum_name = f"SHA256SUMS-{suffix}-{tag}"
+        (args.output_dir / checksum_name).write_text(
+            f"{digest}  {name}\n", encoding="utf-8", newline="\n"
+        )
     print(msg("tag", tag=tag))
     print(msg("commit", commit=commit))
     print(msg("archive", archive=archive_path))
-    print(msg("checksum", checksum=digest))
+    print(msg("docker_archive", archive=docker_archive_path))
+    print(msg("checksums", path=args.output_dir / "SHA256SUMS"))
     if args.publish:
         print(msg("published", repository=REPOSITORY_URL))
     return 0

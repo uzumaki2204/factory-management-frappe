@@ -4,7 +4,9 @@
     "tag": "App tag: {tag}",
     "commit": "Source commit: {commit}",
     "archive": "Archive: {archive}",
-    "checksum": "SHA-256: {checksum}",
+    "docker_archive": "Docker deployment archive: {archive}",
+    "archive_crlf": "Generated archive contains a shell script with CRLF line endings: {path}",
+    "checksums": "Checksums: {path}",
     "published": "Published app repository: {repository}"
   },
   "vi": {
@@ -12,7 +14,9 @@
     "tag": "Tag app: {tag}",
     "commit": "Commit nguồn: {commit}",
     "archive": "Gói nén: {archive}",
-    "checksum": "SHA-256: {checksum}",
+    "docker_archive": "Gói triển khai Docker: {archive}",
+    "archive_crlf": "Gói được tạo có script shell dùng xuống dòng CRLF: {path}",
+    "checksums": "Checksum: {path}",
     "published": "Repo app đã phát hành: {repository}"
   }
 }
