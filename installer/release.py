@@ -18,7 +18,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REPOSITORY_URL = "git@github.com:uzumaki2204/factory-management-frappe.git"
+REPOSITORY_URL = "https://github.com/uzumaki2204/factory-management-frappe.git"
 MESSAGES = json.loads((ROOT / "installer" / "release_messages.json").read_text(encoding="utf-8"))
 EXCLUDED_NAMES = {".git", ".venv", "__pycache__", "build", "dist", "factory_management.egg-info"}
 

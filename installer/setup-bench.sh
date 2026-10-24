@@ -51,7 +51,7 @@ bench new-site "$FRAPPE_SITE_NAME" \
 bench --site "$FRAPPE_SITE_NAME" set-config server_script_enabled 1
 bench --site "$FRAPPE_SITE_NAME" install-app factory_management
 bench --site "$FRAPPE_SITE_NAME" migrate
-bench build --app factory_management
+bench build --apps frappe,factory_management
 bench use "$FRAPPE_SITE_NAME"
 bench config dns_multitenant off
 bench config serve_default_site on

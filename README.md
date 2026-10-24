@@ -4,12 +4,12 @@
 
 ## Cài vào stack Frappe Docker hiện có
 
-Tải `factory-management-frappe-docker-v0.1.9.tar.gz` cùng `SHA256SUMS-docker-v0.1.9` lên máy đang chạy Frappe Docker, kiểm tra checksum, giải nén rồi chạy:
+Tải `factory-management-frappe-docker-v0.1.10.tar.gz` cùng `SHA256SUMS-docker-v0.1.10` lên máy đang chạy Frappe Docker, kiểm tra checksum, giải nén rồi chạy:
 
 ```bash
-sha256sum -c SHA256SUMS-docker-v0.1.9
-tar -xzf factory-management-frappe-docker-v0.1.9.tar.gz
-cd factory-management-frappe-docker-v0.1.9
+sha256sum -c SHA256SUMS-docker-v0.1.10
+tar -xzf factory-management-frappe-docker-v0.1.10.tar.gz
+cd factory-management-frappe-docker-v0.1.10
 sudo ./install-docker.sh
 ```
 
@@ -21,22 +21,22 @@ Không dùng gói Docker này cho máy chưa có stack Frappe Docker. Nếu máy
 
 Bộ cài native tạo một Bench production mới, cài Frappe 16.53.0 và app Factory Management, rồi tạo site dùng địa chỉ IPv4 của máy làm tên site. Bộ cài không nhập dữ liệu khách hàng, sản phẩm, chuyền, thiết bị, lịch sử kiểm tra hoặc token.
 
-Tải gói `factory-management-frappe-v0.1.9.tar.gz` cùng `SHA256SUMS-native-v0.1.9`, kiểm tra SHA-256, giải nén rồi chạy:
+Tải gói `factory-management-frappe-v0.1.10.tar.gz` cùng `SHA256SUMS-native-v0.1.10`, kiểm tra SHA-256, giải nén rồi chạy:
 
 ```bash
-sha256sum -c SHA256SUMS-native-v0.1.9
-tar -xzf factory-management-frappe-v0.1.9.tar.gz
-cd factory-management-frappe-v0.1.9
+sha256sum -c SHA256SUMS-native-v0.1.10
+tar -xzf factory-management-frappe-v0.1.10.tar.gz
+cd factory-management-frappe-v0.1.10
 sudo ./install.sh
 ```
 
 Bộ cài hỗ trợ Ubuntu 24.04 trở lên, kiến trúc x86_64, và cần Internet để lấy các phụ thuộc hệ điều hành. Nó tạo user Linux `frappe`, Bench tại `/opt/frappe-bench`, MariaDB 11.8, Redis, Nginx và Supervisor. Gói wkhtmltopdf được chọn theo phiên bản Ubuntu và xác minh SHA-256 trước khi cài: bản upstream Jammy trên Ubuntu 24.04, bản Noble tương thích cho Ubuntu 24.10–25.10, và bản Resolute cho Ubuntu 26.04 trở lên. Các bản Noble/Resolute được ghim từ [release 2026-05-06 của newinnovations/wkhtml-packaging](https://github.com/newinnovations/wkhtml-packaging/releases/tag/2026-05-06). Nhập mật khẩu cho tài khoản MariaDB cục bộ khi được hỏi; `bench new-site` sẽ hỏi lại mật khẩu đó và mật khẩu Administrator. Không dùng một Bench hoặc MariaDB đã có dữ liệu: bộ cài từ chối nếu thư mục Bench đích đã tồn tại.
 
-Mở `http://<IP-LAN>/` để truy cập. Nếu firewall của máy đang bật, quản trị viên cần cho phép TCP/80 từ mạng LAN. Để cài từ repo riêng tư, clone tag `v0.1.9` trước rồi chạy cùng `sudo ./install.sh`; GitHub cần được cấu hình SSH deploy key trên máy cài.
+Mở `http://<IP-LAN>/` để truy cập. Nếu firewall của máy đang bật, quản trị viên cần cho phép TCP/80 từ mạng LAN. Để cài từ repo riêng tư, clone tag `v0.1.10` trước rồi chạy cùng `sudo ./install.sh`; GitHub cần được cấu hình SSH deploy key trên máy cài.
 
 ## Phát hành
 
-Tăng phiên bản trong `pyproject.toml`, `factory_management/__init__.py` và `release-manifest.json` đồng thời, sau đó chạy `./release.sh`. Lệnh tạo hai archive từ cùng một Git tag trong `dist/`: gói cài native và gói cài vào stack Docker hiện có. `SHA256SUMS` ghi cả hai checksum; các tệp `SHA256SUMS-native-<tag>` và `SHA256SUMS-docker-<tag>` dùng khi chỉ chuyển một archive. Dùng `./release.sh --publish` để đẩy cùng tag và nhánh `main` lên repo riêng `uzumaki2204/factory-management-frappe`; cần cấu hình SSH key có quyền ghi và tạo repo đó trước.
+Tăng phiên bản trong `pyproject.toml`, `factory_management/__init__.py` và `release-manifest.json` đồng thời, sau đó chạy `./release.sh`. Lệnh tạo hai archive từ cùng một Git tag trong `dist/`: gói cài native và gói cài vào stack Docker hiện có. `SHA256SUMS` ghi cả hai checksum; các tệp `SHA256SUMS-native-<tag>` và `SHA256SUMS-docker-<tag>` dùng khi chỉ chuyển một archive. Dùng `./release.sh --publish` để đẩy cùng tag và nhánh `main` lên repo riêng `uzumaki2204/factory-management-frappe`; cần Git Credential Manager đã đăng nhập tài khoản có quyền ghi và tạo repo đó trước.
 
 Manifest ghim Frappe 16.53.0 theo revision `e8d41dd0061a32ee781caefe5d0b0d2bb7c15362` ([bản phát hành chính thức](https://github.com/frappe/frappe/releases/tag/v16.53.0)). Các phụ thuộc runtime theo [hướng dẫn cài Frappe](https://docs.frappe.io/framework/user/en/installation). Bench cài app bằng `get-app` rồi `install-app`; migration dùng lệnh `bench --site <site> migrate` theo [hướng dẫn Bench](https://docs.frappe.io/framework/user/en/bench/reference/migrate).
 

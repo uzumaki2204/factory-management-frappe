@@ -9,7 +9,7 @@ USER frappe
 WORKDIR /home/frappe/frappe-bench
 
 RUN ./env/bin/pip install --no-cache-dir -e apps/factory_management \
-    && PYTHONPATH="/home/frappe/frappe-bench/apps${PYTHONPATH:+:$PYTHONPATH}" bench build --app factory_management \
+    && PYTHONPATH="/home/frappe/frappe-bench/apps${PYTHONPATH:+:$PYTHONPATH}" bench build --apps frappe,factory_management \
     && mkdir -p assets \
     && cp -a sites/assets/. assets/ \
     && rm -rf sites/assets \
