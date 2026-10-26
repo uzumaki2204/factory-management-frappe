@@ -4,6 +4,33 @@
 
     const { t, apply } = window.UQQCI18n;
     const PREFIX = 'fm-uqqc-client:v1:';
+    const epochKey = PREFIX + 'data-epoch';
+    let epochGeneration = localStorage.getItem(epochKey) || '';
+    let epochReloading = false;
+    async function ensureDataEpoch() {
+        if (epochReloading) throw new Error(t('apiFailed'));
+        if (!navigator.onLine) return epochGeneration;
+        const response = await fetch('/api/method/factory_management.api.data_epoch',
+            { credentials: 'same-origin', cache: 'no-store' });
+        if (!response.ok) throw new Error(t('apiFailed'));
+        const generation = String((await response.json()).message?.generation || '');
+        if (epochReloading) throw new Error(t('apiFailed'));
+        if (!generation || generation === epochGeneration) return epochGeneration;
+        epochReloading = true;
+        const deviceId = localStorage.getItem(PREFIX + 'device-id');
+        Object.keys(localStorage).filter(key => key.startsWith(PREFIX)).forEach(key => localStorage.removeItem(key));
+        if (deviceId) localStorage.setItem(PREFIX + 'device-id', deviceId);
+        localStorage.setItem(epochKey, generation);
+        epochGeneration = generation;
+        if ('caches' in window) {
+            try {
+                const names = await caches.keys();
+                await Promise.all(names.filter(name => name.startsWith('fm-uqqc-')).map(name => caches.delete(name)));
+            } catch { /* API writes remain fenced while the page reloads. */ }
+        }
+        window.location.reload();
+        throw new Error(t('apiFailed'));
+    }
     const tokenKey = PREFIX + 'device-token';
     function deviceToken(deviceId) {
         const key = tokenKey + ':' + deviceId;
@@ -350,6 +377,8 @@
     }
 
     async function requestJson(url, options) {
+        const requestEpoch = await ensureDataEpoch();
+        if (epochReloading) throw new Error(t('apiFailed'));
         let requestDevice = storedDeviceId();
         if (options?.body) {
             try { requestDevice = JSON.parse(options.body).deviceId || requestDevice; } catch { /* Invalid JSON is rejected by the API. */ }
@@ -359,7 +388,7 @@
         try {
             response = await fetch(url, {
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-UQQC-Token': deviceToken(requestDevice), 'Accept-Language': document.documentElement.lang, ...(window.frappe?.csrf_token ? { 'X-Frappe-CSRF-Token': frappe.csrf_token } : {}) },
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-UQQC-Token': deviceToken(requestDevice), 'X-Factory-Data-Epoch': requestEpoch, 'Accept-Language': document.documentElement.lang, ...(window.frappe?.csrf_token ? { 'X-Frappe-CSRF-Token': frappe.csrf_token } : {}) },
                 ...options
             });
         } catch (networkError) {
@@ -2520,6 +2549,9 @@
     }
 
     async function start() {
+        if (navigator.onLine) {
+            try { await ensureDataEpoch(); } catch { if (epochReloading) return; }
+        }
         apply(document);
         renderHeaderTitle();
         updateNetwork();

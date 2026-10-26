@@ -3,6 +3,7 @@
 import frappe
 
 from factory_management import device_registry
+from factory_management import data_epoch
 from factory_management.uqqc.i18n import fail
 
 
@@ -18,6 +19,8 @@ OPERATIONS = {
 
 
 def endpoint_policy(operation):
+    if operation in ("device_register", "device_check", "sync"):
+        data_epoch.require_current()
     rule = OPERATIONS.get(operation)
     if not rule:
         fail("api.forbidden", permission=True)

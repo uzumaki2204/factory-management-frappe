@@ -79,13 +79,19 @@ Script cũng tạo hai archive phụ trợ từ cùng tag trong `dist/`: bộ c�
 
 Manifest ghi Frappe 16.53.0 làm phiên bản chuẩn kiểm tra theo revision `e8d41dd0061a32ee781caefe5d0b0d2bb7c15362` ([bản phát hành chính thức](https://github.com/frappe/frappe/releases/tag/v16.53.0)). Metadata Bench trong `pyproject.toml` khai báo app tương thích Frappe `>=16.53.0,<17.0.0`. Các phụ thuộc runtime theo [hướng dẫn cài Frappe](https://docs.frappe.io/framework/user/en/installation). Bench tải mã bằng `get-app`, cài app vào site bằng `install-app` và cập nhật schema bằng `migrate` theo [tài liệu Bench](https://docs.frappe.io/framework/user/en/bench/bench-commands).
 
+## Generation dữ liệu sau khi làm mới QC
+
+`GET /api/method/factory_management.api.data_epoch` trả `{generation, resetAtUtc}` trong `message`. Trước lần làm mới, `generation` rỗng và hợp đồng cũ tiếp tục hoạt động. Sau lần làm mới, các lệnh ghi/đăng ký/kiểm tra thiết bị QC và UQQC cần header `X-Factory-Data-Epoch` bằng generation hiện tại; request cũ bị từ chối. Client QC/UQQC đọc generation trước khi đồng bộ và xóa queue, token, cache cũ khi generation đổi. DocType `Factory Data Epoch` chỉ lưu generation của site, không chứa token. Luồng làm mới do MigrationFrappe chạy cục bộ bằng Bench trong Docker; không có API HTTP để xóa dữ liệu.
+
+Lần làm mới lấy master, thiết bị và `QCInspections` từ SQL Server .NET, dựng lại danh mục lỗi UQQC từ QC, để trống sự kiện UQQC, tắt quyền dịch vụ và thu hồi token Frappe. Cần backup và kiểm tra xung đột Link với app khác trước khi chạy. Không thay đổi dữ liệu QCBrother trong SQL Server.
+
 ## UQQC
 
 UQQC dùng stylesheet mặc định `desk.bundle.css` và các thành phần chuẩn của Frappe Desk, không có CSS tùy biến riêng. Với trang đã tồn tại, chạy `bench --site <site> execute factory_management.uqqc.web_page.apply_desk_style` để áp dụng lại bố cục mặc định và xóa CSS của Web Page; lệnh này thay thế HTML hiện tại của riêng trang UQQC.
 
 Trang tablet nằm tại `/uqqc`, có shortcut **UQQC** trong Desk. Module **UQQC**, package `factory_management.uqqc`, DocType **UQQC Inspection Event** và toàn bộ tài nguyên `/assets/factory_management/uqqc/` được đặt riêng. QC và UQQC dùng chung master **Factory Device** trong module **Factory Management**. Quyền từng trang ở **Factory Device Access** và token trình duyệt ở **Factory Device Client**; không ghi token vào sự kiện QC. Migration xóa **QC Device Client** và **UQQC Device Client** sau khi đối chiếu từng token với registry mới. Chỉ **System Manager** được sửa Web Page UQQC và quản lý thiết bị.
 
-Danh mục lỗi của QC nằm trong bốn DocType **QC Defect Group**, **QC Defect**, **QC Defect Position Group**, **QC Defect Position**. UQQC dùng bốn DocType tương ứng mang tiền tố **UQQC**. Migration sao chép toàn bộ bản ghi QC hiện có sang UQQC với cùng `name` để giữ ID trong sự kiện lịch sử, mục yêu thích và hàng đợi offline; sau đó hai danh mục được quản lý độc lập. Import `QCDefect*` từ .NET chỉ cập nhật QC. **System Manager** và người có role **UQQC Catalog Manager** được quản lý danh mục UQQC trong Desk.
+Danh mục lỗi QC dùng hai DocType **QC Defect** và **QC Defect Position**. Mỗi DocType lưu cả bản ghi nhóm và bản ghi lỗi/vị trí, phân biệt bằng `record_type` và liên kết nhóm tự tham chiếu. UQQC dùng hai DocType độc lập tương ứng mang tiền tố **UQQC**. Migration chuyển các nhóm cũ sang DocType gộp, giữ nguyên tên bản ghi được liên kết trong sự kiện, mục yêu thích và ánh xạ dữ liệu, rồi xóa DocType nhóm cũ. Dữ liệu QC và UQQC tiếp tục được quản lý độc lập; API tablet giữ nguyên URL và payload. Import `QCDefect*` từ .NET chỉ cập nhật QC. **System Manager** và người có role **UQQC Catalog Manager** được quản lý danh mục UQQC trong Desk.
 
 Chạy `bench --site <site> migrate` khi cài/nâng cấp app; patch `separate_uqqc_defects` sao chép danh mục và chuyển Link của sự kiện UQQC. Lệnh `bench --site <site> execute factory_management.uqqc.provision.ensure` chỉ tạo schema, Web Page, Server Scripts và hợp đồng còn thiếu; không chạy patch sao chép dữ liệu. Site cần bật Server Scripts như API QC hiện tại. Provision không ghi đè nội dung đã sửa trong Desk.
 

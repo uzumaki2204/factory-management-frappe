@@ -58,8 +58,8 @@ def run():
         frappe.set_user("Administrator")
         line = frappe.db.get_value("Production Line", {"is_active": 1, "company": ["is", "set"]}, ["name", "company"], as_dict=True)
         variant = frappe.db.get_value("Product Variant", {"is_active": 1, "qc_color": ["is", "set"], "size": ["is", "set"], "market": ["is", "set"]}, ["product", "qc_color", "size", "market"], as_dict=True)
-        defect = frappe.db.get_value("UQQC Defect", {"is_active": 1}, "name")
-        position = frappe.db.get_value("UQQC Defect Position", {"is_active": 1}, "name")
+        defect = frappe.db.get_value("UQQC Defect", {"is_active": 1, "record_type": "Defect"}, "name")
+        position = frappe.db.get_value("UQQC Defect Position", {"is_active": 1, "record_type": "Position"}, "name")
         assert line and variant and defect and position
         device_id = str(uuid.uuid4())
         secret = uuid.uuid4().hex + uuid.uuid4().hex
@@ -232,25 +232,25 @@ def run():
         passed.append("catalog_page_permissions_and_preserved_desk_edits")
 
         suffix = uuid.uuid4().hex[:10]
-        qc_group = frappe.db.get_value("QC Defect Group", {"is_active": 1}, "name")
-        qc_position_group = frappe.db.get_value("QC Defect Position Group", {"is_active": 1}, "name")
-        uqqc_group = frappe.db.get_value("UQQC Defect Group", {"is_active": 1}, "name")
-        uqqc_position_group = frappe.db.get_value("UQQC Defect Position Group", {"is_active": 1}, "name")
+        qc_group = frappe.db.get_value("QC Defect", {"is_active": 1, "record_type": "Group"}, "name")
+        qc_position_group = frappe.db.get_value("QC Defect Position", {"is_active": 1, "record_type": "Group"}, "name")
+        uqqc_group = frappe.db.get_value("UQQC Defect", {"is_active": 1, "record_type": "Group"}, "name")
+        uqqc_position_group = frappe.db.get_value("UQQC Defect Position", {"is_active": 1, "record_type": "Group"}, "name")
         assert qc_group and qc_position_group and uqqc_group and uqqc_position_group
         qc_only_defect = frappe.get_doc({
-            "doctype": "QC Defect", "code": "QC-" + suffix, "title": "QC only",
+            "doctype": "QC Defect", "record_type": "Defect", "code": "QC-" + suffix, "title": "QC only",
             "defect_group": qc_group, "is_active": 1,
         }).insert(ignore_permissions=True)
         qc_only_position = frappe.get_doc({
-            "doctype": "QC Defect Position", "code": "QC-" + suffix, "title": "QC only",
+            "doctype": "QC Defect Position", "record_type": "Position", "code": "QC-" + suffix, "title": "QC only",
             "position_group": qc_position_group, "is_active": 1,
         }).insert(ignore_permissions=True)
         uqqc_only_defect = frappe.get_doc({
-            "doctype": "UQQC Defect", "code": "UQ-" + suffix, "title": "UQQC only",
+            "doctype": "UQQC Defect", "record_type": "Defect", "code": "UQ-" + suffix, "title": "UQQC only",
             "defect_group": uqqc_group, "is_active": 1,
         }).insert(ignore_permissions=True)
         uqqc_only_position = frappe.get_doc({
-            "doctype": "UQQC Defect Position", "code": "UQ-" + suffix, "title": "UQQC only",
+            "doctype": "UQQC Defect Position", "record_type": "Position", "code": "UQ-" + suffix, "title": "UQQC only",
             "position_group": uqqc_position_group, "is_active": 1,
         }).insert(ignore_permissions=True)
         qc_request = EnvironBuilder(path="/api/method/factory_management.api.bootstrap", method="GET",

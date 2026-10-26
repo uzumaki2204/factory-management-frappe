@@ -19,9 +19,9 @@ SOURCES = {
     "ProductionLines": ("Production Line", "line_code"),
     "LineGroups": ("Line Group", "group_code"),
     "LineGroupDetails": ("Line Group Assignment", "assignment_uid"),
-    "QCDefectGroups": ("QC Defect Group", "code"),
+    "QCDefectGroups": ("QC Defect", "code"),
     "QCDefects": ("QC Defect", "code"),
-    "QCDefectPositionGroups": ("QC Defect Position Group", "code"),
+    "QCDefectPositionGroups": ("QC Defect Position", "code"),
     "QCDefectPositions": ("QC Defect Position", "code"),
     "Devices": ("Factory Device", "device_id"),
 }
@@ -126,14 +126,17 @@ def _values(table, row):
                 "factory": _target("Factories", row.get("FactoryId")),
                 "is_active": active, "legacy_id": legacy}
     if table == "QCDefectGroups":
-        return {"code": code, "title": title, "is_active": active, "legacy_id": legacy}
+        return {"record_type": "Group", "code": code, "title": title,
+                "is_active": active, "legacy_id": legacy}
     if table == "QCDefects":
-        return {"code": code, "title": title, "defect_group": _target("QCDefectGroups", row.get("DefectGroupId")),
+        return {"record_type": "Defect", "code": code, "title": title,
+                "defect_group": _target("QCDefectGroups", row.get("DefectGroupId")),
                 "severity": row.get("Severity") or "", "is_active": active, "legacy_id": legacy}
     if table == "QCDefectPositionGroups":
-        return {"code": code, "title": title, "is_active": active, "legacy_id": legacy}
+        return {"record_type": "Group", "code": code, "title": title,
+                "is_active": active, "legacy_id": legacy}
     if table == "QCDefectPositions":
-        return {"code": code, "title": title,
+        return {"record_type": "Position", "code": code, "title": title,
                 "position_group": _target("QCDefectPositionGroups", row.get("PositionGroupId")),
                 "is_active": active, "legacy_id": legacy}
     if table == "Devices":
@@ -157,6 +160,8 @@ def _existing(dt, table, values, codefield):
         return frappe.db.get_value(dt, key, "name")
     if table == "Devices":
         return frappe.db.get_value(dt, {"device_id": values["device_id"]}, "name")
+    if table in ("QCDefectGroups", "QCDefects", "QCDefectPositionGroups", "QCDefectPositions"):
+        return frappe.db.get_value(dt, {codefield: values[codefield], "record_type": values["record_type"]}, "name")
     return frappe.db.get_value(dt, {codefield: values[codefield]}, "name")
 
 

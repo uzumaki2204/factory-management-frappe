@@ -8,8 +8,14 @@ from zoneinfo import ZoneInfo
 
 import frappe
 from factory_management import device_registry
+from factory_management import data_epoch as epoch
 from factory_management.api_access import require_report_access
 from factory_management.i18n import message
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def data_epoch():
+    return epoch.current()
 
 
 def _data(value, fallback=None):
@@ -127,6 +133,7 @@ def _rows(doctype, fields, filters=None, limit=20000):
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def register_device(device_id=None, device_uid=None, token=None, device_name=None,
                     browser_name=None, operating_system=None):
+    epoch.require_current()
     try:
         device_id = str(uuid.UUID(str(device_id))) if device_id else str(uuid.uuid4())
     except (TypeError, ValueError):
@@ -158,6 +165,7 @@ def register_device(device_id=None, device_uid=None, token=None, device_name=Non
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def check_device(device_id=None):
+    epoch.require_current()
     doc = _find_device(device_id)
     token = _token_from_request()
     pairing_status, _ = _token_pairing(doc, token)
@@ -179,10 +187,13 @@ def bootstrap(device_id=None):
     markets = _rows("Market", ["name", "code", "name_en"], {"is_active": 1})
     variants = _rows("Product Variant", ["name", "product", "qc_color", "size", "market"], {"is_active": 1})
     lines = _rows("Production Line", ["name", "line_code", "line_name", "company", "factory"], {"is_active": 1})
-    groups = _rows("QC Defect Group", ["name", "code", "title"], {"is_active": 1})
-    defects = _rows("QC Defect", ["name", "code", "title", "defect_group", "severity"], {"is_active": 1})
-    position_groups = _rows("QC Defect Position Group", ["name", "code", "title"], {"is_active": 1})
-    positions = _rows("QC Defect Position", ["name", "code", "title", "position_group"], {"is_active": 1})
+    groups = _rows("QC Defect", ["name", "code", "title"], {"is_active": 1, "record_type": "Group"})
+    defects = _rows("QC Defect", ["name", "code", "title", "defect_group", "severity"],
+                    {"is_active": 1, "record_type": "Defect"})
+    position_groups = _rows("QC Defect Position", ["name", "code", "title"],
+                            {"is_active": 1, "record_type": "Group"})
+    positions = _rows("QC Defect Position", ["name", "code", "title", "position_group"],
+                      {"is_active": 1, "record_type": "Position"})
     gm = {x.name: x for x in groups}
     pm = {x.name: x for x in position_groups}
     catalog = {
@@ -217,6 +228,10 @@ def _validate_event(item, device):
     for field, dt in links.items():
         if not _valid_link(dt, item.get(field)):
             _fail("error.unknown_master")
+    defect = item.get("defect")
+    if defect and (frappe.db.get_value("QC Defect", defect, "record_type") != "Defect" or
+                   not frappe.db.get_value("QC Defect", defect, "is_active")):
+        _fail("error.unknown_master")
     line = item.get("line") or device.line
     if line:
         if not device.company or frappe.db.get_value("Production Line", line, "company") != device.company:
@@ -226,6 +241,7 @@ def _validate_event(item, device):
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def sync_events(device_id=None, events=None):
+    epoch.require_current()
     device = _approved_device(device_id)
     items = _data(events, [])
     if not isinstance(items, list) or len(items) > 500:
@@ -361,9 +377,15 @@ def get_favorites(device_id=None):
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def replace_favorites(device_id=None, defect_ids=None):
+    epoch.require_current()
     device = _approved_device(device_id)
     wanted = set(str(x) for x in _data(defect_ids, []) or [])
-    if len(wanted) > 200 or any(not frappe.db.exists("QC Defect", x) for x in wanted):
+    if len(wanted) > 200 or any(
+        not frappe.db.exists("QC Defect", x) or
+        frappe.db.get_value("QC Defect", x, "record_type") != "Defect" or
+        not frappe.db.get_value("QC Defect", x, "is_active")
+        for x in wanted
+    ):
         _fail("error.unknown_master")
     existing = _rows("QC Favorite", ["name", "defect"], {"device": device.name})
     have = {x.defect: x.name for x in existing}

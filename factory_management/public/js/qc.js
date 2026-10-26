@@ -3,6 +3,9 @@
   const PREFIX = 'factory.qc.v1.';
   const PAGE_LOCK_CODE = '1234';
   const urlRoot = '/api/method/factory_management.api.';
+  const epochUrl = '/api/method/factory_management.api.data_epoch';
+  let epochGeneration = localStorage.getItem(PREFIX + 'data_epoch') || '';
+  let epochReloading = false;
   const $ = id => document.getElementById(id);
   let initialUnlockResolver = null;
   let autoFullscreenActivated = false;
@@ -267,6 +270,8 @@
     updateNetwork();
   }
   async function call(method, data = {}, verb = 'POST') {
+    const requestEpoch = await ensureDataEpoch();
+    if (epochReloading) throw new Error(t('error.network'));
     const params = new URLSearchParams();
     if (verb === 'GET') {
       Object.entries(data).forEach(([key, value]) => {
@@ -278,7 +283,8 @@
     try {
       response = await fetch(endpoint, {
         method: verb,
-        headers: {'Content-Type': 'application/json', 'X-QC-Token': state.token || ''},
+        headers: {'Content-Type': 'application/json', 'X-QC-Token': state.token || '',
+          'X-Factory-Data-Epoch': requestEpoch},
         credentials: 'omit',
         body: verb === 'GET' ? undefined : JSON.stringify(data)
       });
@@ -306,6 +312,32 @@
       throw error;
     }
     return result.message;
+  }
+  async function ensureDataEpoch() {
+    if (epochReloading) throw new Error(t('error.network'));
+    if (!navigator.onLine) return epochGeneration;
+    let response;
+    try { response = await fetch(epochUrl, {cache: 'no-store', credentials: 'omit'}); }
+    catch (_) { throw new Error(t('error.network')); }
+    if (!response.ok) throw new Error(t('error.network'));
+    const generation = String((await response.json()).message?.generation || '');
+    if (epochReloading) throw new Error(t('error.network'));
+    if (!generation || generation === epochGeneration) return epochGeneration;
+    epochReloading = true;
+    const deviceId = state.device?.device_id || localStorage.getItem('qc_device_id') || '';
+    Object.keys(localStorage).filter(key => key.startsWith(PREFIX)).forEach(key => localStorage.removeItem(key));
+    localStorage.removeItem('fm.client.device');
+    if (deviceId) localStorage.setItem('qc_device_id', deviceId);
+    localStorage.setItem(PREFIX + 'data_epoch', generation);
+    epochGeneration = generation;
+    if ('caches' in window) {
+      try {
+        const cacheKeys = await caches.keys();
+        await Promise.all(cacheKeys.filter(key => key.startsWith('factory-qc-')).map(key => caches.delete(key)));
+      } catch (_) { /* API writes remain fenced while the page reloads. */ }
+    }
+    window.location.reload();
+    throw new Error(t('error.network'));
   }
   async function clearDeviceCache() {
     if (state.syncing) { notice('error.cache_busy', true); return; }
@@ -1328,6 +1360,9 @@
   }
   async function init() {
     await loadLanguage();
+    if (navigator.onLine) {
+      try { await ensureDataEpoch(); } catch (_) { if (epochReloading) return; }
+    }
     if (!state.device) state.device = oldDevice();
     if (state.device && !state.token) state.token = randomToken();
     persistDevice();

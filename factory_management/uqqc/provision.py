@@ -13,7 +13,7 @@ from factory_management.uqqc.i18n import text
 ROOT = Path(__file__).parent
 CATALOG_MANAGER_ROLE = "UQQC Catalog Manager"
 CATALOG_TYPES = (
-    "UQQC Defect Group", "UQQC Defect", "UQQC Defect Position Group", "UQQC Defect Position",
+    "UQQC Defect", "UQQC Defect Position",
 )
 
 
@@ -48,30 +48,20 @@ def ensure_schema():
     if not frappe.db.exists("Role", CATALOG_MANAGER_ROLE):
         frappe.get_doc({"doctype": "Role", "role_name": CATALOG_MANAGER_ROLE, "desk_access": 1}).insert(ignore_permissions=True)
     catalog = {
-        "UQQC Defect Group": [
-            _field("code", reqd=1, in_list_view=1),
-            _field("title", reqd=1, in_list_view=1),
-            _field("is_active", "Check", default="1"),
-            _field("legacy_id", read_only=1),
-        ],
         "UQQC Defect": [
+            _field("record_type", "Select", "Group\nDefect", reqd=1, default="Defect", in_list_view=1),
             _field("code", reqd=1, in_list_view=1),
             _field("title", reqd=1, in_list_view=1),
-            _field("defect_group", "Link", "UQQC Defect Group", reqd=1),
+            _field("defect_group", "Link", "UQQC Defect"),
             _field("severity"),
             _field("is_active", "Check", default="1"),
             _field("legacy_id", read_only=1),
         ],
-        "UQQC Defect Position Group": [
-            _field("code", reqd=1, in_list_view=1),
-            _field("title", reqd=1, in_list_view=1),
-            _field("is_active", "Check", default="1"),
-            _field("legacy_id", read_only=1),
-        ],
         "UQQC Defect Position": [
+            _field("record_type", "Select", "Group\nPosition", reqd=1, default="Position", in_list_view=1),
             _field("code", reqd=1, in_list_view=1),
             _field("title", reqd=1, in_list_view=1),
-            _field("position_group", "Link", "UQQC Defect Position Group", reqd=1),
+            _field("position_group", "Link", "UQQC Defect Position"),
             _field("is_active", "Check", default="1"),
             _field("legacy_id", read_only=1),
         ],

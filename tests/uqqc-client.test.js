@@ -46,12 +46,24 @@ class Element {
         };
     }
     setAttribute(key, value) { this.attributes[key] = String(value); }
-    append(...elements) { elements.forEach(el => el.tag === 'fragment' ? this.append(...el.children) : this.children.push(el)); }
+    append(...elements) { elements.forEach(el => {
+        if (el.tag === 'fragment') this.append(...el.children);
+        else { el.parent = this; this.children.push(el); }
+    }); }
     appendChild(el) { this.append(el); return el; }
     replaceChildren(...elements) { this.children = []; this.append(...elements); }
     addEventListener(type, handler) { (this.handlers[type] ||= []).push(handler); }
     click() { (this.handlers.click || []).forEach(handler => handler({ target: this, stopPropagation() {}, preventDefault() {} })); }
     focus() { this.focused = true; }
+    closest(selector) {
+        let node = this;
+        while (node) {
+            if (selector.startsWith('.') && selector.slice(1).split('.').every(name => node.classList.contains(name)))
+                return node;
+            node = node.parent;
+        }
+        return null;
+    }
     pause() {}
     querySelectorAll(selector) {
         const matches = selector.split(',').map(value => value.trim());
@@ -66,8 +78,9 @@ class Element {
 function response(data) { return { ok: true, status: 200, json: async () => ({ message: data }) }; }
 function snapshot(scopes = []) { return { serverDateKey: dateKey, serverNowUtc: new Date().toISOString(), serverUtcOffsetMinutes: 0, scopes }; }
 function deferred() { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; }
+async function flushRequests() { for (let index = 0; index < 6; index++) await Promise.resolve(); }
 
-function createClient(fetch = async () => { throw new Error('offline'); }, localStorage = new Storage()) {
+function createClient(fetch = async () => { throw new Error('offline'); }, localStorage = new Storage(), generation = '') {
     const nodes = new Map();
     const document = {
         documentElement: new Element(),
@@ -86,7 +99,10 @@ function createClient(fetch = async () => { throw new Error('offline'); }, local
         location: { href: 'http://localhost/uqqc', reload() { reloads++; } }
     };
     const context = { document, window, localStorage, sessionStorage: new Storage(),
-        navigator: { onLine: true }, fetch, crypto: { randomUUID, getRandomValues: array => require('node:crypto').randomFillSync(array) }, URL, console };
+        navigator: { onLine: true }, fetch: (url, options) =>
+            url === '/api/method/factory_management.api.data_epoch'
+                ? Promise.resolve(response({ generation })) : fetch(url, options),
+        crypto: { randomUUID, getRandomValues: array => require('node:crypto').randomFillSync(array) }, URL, console };
     vm.runInNewContext(testSource, context);
     const { client } = context;
     client.state.device = { id: 'device', status: 'Approved', isActive: true };
@@ -108,7 +124,8 @@ function cacheScope(client, values = { pass: 185, rework: 0, defectNo: 1, defect
 test('position star persists independently without choosing a position, closing popup or queuing an event', () => {
     const client = createClient();
     client.openDefectPositionPicker('defect');
-    client.elements.positionGrid.querySelector('.uqqc-position-favorite-button').click();
+    client.elements.positionGrid.querySelectorAll('.uqqc-position-favorite-button')
+        .find(button => button.dataset.positionId === 'front').click();
     assert.equal(client.state.positionFavorites.has('front'), true);
     assert.equal(client.state.activeDefectId, 'defect');
     assert.equal(client.elements.positionPanel.classList.contains('open'), true);
@@ -134,7 +151,9 @@ test('position content button chooses the position and queues exactly one defect
     const client = createClient();
     client.navigator.onLine = false;
     client.openDefectPositionPicker('defect');
-    client.elements.positionGrid.querySelector('.uqqc-scope-picker-option').click();
+    client.elements.positionGrid.querySelectorAll('.uqqc-position-card')
+        .find(card => card.querySelector('.uqqc-position-favorite-button').dataset.positionId === 'front')
+        .querySelector('.uqqc-defect-name').click();
     assert.equal(client.elements.positionPanel.classList.contains('open'), false);
     assert.equal(client.state.queue.length, 1);
     assert.equal(client.state.queue[0].defectPositionId, 'front');
@@ -356,6 +375,7 @@ test('hydration waits for in-flight sync and concurrent sync callers share one b
     const syncing = client.syncQueue();
     const secondSync = client.syncQueue();
     const restoring = client.hydrateDetailSnapshots();
+    await flushRequests();
     assert.deepEqual(requests, ['/api/method/uqqc-inspections-sync']);
     gate.resolve();
     await Promise.all([syncing, secondSync, restoring]);
@@ -376,6 +396,7 @@ test('sync started during restore waits and cannot double count pending events i
     const restoring = client.hydrateDetailSnapshots();
     client.state.queue = [{ ...scope, localEventId: 'pending', serverDateKey: dateKey, eventKind: 'pass' }];
     const syncing = client.syncQueue();
+    await flushRequests();
     assert.deepEqual(requests, ['/api/method/uqqc-inspections-detail-snapshot']);
     gate.resolve();
     await Promise.all([restoring, syncing]);
@@ -392,6 +413,38 @@ test('Frappe requests carry a persistent UQQC token and unwrap message', async (
     assert.match(calls[0].options.headers['X-UQQC-Token'], /^[a-f0-9]{64}$/);
     assert.equal(calls[0].options.headers['X-UQQC-Token'], calls[1].options.headers['X-UQQC-Token']);
     assert.equal(calls[0].url, '/api/method/uqqc-bootstrap?deviceId=device');
+});
+
+test('new data generation clears stale UQQC queue and token before sync', async () => {
+    const storage = new Storage();
+    storage.setItem(prefix + 'device-id', 'device');
+    storage.setItem(prefix + 'offline-queue', JSON.stringify([{ localEventId: 'old' }]));
+    storage.setItem(prefix + 'device-token:device', 'old-token');
+    let writes = 0;
+    const client = createClient(async () => { writes++; return response({}); }, storage, 'new');
+    await assert.rejects(client.requestJson('/api/method/uqqc-inspections-sync',
+        { method: 'POST', body: '{}' }));
+    assert.equal(writes, 0);
+    assert.equal(storage.getItem(prefix + 'offline-queue'), null);
+    assert.equal(storage.getItem(prefix + 'device-token:device'), null);
+    assert.equal(storage.getItem(prefix + 'device-id'), 'device');
+    assert.equal(storage.getItem(prefix + 'data-epoch'), 'new');
+    assert.equal(client.reloads, 1);
+});
+
+test('concurrent requests cannot send an old UQQC queue after a generation change', async () => {
+    let writes = 0;
+    const storage = new Storage();
+    storage.setItem(prefix + 'device-id', 'device');
+    storage.setItem(prefix + 'offline-queue', JSON.stringify([{ localEventId: 'old' }]));
+    const client = createClient(async () => { writes++; return response({}); }, storage, 'new');
+    const requests = await Promise.allSettled([
+        client.requestJson('/api/method/uqqc-inspections-sync', { method: 'POST', body: '{}' }),
+        client.requestJson('/api/method/uqqc-inspections-sync', { method: 'POST', body: '{}' })
+    ]);
+    assert.equal(requests.every(result => result.status === 'rejected'), true);
+    assert.equal(writes, 0);
+    assert.equal(storage.getItem(prefix + 'offline-queue'), null);
 });
 
 test('storage failure cannot queue a pass or leave an unfinished defective piece', () => {

@@ -141,9 +141,7 @@ Service Key,Service Key
 Enabled,Enabled
 Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.,Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.
 The sync transaction conflicted. Pending data is retained and will be retried automatically.,The sync transaction conflicted. Pending data is retained and will be retried automatically.
-UQQC Defect Group,UQQC Defect Group
 UQQC Defect,UQQC Defect
-UQQC Defect Position Group,UQQC Defect Position Group
 UQQC Defect Position,UQQC Defect Position
 UQQC Catalog Manager,UQQC Catalog Manager
 Code,Code
@@ -153,5 +151,10 @@ Defect Position Group,Defect Position Group
 Position Group,Position Group
 Severity,Severity
 Legacy ID,Legacy ID
-Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position catalogs come from four independent UQQC DocTypes; production masters remain shared.,Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position catalogs come from four independent UQQC DocTypes; production masters remain shared.
+Record Type,Record Type
+Parent Group,Parent Group
+Group,Group
+Defect,Defect
+Position,Position
+Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position groups are stored as record types in their respective UQQC catalog DocTypes; production masters remain shared.,Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position groups are stored as record types in their respective UQQC catalog DocTypes; production masters remain shared.
 Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.,Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.

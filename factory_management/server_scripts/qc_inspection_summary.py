@@ -107,7 +107,7 @@ INNER JOIN `tabCompany` c ON c.name = f.company
 LEFT JOIN `tabLine Group Assignment` lga ON lga.line = pl.name AND lga.is_active = 1
 LEFT JOIN `tabLine Group` lg ON lg.name = lga.line_group
 LEFT JOIN `tabQC Defect` qd ON qd.name = e.defect
-LEFT JOIN `tabQC Defect Group` qdg ON qdg.name = qd.defect_group
+LEFT JOIN `tabQC Defect` qdg ON qdg.name = qd.defect_group AND qdg.record_type = 'Group'
 LEFT JOIN `tabSize` s ON s.name = e.size
 LEFT JOIN `tabProduct Color` cl ON cl.name = e.color
 WHERE e.occurred_at >= %(date_from)s

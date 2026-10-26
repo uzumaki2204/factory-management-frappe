@@ -16,6 +16,10 @@ permission_query_conditions = {"Web Page": "factory_management.web_page_permissi
 doc_events = {
     "API Documentation Service": {"validate": "factory_management.api_docs.validate_service"},
     "API Documentation Endpoint": {"validate": "factory_management.api_docs.validate_endpoint"},
+    "QC Defect": {"validate": "factory_management.catalog.validate_qc_defect"},
+    "QC Defect Position": {"validate": "factory_management.catalog.validate_qc_position"},
+    "UQQC Defect": {"validate": "factory_management.catalog.validate_uqqc_defect"},
+    "UQQC Defect Position": {"validate": "factory_management.catalog.validate_uqqc_position"},
     "Factory Device": {
         "validate": "factory_management.device.on_validate",
     },

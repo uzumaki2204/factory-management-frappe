@@ -90,7 +90,6 @@ def bootstrap(data, endpoint):
         "sizes": ("Size", "size_code", "size_label", {"is_active": 1}),
         "markets": ("Market", "code", "name_en", {"is_active": 1}),
         "lines": ("Production Line", "line_code", "line_name", {"is_active": 1, "company": device.company}),
-        "defectPositionGroups": ("UQQC Defect Position Group", "code", "title", {"is_active": 1}),
     }
     extra = {"products": ["customer", "production_season"], "lines": ["company", "factory"], "factories": ["company"]}
     catalog = {}
@@ -109,18 +108,24 @@ def bootstrap(data, endpoint):
         if row.product in valid_ids["products"] and row.qc_color in valid_ids["colors"]
         and row.size in valid_ids["sizes"] and row.market in valid_ids["markets"]
     ]
-    groups = {row.name: row for row in rows("UQQC Defect Group", ["name", "code", "title"], {"is_active": 1})}
+    position_group_rows = rows("UQQC Defect Position", ["name", "code", "title"],
+                               {"is_active": 1, "record_type": "Group"})
+    catalog["defectPositionGroups"] = [qc._option(row, "code", "title") for row in position_group_rows]
+    groups = {row.name: row for row in rows("UQQC Defect", ["name", "code", "title"],
+                                             {"is_active": 1, "record_type": "Group"})}
     catalog["defects"] = [
         {"id": row.name, "code": row.code, "name": row.title, "groupCode": groups[row.defect_group].code,
          "groupName": groups[row.defect_group].title, "severity": row.severity}
-        for row in rows("UQQC Defect", ["name", "code", "title", "defect_group", "severity"], {"is_active": 1})
+        for row in rows("UQQC Defect", ["name", "code", "title", "defect_group", "severity"],
+                        {"is_active": 1, "record_type": "Defect"})
         if row.defect_group in groups
     ]
-    positions = {row["id"]: row for row in catalog["defectPositionGroups"]}
+    positions = {row.name: row for row in position_group_rows}
     catalog["defectPositions"] = [
         {"id": row.name, "code": row.code, "name": row.title, "positionGroupId": row.position_group,
-         "groupCode": positions[row.position_group]["code"], "groupName": positions[row.position_group]["name"]}
-        for row in rows("UQQC Defect Position", ["name", "code", "title", "position_group"], {"is_active": 1})
+         "groupCode": positions[row.position_group].code, "groupName": positions[row.position_group].title}
+        for row in rows("UQQC Defect Position", ["name", "code", "title", "position_group"],
+                        {"is_active": 1, "record_type": "Position"})
         if row.position_group in positions
     ]
     version = hashlib.sha256(json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
@@ -175,16 +180,24 @@ def _event(item, kind, device):
         if type(version) is not int or version not in (1, 2) or type(quantity) is not int or quantity != 1:
             fail("api.input")
         defect = item.get("defectId")
-        group = _master_value("UQQC Defect", defect, "defect_group") if isinstance(defect, str) and _master_value("UQQC Defect", defect, "is_active") else None
-        if not group or not _master_value("UQQC Defect Group", group, "is_active"):
+        valid_defect = (isinstance(defect, str) and
+                        _master_value("UQQC Defect", defect, "is_active") and
+                        _master_value("UQQC Defect", defect, "record_type") == "Defect")
+        group = _master_value("UQQC Defect", defect, "defect_group") if valid_defect else None
+        if not group or not _master_value("UQQC Defect", group, "is_active") or \
+                _master_value("UQQC Defect", group, "record_type") != "Group":
             fail("api.defect")
         position = item.get("defectPositionId")
         piece = item.get("defectPieceId")
         if version == 2 and (not position or not piece):
             fail("api.position_piece")
         if position:
-            group = _master_value("UQQC Defect Position", position, "position_group") if isinstance(position, str) and _master_value("UQQC Defect Position", position, "is_active") else None
-            if not group or not _master_value("UQQC Defect Position Group", group, "is_active"):
+            valid_position = (isinstance(position, str) and
+                              _master_value("UQQC Defect Position", position, "is_active") and
+                              _master_value("UQQC Defect Position", position, "record_type") == "Position")
+            group = _master_value("UQQC Defect Position", position, "position_group") if valid_position else None
+            if not group or not _master_value("UQQC Defect Position", group, "is_active") or \
+                    _master_value("UQQC Defect Position", group, "record_type") != "Group":
                 fail("api.position_piece")
         if piece:
             try:

@@ -161,7 +161,7 @@
     "docs.description": "API tablet UQQC. Hợp đồng và role được quản lý trong Frappe Desk.",
     "docs.reader": "Tablet dùng X-UQQC-Token. User Frappe có thể đọc bằng role trong Allowed Roles của API.",
     "docs.device": "Yêu cầu X-UQQC-Token. Thiết bị dùng Factory Device và phải được cấp quyền UQQC; token được lưu tại Factory Device Client.",
-    "docs.bootstrap_catalog": "Tablet dùng X-UQQC-Token; User Frappe cần role trong Allowed Roles. Danh mục lỗi và vị trí lấy từ bốn DocType UQQC riêng; dữ liệu sản xuất tiếp tục dùng chung.",
+    "docs.bootstrap_catalog": "Tablet dùng X-UQQC-Token; User Frappe cần role trong Allowed Roles. Nhóm lỗi và nhóm vị trí được lưu thành các loại bản ghi trong DocType danh mục UQQC tương ứng; dữ liệu sản xuất tiếp tục dùng chung.",
     "docs.sync_catalog": "Yêu cầu X-UQQC-Token. defectId và defectPositionId phải tham chiếu danh mục UQQC đang hoạt động; ID và cấu trúc payload tablet được giữ nguyên.",
     "docs.device_legacy": "Requires X-UQQC-Token. Shares QC Device identity; manages separate tokens in UQQC Device Client.",
     "docs.success": "Dữ liệu được trả trong message.",
@@ -204,7 +204,17 @@
     "kind.rework": "Làm lại",
     "kind.defect": "Lỗi",
     "doctype.event": "Sự kiện kiểm tra UQQC",
-    "doctype.client": "Client thiết bị UQQC"
+    "doctype.client": "Client thiết bị UQQC",
+    "field.record_type": "Loại bản ghi",
+    "field.parent_group": "Nhóm cha",
+    "catalog.group_cannot_have_parent": "Bản ghi nhóm không được liên kết đến nhóm cha.",
+    "catalog.invalid_record_type": "Loại bản ghi danh mục không hợp lệ.",
+    "catalog.parent_required": "Hãy chọn nhóm cha cho bản ghi lỗi hoặc vị trí.",
+    "catalog.parent_must_be_group": "Bản ghi cha phải là một nhóm.",
+    "catalog.merge_missing_group": "{doctype}: bản ghi {record} tham chiếu đến nhóm không tồn tại: {group}.",
+    "catalog.merge_custom_field_conflict": "Không thể gộp trường tùy chỉnh {field} từ {source} vào {target} vì cấu hình trường bị trùng nhưng khác nhau.",
+    "catalog.merge_property_conflict": "Không thể gộp cài đặt trường {field} từ {source} vào {target} vì giá trị cài đặt bị xung đột.",
+    "catalog.merge_report_script": "Server Script QC Inspection Summary tùy chỉnh vẫn tham chiếu đến DocType QC Defect Group. Hãy cập nhật truy vấn này trước khi chạy migrate."
   },
   "en": {
     "reorderActions": "Reorder the visible list",
@@ -368,7 +378,7 @@
     "docs.description": "UQQC tablet APIs. Contracts and allowed roles are managed in Frappe Desk.",
     "docs.reader": "Tablets use X-UQQC-Token. Frappe users may read with a role listed in this endpoint Allowed Roles.",
     "docs.device": "Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.",
-    "docs.bootstrap_catalog": "Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position catalogs come from four independent UQQC DocTypes; production masters remain shared.",
+    "docs.bootstrap_catalog": "Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position groups are stored as record types in their respective UQQC catalog DocTypes; production masters remain shared.",
     "docs.sync_catalog": "Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.",
     "docs.device_legacy": "Requires X-UQQC-Token. Shares QC Device identity; manages separate tokens in UQQC Device Client.",
     "docs.success": "Response data is returned inside message.",
@@ -411,6 +421,16 @@
     "kind.rework": "rework",
     "kind.defect": "defect",
     "doctype.event": "UQQC Inspection Event",
-    "doctype.client": "Factory Device Client"
+    "doctype.client": "Factory Device Client",
+    "field.record_type": "Record Type",
+    "field.parent_group": "Parent Group",
+    "catalog.group_cannot_have_parent": "A group record cannot have a parent group.",
+    "catalog.invalid_record_type": "The catalog record type is invalid.",
+    "catalog.parent_required": "Select a parent group for each defect or position record.",
+    "catalog.parent_must_be_group": "The parent record must be a group.",
+    "catalog.merge_missing_group": "{doctype}: record {record} refers to a missing group: {group}.",
+    "catalog.merge_custom_field_conflict": "Cannot merge custom field {field} from {source} into {target} because the target has a different field definition.",
+    "catalog.merge_property_conflict": "Cannot merge the property setter for {field} from {source} into {target} because the target value conflicts.",
+    "catalog.merge_report_script": "The customized QC Inspection Summary Server Script still references QC Defect Group. Update that query before running migrate."
   }
 }

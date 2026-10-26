@@ -141,9 +141,7 @@ Service Key,Mã dịch vụ
 Enabled,Đã bật
 Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.,Yêu cầu X-UQQC-Token. Thiết bị phải có quyền UQQC; token được lưu tại Factory Device Client.
 The sync transaction conflicted. Pending data is retained and will be retried automatically.,Giao dịch đồng bộ đang xung đột. Dữ liệu chờ được giữ lại và sẽ tự động thử lại.
-UQQC Defect Group,Nhóm lỗi UQQC
 UQQC Defect,Lỗi UQQC
-UQQC Defect Position Group,Nhóm vị trí lỗi UQQC
 UQQC Defect Position,Vị trí lỗi UQQC
 UQQC Catalog Manager,Người quản lý danh mục UQQC
 Code,Mã
@@ -153,5 +151,10 @@ Defect Position Group,Nhóm vị trí lỗi
 Position Group,Nhóm vị trí lỗi
 Severity,Mức độ nghiêm trọng
 Legacy ID,ID dữ liệu gốc
-Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position catalogs come from four independent UQQC DocTypes; production masters remain shared.,Tablet dùng X-UQQC-Token; User Frappe cần role trong Allowed Roles. Danh mục lỗi và vị trí lấy từ bốn DocType UQQC riêng; dữ liệu sản xuất tiếp tục dùng chung.
+Record Type,Loại bản ghi
+Parent Group,Nhóm cha
+Group,Nhóm
+Defect,Lỗi
+Position,Vị trí
+Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position groups are stored as record types in their respective UQQC catalog DocTypes; production masters remain shared.,Tablet dùng X-UQQC-Token; User Frappe cần role trong Allowed Roles. Nhóm lỗi và nhóm vị trí được lưu thành các loại bản ghi trong DocType danh mục UQQC tương ứng; dữ liệu sản xuất tiếp tục dùng chung.
 Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.,Yêu cầu X-UQQC-Token. defectId và defectPositionId phải tham chiếu danh mục UQQC đang hoạt động; ID và cấu trúc payload tablet được giữ nguyên.

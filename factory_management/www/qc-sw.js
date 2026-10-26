@@ -1,5 +1,5 @@
-const CACHE = 'factory-qc-v53';
-const SHELL = ['/assets/factory_management/js/qc.js?v=51', '/assets/factory_management/js/qc-i18n.json?v=44', '/assets/factory_management/css/qc-layout.css?v=11', '/assets/factory_management/images/qc-logo.png', '/assets/factory_management/manifest.json'];
+const CACHE = 'factory-qc-v54';
+const SHELL = ['/assets/factory_management/js/qc.js?v=52', '/assets/factory_management/js/qc-i18n.json?v=44', '/assets/factory_management/css/qc-layout.css?v=11', '/assets/factory_management/images/qc-logo.png', '/assets/factory_management/manifest.json'];
 
 async function cachePublicPage() {
   // Frappe's Web Page embeds session data. Cache only its public Guest variant.

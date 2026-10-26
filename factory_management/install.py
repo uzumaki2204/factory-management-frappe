@@ -108,30 +108,20 @@ MASTER_TYPES = {
         field("is_active", "Active", "Check", default="1"),
         field("legacy_id", "Legacy ID", read_only=1),
     ],
-    "QC Defect Group": [
-        field("code", "Code", reqd=1, in_list_view=1),
-        field("title", "Title", reqd=1, in_list_view=1),
-        field("is_active", "Active", "Check", default="1"),
-        field("legacy_id", "Legacy ID", read_only=1),
-    ],
     "QC Defect": [
+        field("record_type", "Record Type", "Select", "Group\nDefect", reqd=1, default="Defect", in_list_view=1),
         field("code", "Code", reqd=1, in_list_view=1),
         field("title", "Title", reqd=1, in_list_view=1),
-        field("defect_group", "Defect Group", "Link", "QC Defect Group", reqd=1),
+        field("defect_group", "Parent Group", "Link", "QC Defect"),
         field("severity", "Severity"),
         field("is_active", "Active", "Check", default="1"),
         field("legacy_id", "Legacy ID", read_only=1),
     ],
-    "QC Defect Position Group": [
-        field("code", "Code", reqd=1, in_list_view=1),
-        field("title", "Title", reqd=1, in_list_view=1),
-        field("is_active", "Active", "Check", default="1"),
-        field("legacy_id", "Legacy ID", read_only=1),
-    ],
     "QC Defect Position": [
+        field("record_type", "Record Type", "Select", "Group\nPosition", reqd=1, default="Position", in_list_view=1),
         field("code", "Code", reqd=1, in_list_view=1),
         field("title", "Title", reqd=1, in_list_view=1),
-        field("position_group", "Position Group", "Link", "QC Defect Position Group", reqd=1),
+        field("position_group", "Parent Group", "Link", "QC Defect Position"),
         field("is_active", "Active", "Check", default="1"),
         field("legacy_id", "Legacy ID", read_only=1),
     ],
@@ -227,6 +217,10 @@ TRANSACTION_TYPES = {
 }
 
 DEVICE_TYPES = {
+    "Factory Data Epoch": [
+        field("generation", "Generation", reqd=1, unique=1),
+        field("reset_at_utc", "Reset At UTC", "Datetime", reqd=1),
+    ],
     "Factory Device": [
         field("device_id", "Device ID", reqd=1, unique=1, in_list_view=1),
         field("device_uid", "Device UID", reqd=1, unique=1, in_list_view=1),
