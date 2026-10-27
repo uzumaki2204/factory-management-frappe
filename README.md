@@ -50,7 +50,7 @@ cd factory-management-frappe-docker-v0.1.20
 sudo ./install-docker.sh
 ```
 
-Bộ cài đọc Compose project và image đang chạy từ metadata Docker, rồi kiểm tra Frappe 16.53.0, kiến trúc `linux/amd64` và `PULL_POLICY=never`. Trước khi triển khai, script yêu cầu xác nhận, sao lưu database cùng files của từng site, tạo image mới dựa trên image Frappe cục bộ và chỉ sửa `CUSTOM_TAG` trong `.env`. Sau đó nó tạo lại các dịch vụ backend, frontend, websocket, worker và scheduler; database cùng Redis không bị tạo lại. Script bật maintenance mode trong khi cài app, bật Server Scripts và chạy migrate. Các bản sao lưu và bản `.env` gốc được giữ trong thư mục `backups/factory-management-*` cạnh dự án Compose.
+Bộ cài đọc Compose project và image đang chạy từ metadata Docker, rồi kiểm tra Frappe 16.53.0, kiến trúc `linux/amd64` và `PULL_POLICY=never` hoặc `missing`. Cả hai chính sách đều dùng image đã có trên máy; Compose chỉ kéo image với `missing` khi image chưa có trong cache. Trước khi triển khai, script yêu cầu xác nhận, sao lưu database cùng files của từng site, tạo image mới dựa trên image Frappe cục bộ và chỉ sửa `CUSTOM_TAG` trong `.env`. Sau đó nó tạo lại các dịch vụ backend, frontend, websocket, worker và scheduler; database cùng Redis không bị tạo lại. Script bật maintenance mode trong khi cài app, bật Server Scripts và chạy migrate. Các bản sao lưu và bản `.env` gốc được giữ trong thư mục `backups/factory-management-*` cạnh dự án Compose.
 
 Không dùng gói Docker này cho máy chưa có stack Frappe Docker. Nếu máy có nhiều backend Compose, truyền tên container cần triển khai qua `FRAPPE_BACKEND_CONTAINER`. Gói không tự chạy trên máy Production khi được tạo; quản trị viên chủ động tải lên và chạy lệnh cài đặt.
 

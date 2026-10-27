@@ -81,7 +81,7 @@ CUSTOM_IMAGE="$(read_env CUSTOM_IMAGE)"
 CUSTOM_TAG="$(read_env CUSTOM_TAG)"
 PULL_POLICY="$(read_env PULL_POLICY)"
 [[ -n "$CUSTOM_IMAGE" && -n "$CUSTOM_TAG" && -n "$PULL_POLICY" ]] || fail env_invalid
-[[ "$PULL_POLICY" == never ]] || fail pull_policy
+[[ "$PULL_POLICY" == never || "$PULL_POLICY" == missing ]] || fail pull_policy
 BASE_IMAGE="$CUSTOM_IMAGE:$CUSTOM_TAG"
 docker image inspect "$BASE_IMAGE" >/dev/null 2>&1 || fail image_missing
 IMAGE_ARCH="$(docker image inspect --format '{{.Os}}/{{.Architecture}}' "$BASE_IMAGE")"
