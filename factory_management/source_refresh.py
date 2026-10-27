@@ -103,9 +103,15 @@ def _check_relations(directory):
             seen.add(source_id)
             if table not in ("ProductVariants", "LineGroupDetails", "Devices", "QCInspections"):
                 code = str(row.get("Code") or "").strip().casefold()
-                if not code or code in seen_codes:
+                if not code:
                     raise RefreshError("DuplicateSourceCode", table + ":" + code)
-                seen_codes.add(code)
+                # Only enforce global code uniqueness where the destination
+                # DocType has a unique field. Factory codes are scoped by
+                # company in SQL and are intentionally non-unique in Frappe.
+                if table in ("Companies", "LineGroups"):
+                    if code in seen_codes:
+                        raise RefreshError("DuplicateSourceCode", table + ":" + code)
+                    seen_codes.add(code)
             if table == "Devices":
                 uid = str(row.get("DeviceUid") or "").strip().casefold()
                 if not uid or uid in uids:
