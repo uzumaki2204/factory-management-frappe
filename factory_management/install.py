@@ -45,9 +45,9 @@ MASTER_TYPES = {
         field("color_name", "Color Name"),
         field("is_active", "Active", "Check", default="0"),
     ],
-    "Size": [
+    "ProductSize": [
         field("size_code", "Size Code", in_list_view=1),
-        field("size_label", "Size Name"),
+        field("size_label", "Size Label", reqd=1),
         field("sort_order", "Sort Order", "Int"),
         field("is_active", "Active", "Check", default="0"),
     ],
@@ -55,7 +55,7 @@ MASTER_TYPES = {
         field("product", "Product", "Link", "Product"),
         field("market", "Market", "Link", "Market"),
         field("color", "Color", "Link", "Color"),
-        field("size", "Size", "Link", "Size"),
+        field("size", "Size", "Link", "ProductSize"),
         field("is_active", "Active", "Check", default="0"),
     ],
     "Customer": [
@@ -136,7 +136,7 @@ MASTER_TYPE_MODULES = {
     "Product": "KTG Master Data",
     "Product Variant": "KTG Master Data",
     "Color": "KTG Master Data",
-    "Size": "KTG Master Data",
+    "ProductSize": "KTG Master Data",
     "Customer": "KTG Master Data",
     "Factory": "KTG Master Data",
     "Product Color": "KTG Master Data",
@@ -154,6 +154,8 @@ DOCTYPE_SETTINGS = {
     "Product Color": {"naming_rule": "By fieldname", "autoname": "field:color_code", "allow_rename": 1},
     "Production Season": {"naming_rule": "By fieldname", "autoname": "field:season_code", "allow_rename": 1},
     "QC Defect": {"naming_rule": "By fieldname", "autoname": "field:code", "allow_rename": 1},
+    "ProductSize": {"naming_rule": "By fieldname", "autoname": "field:size_label", "allow_rename": 1},
+    "Line Group": {"naming_rule": "By fieldname", "autoname": "field:group_code", "allow_rename": 1},
     "Market": {"naming_rule": "By fieldname", "autoname": "field:code", "allow_rename": 1},
     "Production Line": {"naming_rule": "By fieldname", "autoname": "field:line_code", "allow_rename": 1},
 }
@@ -210,7 +212,7 @@ TRANSACTION_TYPES = {
         field("product", "Product", "Link", "Product", in_list_view=1),
         field("line", "Line", "Link", "Production Line"),
         field("color", "Color", "Link", "Product Color"),
-        field("size", "Size", "Link", "Size"),
+        field("size", "Size", "Link", "ProductSize"),
         field("defect", "Defect", "Link", "QC Defect"),
         field("quantity_delta", "Quantity Delta", "Int"),
         field("occurred_at", "Occurred At", "Datetime", reqd=1, in_list_view=1),

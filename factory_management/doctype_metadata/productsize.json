@@ -105,7 +105,7 @@
         "read_only": 0,
         "remember_last_selected_value": 0,
         "report_hide": 0,
-        "reqd": 0,
+        "reqd": 1,
         "search_index": 0,
         "set_only_once": 0,
         "show_dashboard": 0,
@@ -232,8 +232,8 @@
     "make_attachments_public": 0,
     "max_attachments": 0,
     "module": "KTG Master Data",
-    "name": "Size",
-    "naming_rule": "Random",
+    "name": "ProductSize",
+    "naming_rule": "By fieldname",
     "permissions": [
       {
         "amend": 0,
@@ -449,7 +449,8 @@
     "track_changes": 0,
     "track_seen": 0,
     "track_views": 0,
-    "translated_doctype": 0
+    "translated_doctype": 0,
+    "autoname": "field:size_label"
   },
   "property_setters": [],
   "roles": [

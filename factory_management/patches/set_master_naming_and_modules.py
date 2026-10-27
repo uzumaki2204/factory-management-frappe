@@ -11,6 +11,8 @@ DOCTYPE_SETTINGS = {
     "Factory": {"fieldname": "factory_code", "module": "KTG Master Data"},
     "Product Color": {"fieldname": "color_code", "module": "KTG Master Data"},
     "Production Season": {"fieldname": "season_code", "module": "KTG Master Data"},
+    "ProductSize": {"fieldname": "size_label", "module": "KTG Master Data"},
+    "Line Group": {"fieldname": "group_code", "module": "KTG Master Data"},
 }
 
 

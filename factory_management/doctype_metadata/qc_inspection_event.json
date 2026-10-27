@@ -415,7 +415,7 @@
         "no_copy": 0,
         "non_negative": 0,
         "not_nullable": 0,
-        "options": "Size",
+        "options": "ProductSize",
         "permlevel": 0,
         "precision": "",
         "print_hide": 0,

@@ -25,7 +25,7 @@ MANAGED = (
     "Factory Device Client", "Factory Device",
     "Product Variant", "Line Group Assignment", "QC Defect", "QC Defect Position",
     "UQQC Defect", "UQQC Defect Position", "Production Line", "Line Group",
-    "Product", "Production Season", "Customer", "Product Color", "Color", "Size", "Market",
+    "Product", "Production Season", "Customer", "Product Color", "Color", "ProductSize", "Market",
     "Factory", "Company",
 )
 DELETE_ORDER = MANAGED
@@ -94,6 +94,7 @@ def _check_relations(directory):
     uids = set()
     variants = set()
     event_keys = set()
+    size_labels = set()
     for table in TABLES:
         seen, seen_codes = set(), set()
         for row in _rows(directory, table):
@@ -122,6 +123,14 @@ def _check_relations(directory):
                 if variant in variants:
                     raise RefreshError("DuplicateSourceId", table)
                 variants.add(variant)
+            if table == "Sizes":
+                label = str(row.get("Name") or "").strip()
+                normalized_label = label.casefold()
+                if not label or len(label) > 140:
+                    raise RefreshError("InvalidSnapshot", "Sizes.SizeLabel")
+                if normalized_label in size_labels:
+                    raise RefreshError("DuplicateSourceCode", "Sizes.SizeLabel:" + label)
+                size_labels.add(normalized_label)
             if table == "QCInspections" and (row.get("IsDeleted") or row.get("Source") != "QC"):
                 raise RefreshError("InvalidSnapshot", table)
             if table == "QCInspections":

@@ -181,7 +181,7 @@ def bootstrap(device_id=None):
     seasons = _rows("Production Season", ["name", "season_code", "season_name"], {"is_active": 1})
     products = _rows("Product", ["name", "product_code", "product_name", "customer", "production_season"], {"is_active": 1})
     colors = _rows("Product Color", ["name", "color_code", "color_name"], {"is_active": 1})
-    sizes = _rows("Size", ["name", "size_code", "size_label"], {"is_active": 1})
+    sizes = _rows("ProductSize", ["name", "size_code", "size_label"], {"is_active": 1})
     markets = _rows("Market", ["name", "code", "name_en"], {"is_active": 1})
     variants = _rows("Product Variant", ["name", "product", "qc_color", "size", "market"], {"is_active": 1})
     lines = _rows("Production Line", ["name", "line_code", "line_name", "company", "factory"], {"is_active": 1})
@@ -222,7 +222,7 @@ def _validate_event(item, device):
     if not local_id or len(local_id) > 100:
         _fail("error.event_id")
     links = {"product": "Product", "line": "Production Line", "color": "Product Color",
-             "size": "Size", "defect": "QC Defect"}
+             "size": "ProductSize", "defect": "QC Defect"}
     for field, dt in links.items():
         if not _valid_link(dt, item.get(field)):
             _fail("error.unknown_master")

@@ -19,7 +19,7 @@ from factory_management.uqqc.i18n import fail, text
 
 EVENT_TYPE = "UQQC Inspection Event"
 SCOPE = {"lineId": "line", "productId": "product", "colorId": "color", "sizeId": "size", "marketId": "market"}
-LINKS = {"line": "Production Line", "product": "Product", "color": "Product Color", "size": "Size", "market": "Market"}
+LINKS = {"line": "Production Line", "product": "Product", "color": "Product Color", "size": "ProductSize", "market": "Market"}
 
 
 class UQQCSyncRetryError(frappe.ValidationError):
@@ -87,7 +87,7 @@ def bootstrap(data, endpoint):
         "seasons": ("Production Season", "season_code", "season_name", {"is_active": 1}),
         "products": ("Product", "product_code", "product_name", {"is_active": 1}),
         "colors": ("Product Color", "color_code", "color_name", {"is_active": 1}),
-        "sizes": ("Size", "size_code", "size_label", {"is_active": 1}),
+        "sizes": ("ProductSize", "size_code", "size_label", {"is_active": 1}),
         "markets": ("Market", "code", "name_en", {"is_active": 1}),
         "lines": ("Production Line", "line_code", "line_name", {"is_active": 1, "company": device.company}),
     }

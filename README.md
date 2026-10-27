@@ -130,7 +130,9 @@ Sau đó kiểm tra hai bảng sự kiện trống và mở QC/UQQC trên tablet
 
 ## Chuyền trong KTG Master Data
 
-`Production Line`, `Line Group` và `Line Group Assignment` thuộc module **KTG Master Data**. Tên bản ghi **Production Line** dùng `line_code`; khi nâng cấp, Frappe đổi tên bản ghi hiện có và cập nhật các Link tham chiếu. `line_code` phải có giá trị, không có khoảng trắng thừa, không vượt quá 140 ký tự và duy nhất không phân biệt hoa thường trên toàn site. Migration dừng trước khi đổi tên nếu phát hiện mã không hợp lệ hoặc trùng.
+`Production Line`, `Line Group` và `Line Group Assignment` thuộc module **KTG Master Data**. Tên bản ghi **Production Line** dùng `line_code`; khi nâng cấp, Frappe đổi tên bản ghi hiện có và cập nhật các Link tham chiếu. `line_code` phải có giá trị, không có khoảng trắng thừa, không vượt quá 140 ký tự và duy nhất không phân biệt hoa thường trên toàn site. Migration dừng trước khi đổi tên nếu phát hiện mã không hợp lệ hoặc trùng. Bản ghi **Line Group** mới dùng `group_code` làm tên; các tên bản ghi hiện có được giữ để bảo toàn Link.
+
+DocType `Size` được đổi thành **ProductSize**, thuộc **KTG Master Data** và dùng `size_label` làm tên cho bản ghi mới. Migration Frappe đổi tên DocType/bảng và cập nhật các trường Link, nhưng giữ nguyên tên các bản ghi size hiện có để bảo toàn dữ liệu tham chiếu. Nhãn size cần có giá trị, không trùng và không vượt quá 140 ký tự.
 
 `Factory`, `Product Color` và `Production Season` cũng thuộc **KTG Master Data**, lần lượt dùng `factory_code`, `color_code` và `season_code` để đặt tên bản ghi mới. **QC Defect** vẫn thuộc **Quality Control** và dùng `code`. Thay đổi quy tắc không đổi tên các bản ghi hiện có để giữ nguyên Link; mã dùng để tạo tên mới cần duy nhất trong DocType.
 

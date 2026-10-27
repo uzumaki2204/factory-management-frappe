@@ -76,7 +76,7 @@ def ensure_schema():
         _field("line", "Link", "Production Line", reqd=1),
         _field("product", "Link", "Product", reqd=1, in_list_view=1),
         _field("color", "Link", "Product Color", reqd=1),
-        _field("size", "Link", "Size", reqd=1),
+        _field("size", "Link", "ProductSize", reqd=1),
         _field("market", "Link", "Market", reqd=1),
         _field("defect", "Link", "UQQC Defect"),
         _field("defect_position", "Link", "UQQC Defect Position"),

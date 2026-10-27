@@ -13,7 +13,7 @@ SOURCES = {
     "ProductionSeasons": ("Production Season", "season_code"),
     "Products": ("Product", "product_code"),
     "Colors": ("Product Color", "color_code"),
-    "Sizes": ("Size", "size_code"),
+    "Sizes": ("ProductSize", "size_code"),
     "Markets": ("Market", "code"),
     "ProductVariants": ("Product Variant", None),
     "ProductionLines": ("Production Line", "line_code"),
