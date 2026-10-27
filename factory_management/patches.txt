@@ -13,3 +13,4 @@ factory_management.patches.merge_defect_catalogs
 factory_management.patches.set_market_naming_by_code
 factory_management.patches.remove_factory_device_access
 factory_management.patches.set_master_naming_and_modules
+factory_management.patches.set_factory_company_scoped_naming

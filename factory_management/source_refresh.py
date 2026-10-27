@@ -106,9 +106,17 @@ def _check_relations(directory):
                 code = str(row.get("Code") or "").strip().casefold()
                 if not code:
                     raise RefreshError("DuplicateSourceCode", table + ":" + code)
-                # These code fields are used as destination document names and
-                # therefore need to be unique across their destination DocType.
-                if table in ("Companies", "Factories", "Colors", "ProductionSeasons", "LineGroups"):
+                # Factory codes are unique within a Company; other code-named
+                # masters remain globally unique within their destination DocType.
+                if table == "Factories":
+                    company_id = str(row.get("CompanyId") or "").strip().casefold()
+                    if not company_id:
+                        raise RefreshError("MissingReference", "Factories.CompanyId")
+                    identity = (company_id, code)
+                    if identity in seen_codes:
+                        raise RefreshError("DuplicateSourceCode", table + ":" + code)
+                    seen_codes.add(identity)
+                elif table in ("Companies", "Colors", "ProductionSeasons", "LineGroups"):
                     if code in seen_codes:
                         raise RefreshError("DuplicateSourceCode", table + ":" + code)
                     seen_codes.add(code)

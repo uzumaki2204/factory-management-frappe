@@ -20,6 +20,7 @@ doc_events = {
     "QC Defect Position": {"validate": "factory_management.catalog.validate_qc_position"},
     "UQQC Defect": {"validate": "factory_management.catalog.validate_uqqc_defect"},
     "UQQC Defect Position": {"validate": "factory_management.catalog.validate_uqqc_position"},
+    "Factory": {"before_naming": "factory_management.factory_naming.before_naming"},
     "Factory Device": {
         "validate": "factory_management.device.on_validate",
     },

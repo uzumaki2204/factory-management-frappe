@@ -74,8 +74,9 @@ MASTER_TYPES = {
     ],
     "Factory": [
         field("factory_code", "Factory Code", reqd=1, in_list_view=1),
+        field("factory_key", "Factory Key", hidden=1, read_only=1, no_copy=1),
         field("factory_name", "Factory Name", reqd=1, in_list_view=1),
-        field("company", "Company", "Link", "Company"),
+        field("company", "Company", "Link", "Company", reqd=1),
         field("is_active", "Active", "Check", default="1"),
         field("legacy_id", "Legacy ID", read_only=1),
     ],
@@ -150,7 +151,11 @@ MASTER_TYPE_MODULES = {
 # every site, even when the DocType already existed before an app upgrade.
 DOCTYPE_SETTINGS = {
     "Customer": {"autoname": "hash", "allow_rename": 1},
-    "Factory": {"naming_rule": "By fieldname", "autoname": "field:factory_code", "allow_rename": 1},
+    "Factory": {
+        "naming_rule": "By fieldname",
+        "autoname": "field:factory_key",
+        "allow_rename": 1,
+    },
     "Product Color": {"naming_rule": "By fieldname", "autoname": "field:color_code", "allow_rename": 1},
     "Production Season": {"naming_rule": "By fieldname", "autoname": "field:season_code", "allow_rename": 1},
     "QC Defect": {"naming_rule": "By fieldname", "autoname": "field:code", "allow_rename": 1},

@@ -153,6 +153,12 @@ def _values(table, row):
 
 
 def _existing(dt, table, values, codefield):
+    if table == "Factories":
+        return frappe.db.get_value(
+            dt,
+            {codefield: values[codefield], "company": values.get("company")},
+            "name",
+        )
     if table == "ProductVariants":
         key = {k: values.get(k) for k in ("product", "qc_color", "size", "market")}
         return frappe.db.get_value(dt, key, "name")
@@ -217,6 +223,8 @@ def _import_one(table, row):
     values = _values(table, row)
     if table != "ProductVariants" and table != "Devices" and not values.get(codefield):
         _fail("error.input")
+    if table == "Factories" and not values.get("company"):
+        _fail("error.factory_company_required")
     if table == "Devices" and not values["device_uid"]:
         _fail("error.input")
     existing = _existing(dt, table, values, codefield)
