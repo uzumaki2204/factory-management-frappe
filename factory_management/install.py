@@ -138,6 +138,9 @@ MASTER_TYPE_MODULES = {
     "Color": "KTG Master Data",
     "Size": "KTG Master Data",
     "Customer": "KTG Master Data",
+    "Factory": "KTG Master Data",
+    "Product Color": "KTG Master Data",
+    "Production Season": "KTG Master Data",
     "Line Group": "KTG Master Data",
     "Production Line": "KTG Master Data",
     "Line Group Assignment": "KTG Master Data",
@@ -147,6 +150,10 @@ MASTER_TYPE_MODULES = {
 # every site, even when the DocType already existed before an app upgrade.
 DOCTYPE_SETTINGS = {
     "Customer": {"autoname": "hash", "allow_rename": 1},
+    "Factory": {"naming_rule": "By fieldname", "autoname": "field:factory_code", "allow_rename": 1},
+    "Product Color": {"naming_rule": "By fieldname", "autoname": "field:color_code", "allow_rename": 1},
+    "Production Season": {"naming_rule": "By fieldname", "autoname": "field:season_code", "allow_rename": 1},
+    "QC Defect": {"naming_rule": "By fieldname", "autoname": "field:code", "allow_rename": 1},
     "Market": {"naming_rule": "By fieldname", "autoname": "field:code", "allow_rename": 1},
     "Production Line": {"naming_rule": "By fieldname", "autoname": "field:line_code", "allow_rename": 1},
 }

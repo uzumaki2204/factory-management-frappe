@@ -19,7 +19,9 @@
     "error.legacy_client_unmigrated": "Client trong {doctype} chưa được chuyển đầy đủ; đã dừng việc xóa.",
     "error.legacy_device_token_unmigrated": "Có {count} token Factory Device chưa được chuyển an toàn sang Factory Device Client; đã dừng việc xóa trường.",
     "error.market_doctype_missing": "Không tìm thấy DocType Market khi cập nhật quy tắc đặt tên.",
-    "error.market_code_field_missing": "DocType Market chưa có trường Code; không thể đặt tên theo mã."
+    "error.market_code_field_missing": "DocType Market chưa có trường Code; không thể đặt tên theo mã.",
+    "error.naming_doctype_missing": "Không tìm thấy DocType {doctype} khi cập nhật quy tắc đặt tên.",
+    "error.naming_code_field_missing": "DocType {doctype} chưa có trường mã {field}; không thể cập nhật quy tắc đặt tên."
   },
   "en": {
     "error.standard_doctype_missing": "Standard DocType {doctype} was not found; install the Frappe app that provides it before syncing.",
@@ -41,6 +43,8 @@
     "error.legacy_client_unmigrated": "A client in {doctype} has not been migrated; removal stopped.",
     "error.legacy_device_token_unmigrated": "{count} Factory Device token(s) have not been safely migrated to Factory Device Client; field removal stopped.",
     "error.market_doctype_missing": "Market DocType was not found while applying its naming rule.",
-    "error.market_code_field_missing": "Market does not have a Code field; code-based naming could not be applied."
+    "error.market_code_field_missing": "Market does not have a Code field; code-based naming could not be applied.",
+    "error.naming_doctype_missing": "DocType {doctype} was not found while applying its naming rule.",
+    "error.naming_code_field_missing": "DocType {doctype} does not have code field {field}; its naming rule could not be applied."
   }
 }

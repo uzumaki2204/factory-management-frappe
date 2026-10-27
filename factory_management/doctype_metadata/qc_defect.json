@@ -9,7 +9,7 @@
     "allow_guest_to_view": 0,
     "allow_import": 0,
     "allow_rename": 1,
-    "autoname": "hash",
+    "autoname": "field:code",
     "beta": 0,
     "custom": 1,
     "deprecated": 0,
@@ -398,7 +398,7 @@
     "max_attachments": 0,
     "module": "Quality Control",
     "name": "QC Defect",
-    "naming_rule": "",
+    "naming_rule": "By fieldname",
     "permissions": [
       {
         "amend": 0,

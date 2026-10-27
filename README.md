@@ -132,6 +132,8 @@ Sau đó kiểm tra hai bảng sự kiện trống và mở QC/UQQC trên tablet
 
 `Production Line`, `Line Group` và `Line Group Assignment` thuộc module **KTG Master Data**. Tên bản ghi **Production Line** dùng `line_code`; khi nâng cấp, Frappe đổi tên bản ghi hiện có và cập nhật các Link tham chiếu. `line_code` phải có giá trị, không có khoảng trắng thừa, không vượt quá 140 ký tự và duy nhất không phân biệt hoa thường trên toàn site. Migration dừng trước khi đổi tên nếu phát hiện mã không hợp lệ hoặc trùng.
 
+`Factory`, `Product Color` và `Production Season` cũng thuộc **KTG Master Data**, lần lượt dùng `factory_code`, `color_code` và `season_code` để đặt tên bản ghi mới. **QC Defect** vẫn thuộc **Quality Control** và dùng `code`. Thay đổi quy tắc không đổi tên các bản ghi hiện có để giữ nguyên Link; mã dùng để tạo tên mới cần duy nhất trong DocType.
+
 ## Tài liệu API
 
 Từ màn hình `/desk`, chọn **QC** để mở trang QC trong tab mới hoặc **API Docs** để mở tài liệu và quản lý API trong Desk. Biểu tượng API Docs chỉ hiển thị cho System Manager.

@@ -105,10 +105,9 @@ def _check_relations(directory):
                 code = str(row.get("Code") or "").strip().casefold()
                 if not code:
                     raise RefreshError("DuplicateSourceCode", table + ":" + code)
-                # Only enforce global code uniqueness where the destination
-                # DocType has a unique field. Factory codes are scoped by
-                # company in SQL and are intentionally non-unique in Frappe.
-                if table in ("Companies", "LineGroups"):
+                # These code fields are used as destination document names and
+                # therefore need to be unique across their destination DocType.
+                if table in ("Companies", "Factories", "Colors", "ProductionSeasons", "LineGroups"):
                     if code in seen_codes:
                         raise RefreshError("DuplicateSourceCode", table + ":" + code)
                     seen_codes.add(code)
@@ -134,6 +133,18 @@ def _check_relations(directory):
                     raise RefreshError("InvalidSnapshot", table + ":" + str(row.get("Id")))
                 event_keys.add(key)
         ids[table], codes[table] = seen, seen_codes
+
+    # Defect groups and defects share one destination DocType, so their codes
+    # must be unique across both source tables when QC Defect names use Code.
+    defect_codes = {}
+    for table in ("QCDefectGroups", "QCDefects"):
+        for row in _rows(directory, table):
+            code = str(row.get("Code") or "").strip().casefold()
+            previous = defect_codes.get(code)
+            if previous:
+                raise RefreshError("DuplicateSourceCode", f"{previous}/{table}:{code}")
+            defect_codes[code] = table
+
     for table, fields in REFERENCE_FIELDS.items():
         for row in _rows(directory, table):
             for field, target in fields.items():
