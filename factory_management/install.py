@@ -257,7 +257,7 @@ DEVICE_TYPES = {
 
 
 def ensure_module():
-    for module_name in ("Factory Management", "Quality Control", "API Management", "KTG Master Data"):
+    for module_name in ("Factory Management", "Quality Control", "API Management", "KTG Master Data", "UQQC"):
         owner = frappe.db.get_value("Module Def", module_name, "app_name")
         if module_name == "Factory Management" and owner and owner != "factory_management":
             from factory_management.device_registry import message
@@ -322,6 +322,33 @@ def _doctype_definition(name, fields, module, is_child):
     }
     data.update(DOCTYPE_SETTINGS.get(name, {}))
     return data
+
+
+def _ensure_snapshot_doctype_shells():
+    """Create empty app-owned DocTypes before syncing fields and custom fields.
+
+    Metadata snapshots can contain Link fields whose target DocType appears later
+    in the installation order (or points back to the current DocType). Frappe
+    validates those targets immediately, so make every snapshot-backed DocType
+    available first, then let the normal schema pass apply its complete metadata.
+    """
+    for path in sorted(METADATA_DIRECTORY.glob("*.json")):
+        snapshot = json.loads(path.read_text(encoding="utf-8"))
+        data = snapshot.get("doctype") or {}
+        name = data.get("name")
+        if not name or not data.get("custom") or frappe.db.exists("DocType", name):
+            continue
+
+        shell = _doctype_definition(
+            name,
+            [],
+            data.get("module") or "Factory Management",
+            bool(data.get("istable")),
+        )
+        # A shell has no user fields yet, so use an autoname mode that does not
+        # depend on a field being installed in the later metadata sync.
+        shell["autoname"] = "hash"
+        frappe.get_doc(shell).insert(ignore_permissions=True)
 
 
 def _metadata_document_data(document):
@@ -493,6 +520,7 @@ def ensure_custom_field(dt, name, label, kind="Data", options=None):
 
 def ensure_schema():
     ensure_module()
+    _ensure_snapshot_doctype_shells()
     for name, fields in MASTER_TYPES.items():
         ensure_doctype(name, fields, module=MASTER_TYPE_MODULES.get(name, "Quality Control"))
     ensure_device_schema()
