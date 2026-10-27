@@ -17,7 +17,8 @@
     "error.legacy_client_registry_missing": "Chưa có danh mục thiết bị và client dùng chung; không thể xóa {doctype}.",
     "error.legacy_client_namespace": "DocType {doctype} không thuộc danh mục cũ dự kiến; đã dừng việc xóa.",
     "error.legacy_client_referenced": "DocType {doctype} vẫn đang được tham chiếu; đã dừng việc xóa.",
-    "error.legacy_client_unmigrated": "Client trong {doctype} chưa được chuyển đầy đủ; đã dừng việc xóa."
+    "error.legacy_client_unmigrated": "Client trong {doctype} chưa được chuyển đầy đủ; đã dừng việc xóa.",
+    "error.legacy_device_token_unmigrated": "Có {count} token Factory Device chưa được chuyển an toàn sang Factory Device Client; đã dừng việc xóa trường."
   },
   "en": {
     "error.standard_doctype_missing": "Standard DocType {doctype} was not found; install the Frappe app that provides it before syncing.",
@@ -37,6 +38,7 @@
     "error.legacy_client_registry_missing": "The shared device and client registry is missing; cannot remove {doctype}.",
     "error.legacy_client_namespace": "DocType {doctype} is not an expected legacy client; removal stopped.",
     "error.legacy_client_referenced": "DocType {doctype} is still referenced; removal stopped.",
-    "error.legacy_client_unmigrated": "A client in {doctype} has not been migrated; removal stopped."
+    "error.legacy_client_unmigrated": "A client in {doctype} has not been migrated; removal stopped.",
+    "error.legacy_device_token_unmigrated": "{count} Factory Device token(s) have not been safely migrated to Factory Device Client; field removal stopped."
   }
 }

@@ -149,9 +149,7 @@ def _values(table, row):
                 "company": _target("Companies", row.get("CompanyId")),
                 "factory": _target("Factories", row.get("FactoryId")),
                 "line": _target("ProductionLines", row.get("LineId")),
-                "client_lock_enabled": int(bool(row.get("ClientLockEnabled", True))),
-                "browser_name": row.get("BrowserName") or "",
-                "operating_system": row.get("OperatingSystem") or ""}
+                "client_lock_enabled": int(bool(row.get("ClientLockEnabled", True)))}
 
 
 def _existing(dt, table, values, codefield):

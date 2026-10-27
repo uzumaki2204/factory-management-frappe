@@ -231,8 +231,6 @@ DEVICE_TYPES = {
         field("factory", "Factory", "Link", "Factory"),
         field("line", "Line", "Link", "Production Line"),
         field("client_lock_enabled", "Client Lock Enabled", "Check", default="1"),
-        field("browser_name", "Browser Name"),
-        field("operating_system", "Operating System"),
         field("last_seen_at", "Last Seen", "Datetime"),
     ],
     "Factory Device Access": [

@@ -151,8 +151,6 @@ def register_device(device_id=None, device_uid=None, token=None, device_name=Non
             "device_name": (device_name or "")[:140],
             "status": "Pending",
             "is_active": 1,
-            "browser_name": (browser_name or "")[:140],
-            "operating_system": (operating_system or "")[:140],
         }).insert(ignore_permissions=True)
     pairing_status, _ = device_registry.register_client(
         doc, "qc", token, browser_name, operating_system,

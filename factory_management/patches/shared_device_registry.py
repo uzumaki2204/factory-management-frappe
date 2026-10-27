@@ -7,7 +7,8 @@ client DocTypes after verifying the shared client registry.
 import frappe
 
 from factory_management.device_registry import (
-    ACCESS_TYPE, DEVICE_TYPE, access_key, import_legacy_client, message,
+    ACCESS_TYPE, CLIENT_TYPE, DEVICE_TYPE, access_key, credential_hash,
+    import_legacy_client, message,
 )
 from factory_management.install import ensure_device_schema, ensure_module
 
@@ -72,26 +73,34 @@ def _migrate_credentials():
             collect(row.device, service, row.token_hash, row.status,
                     row.browser_name, row.operating_system, row.get("last_seen_at"))
 
-    legacy_columns = (frappe.db.has_column(DEVICE_TYPE, "token_hash")
-                      and frappe.db.has_column(DEVICE_TYPE, "pending_token_hash"))
-    fields = ["name"]
-    if legacy_columns:
-        fields += ["token_hash", "pending_token_hash", "pairing_status",
-                   "browser_name", "operating_system", "last_seen_at"]
-    for device in frappe.get_all(DEVICE_TYPE, fields=fields, limit_page_length=0):
-        if not legacy_columns:
-            continue
-        paired = device.pairing_status == "Paired"
-        collect(device.name, "qc", device.token_hash, "Approved" if paired else "Pending",
-                device.browser_name, device.operating_system, device.last_seen_at)
-        collect(device.name, "qc", device.pending_token_hash, "Pending",
-                device.browser_name, device.operating_system, device.last_seen_at)
+    device_columns = set(frappe.db.get_table_columns(DEVICE_TYPE))
+    legacy_fields = ["name"] + [field for field in (
+        "token_hash", "pending_token_hash", "pairing_status", "last_seen_at",
+    ) if field in device_columns]
+    if "token_hash" in device_columns or "pending_token_hash" in device_columns:
+        for device in frappe.db.sql(
+                "SELECT " + ", ".join(f"`{field}`" for field in legacy_fields)
+                + f" FROM `tab{DEVICE_TYPE}`", as_dict=True):
+            paired = device.get("pairing_status") == "Paired"
+            collect(device.name, "qc", device.get("token_hash"),
+                    "Approved" if paired else "Pending",
+                    last_seen_at=device.get("last_seen_at"))
+            collect(device.name, "qc", device.get("pending_token_hash"), "Pending",
+                    last_seen_at=device.get("last_seen_at"))
 
     grants = {}
     for values in credentials.values():
         device_name, service, legacy_hash, status, browser_name, operating_system, last_seen_at = values
         import_legacy_client(device_name, service, legacy_hash, status,
                              browser_name, operating_system, last_seen_at)
+        migrated_hash = frappe.db.exists(CLIENT_TYPE, {
+            "device": device_name,
+            "service_key": service,
+            "token_hash": credential_hash(service, legacy_hash=legacy_hash),
+        })
+        if not migrated_hash:
+            frappe.throw(message("error.legacy_device_token_unmigrated").format(count=1),
+                         frappe.ValidationError)
         key = (device_name, service)
         grants[key] = grants.get(key, False) or status == "Approved"
 
@@ -117,12 +126,13 @@ def _update_api_docs():
 
 
 def _retire_master_pairing_fields():
-    if not frappe.db.has_column(DEVICE_TYPE, "token_hash"):
+    columns = set(frappe.db.get_table_columns(DEVICE_TYPE))
+    token_fields = [field for field in ("token_hash", "pending_token_hash")
+                    if field in columns]
+    if not token_fields:
         return
-    for row in frappe.get_all(DEVICE_TYPE, fields=["name"], limit_page_length=0):
-        frappe.db.set_value(DEVICE_TYPE, row.name,
-                            {"token_hash": None, "pending_token_hash": None},
-                            update_modified=False)
+    assignments = ", ".join(f"`{field}` = NULL" for field in token_fields)
+    frappe.db.sql(f"UPDATE `tab{DEVICE_TYPE}` SET {assignments}")
     for fieldname in ("pairing_status", "token_hash", "pending_token_hash"):
         field_name = frappe.db.get_value("DocField", {"parent": DEVICE_TYPE,
                                                        "fieldname": fieldname}, "name")
