@@ -14,6 +14,7 @@ from werkzeug.wrappers import Request
 
 from factory_management import device_registry
 from factory_management import api as qc_api
+from factory_management import data_epoch
 from factory_management.uqqc import api
 from factory_management.uqqc.access import OPERATIONS, READER_ROLE
 from factory_management.uqqc.provision import CATALOG_MANAGER_ROLE
@@ -80,14 +81,17 @@ def run():
         scope = {"lineId": line.name, "productId": variant.product, "colorId": variant.qc_color,
                  "sizeId": variant.size, "marketId": variant.market}
 
-        def invoke(operation, payload=None, auth=secret, session="Guest", path=None, method=None):
+        def invoke(operation, payload=None, auth=secret, session="Guest", path=None, method=None,
+                   generation=None):
             frappe.set_user(session)
             http_method, route, _ = OPERATIONS[operation]
             payload = {"deviceId": device_id, **(payload or {})}
             actual_method = method or http_method
             body = {"query_string": payload} if actual_method == "GET" else {"data": json.dumps(payload)}
+            headers = {"X-UQQC-Token": auth} if auth else {}
+            headers[data_epoch.HEADER] = generation if generation is not None else data_epoch.current()["generation"]
             builder = EnvironBuilder(path=path or "/api/method/" + route, method=actual_method,
-                                     headers={"X-UQQC-Token": auth} if auth else {},
+                                     headers=headers,
                                      content_type="application/json", **body)
             frappe.local.request = Request(builder.get_environ())
             frappe.local.form_dict = frappe._dict(payload)
@@ -168,7 +172,25 @@ def run():
         assert len(details["scopes"]) == 1 and details["scopes"][0]["defectNo"] == 2
         passed.append("idempotency_piece_metrics_and_detail")
 
+        qc_event = {"local_event_id": "qc-verification-" + uuid.uuid4().hex,
+                    "event_type": "CumulativeAdd", "product": variant.product, "line": line.name,
+                    "color": variant.qc_color, "size": variant.size,
+                    "quantity_delta": 1, "occurred_at": now}
+        qc_builder = EnvironBuilder(path="/api/method/factory_management.api.sync_events", method="POST",
+                                    headers={"X-QC-Token": secret,
+                                             data_epoch.HEADER: data_epoch.current()["generation"]})
+        frappe.local.request = Request(qc_builder.get_environ())
+        try:
+            assert qc_api.sync_events(device_id, [qc_event])["accepted_count"] == 1
+            assert qc_api.sync_events(device_id, [qc_event])["accepted_count"] == 0
+            assert qc_api.snapshot(device_id, variant.product, line.name,
+                                   variant.qc_color, variant.size)["received"] == 1
+        finally:
+            qc_builder.close()
+        passed.append("qc_sync_replay_and_snapshot_without_retired_fields")
+
         denied("sync", {"events": [{**event, "quantityDelta": -1}]})
+        denied("sync", batch, generation="previous-generation")
         denied("sync", {"events": [{**event, "defectPositionId": None}]})
         denied("sync", {"events": [{**event, "defectPieceId": str(uuid.UUID(int=0))}]})
         denied("sync", {"passEvents": [{**scope, "localEventId": "fresh", "occurredAt": now}, {**scope, "localEventId": "bad", "occurredAt": "invalid"}]})

@@ -259,16 +259,12 @@ def sync_events(device_id=None, events=None):
                 "local_event_id": local_id,
                 "device": device.name,
                 "event_type": str(item.get("event_type") or "")[:100],
-                "event_key": str(item.get("event_key") or "")[:200],
-                "entity_type": str(item.get("entity_type") or "")[:100],
-                "entity_id": str(item.get("entity_id") or "")[:100],
                 "product": item.get("product"),
                 "line": item.get("line") or device.line,
                 "color": item.get("color"),
                 "size": item.get("size"),
                 "defect": item.get("defect"),
                 "quantity_delta": int(item.get("quantity_delta") or 0),
-                "payload_json": json.dumps(_data(item.get("payload_json"), item.get("payload_json")), ensure_ascii=False)[:4000] if item.get("payload_json") else "",
                 "occurred_at": occurred.strftime("%Y-%m-%d %H:%M:%S.%f"),
                 "synced_at": _now_db(),
                 "server_date_key": occurred.astimezone(_time_zone()).date().isoformat(),
@@ -279,13 +275,11 @@ def sync_events(device_id=None, events=None):
 
 
 def _is_defect(item):
-    return item.defect and (item.entity_type == "QCDefect" or item.event_type in ("DefectAdd", "DefectSubtract"))
+    return item.defect and item.event_type in ("DefectAdd", "DefectSubtract")
 
 
 def _is_received(item):
-    return (item.entity_type in ("QCReceived", "QCPass") or
-            item.event_key in ("ReceivedQty", "PassQty") or
-            item.event_type in ("CumulativeAdd", "CumulativeSubtract"))
+    return item.event_type in ("CumulativeAdd", "CumulativeSubtract")
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
@@ -300,7 +294,7 @@ def snapshot(device_id=None, product=None, line=None, color=None, size=None):
         if value:
             filters[key] = value
     items = _rows("QC Inspection Event",
-                  ["event_type", "event_key", "entity_type", "defect", "quantity_delta", "color", "size", "synced_at", "occurred_at"],
+                  ["event_type", "defect", "quantity_delta", "color", "size", "synced_at", "occurred_at"],
                   filters, limit=100000)
     items.sort(key=lambda x: x.occurred_at)
     received = 0
@@ -331,8 +325,7 @@ def detail_snapshot(device_id=None, pending_ids=None):
     end = start + timedelta(days=1)
     items = _rows(
         "QC Inspection Event",
-        ["local_event_id", "product", "line", "defect", "event_type", "event_key",
-         "entity_type", "quantity_delta", "occurred_at"],
+        ["local_event_id", "product", "line", "defect", "event_type", "quantity_delta", "occurred_at"],
         {"device": device.name,
          "occurred_at": ["between", [start.strftime("%Y-%m-%d %H:%M:%S"),
                                     (end - timedelta(microseconds=1)).strftime("%Y-%m-%d %H:%M:%S.%f")]]},
@@ -415,7 +408,7 @@ def _report_rows(operation_id, date_from, date_to, **filters):
                                          (end - timedelta(microseconds=1)).strftime("%Y-%m-%d %H:%M:%S.%f")]]}
     where.update({k: v for k, v in filters.items() if v})
     return _rows("QC Inspection Event",
-                 ["name", "device", "event_type", "event_key", "entity_type", "product", "line",
+                 ["name", "device", "event_type", "product", "line",
                   "color", "size", "defect", "quantity_delta", "occurred_at", "synced_at"],
                  where, limit=100000)
 

@@ -70,9 +70,7 @@ def ensure_schema():
         ensure_doctype(doctype, fields, module="UQQC")
         _ensure_catalog_permission(doctype)
     ensure_doctype("UQQC Inspection Event", [
-        _field("event_uid", reqd=1, unique=1, read_only=1),
         _field("local_event_id", reqd=1, read_only=1),
-        _field("fingerprint", hidden=1, read_only=1),
         _field("device", "Link", "Factory Device", reqd=1, in_list_view=1),
         _field("event_kind", "Select", "pass\nrework\ndefect", reqd=1, in_list_view=1),
         _field("line", "Link", "Production Line", reqd=1),
@@ -86,9 +84,8 @@ def ensure_schema():
         _field("quantity", "Int", reqd=1, default="1"),
         _field("occurred_at", "Datetime", reqd=1, in_list_view=1),
         _field("synced_at", "Datetime", reqd=1),
-        _field("server_date_key", "Date", reqd=1, in_list_view=1),
     ], module="UQQC")
-    frappe.db.add_index("UQQC Inspection Event", ["device", "server_date_key"], "uqqc_device_day")
+    frappe.db.add_index("UQQC Inspection Event", ["device", "occurred_at"], "uqqc_device_occurred")
 
 
 def ensure_catalog():

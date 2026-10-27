@@ -116,6 +116,18 @@ Khi MariaDB báo deadlock hoặc xung đột snapshot giữa các yêu cầu đ�
 
 Chạy kiểm tra JavaScript bằng `node --test integrations/frappe/factory-management/tests/uqqc-client.test.js` từ workspace. Kiểm tra tích hợp sáu Server Scripts bằng `bench --site <site> execute factory_management.uqqc.verification.run`; dữ liệu thử và thay đổi phân quyền được rollback trong `finally`. Nên chạy khi site không đang thay đổi master data. HTTPS cần thiết để trình duyệt cho phép camera và mở lại PWA khi mất mạng; địa chỉ HTTP nội bộ vẫn dùng nhập mã thiết bị và hàng đợi khi trang đang mở.
 
+## Làm gọn sự kiện QC/UQQC trên site đã có dữ liệu
+
+Bản này giữ `Local Event ID` cho đồng bộ offline. QC bỏ `Event Key`, `Entity Type`, `Entity ID` và `Payload`; UQQC bỏ `Fingerprint`, `Event UID` và cột lưu `Server Date Key`. API UQQC vẫn trả `serverDateKey` tính theo múi giờ site. Trước khi chạy lệnh dưới đây, sao lưu **database và public/private files** của từng site, bật maintenance và cập nhật app trên site đó. Lệnh xóa toàn bộ bản ghi trong hai DocType sự kiện, đổi data epoch để hàng đợi tablet cũ không gửi lại, và chỉ xóa bảy cột được nêu. Các danh mục và thiết bị không bị xóa. Lệnh được gọi thủ công để nâng cấp app trên site khác không tự xóa lịch sử.
+
+```bash
+bench --site <site> migrate
+bench --site <site> execute factory_management.patches.retire_inspection_event_fields.execute
+bench --site <site> clear-cache
+```
+
+Sau đó kiểm tra hai bảng sự kiện trống và mở QC/UQQC trên tablet để đăng ký lại generation. Nếu bước thực thi lỗi, giữ maintenance và khôi phục bản backup trước khi mở site.
+
 ## Tài liệu API
 
 Từ màn hình `/desk`, chọn **QC** để mở trang QC trong tab mới hoặc **API Docs** để mở tài liệu và quản lý API trong Desk. Biểu tượng API Docs chỉ hiển thị cho System Manager.

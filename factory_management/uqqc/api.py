@@ -4,7 +4,7 @@ import hashlib
 import json
 import uuid
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 
 import frappe
@@ -172,7 +172,6 @@ def _event(item, kind, device):
     event = {
         **_scope(item, device), "local_event_id": local_id.strip(), "device": device.name,
         "event_kind": kind, "quantity": 1, "occurred_at": occurred.strftime("%Y-%m-%d %H:%M:%S.%f"),
-        "server_date_key": occurred.astimezone(qc._time_zone()).date().isoformat(),
     }
     if kind == "defect":
         version = item.get("schemaVersion", 1)
@@ -208,9 +207,31 @@ def _event(item, kind, device):
             except (ValueError, TypeError):
                 fail("api.position_piece")
         event.update(defect=defect, defect_position=position, defect_piece_id=piece, schema_version=version)
-    event["event_uid"] = hashlib.sha256((device.name + "|" + event["local_event_id"].casefold()).encode("utf-8")).hexdigest()
-    event["fingerprint"] = hashlib.sha256(json.dumps(event, sort_keys=True).encode("utf-8")).hexdigest()
     return event
+
+
+EVENT_IDENTITY_FIELDS = (
+    "device", "local_event_id", "event_kind", "line", "product", "color", "size", "market",
+    "defect", "defect_position", "defect_piece_id", "schema_version", "quantity", "occurred_at",
+)
+
+
+def _event_uid(event):
+    return hashlib.sha256((event["device"] + "|" + event["local_event_id"].casefold()).encode("utf-8")).hexdigest()
+
+
+def _event_identity(event):
+    values = []
+    for field in EVENT_IDENTITY_FIELDS:
+        value = event.get(field)
+        if field == "occurred_at":
+            value = datetime.fromisoformat(str(value)).strftime("%Y-%m-%d %H:%M:%S.%f")
+        elif field in ("quantity", "schema_version"):
+            value = int(value or 0)
+        else:
+            value = str(value or "")
+        values.append(value)
+    return tuple(values)
 
 
 def sync(data, endpoint):
@@ -219,22 +240,23 @@ def sync(data, endpoint):
     if any(not isinstance(batch, list) for batch, _ in batches) or sum(len(batch) for batch, _ in batches) > 500:
         fail("api.batch")
     events = [_event(item, kind, device) for batch, kind in batches for item in batch]
-    fingerprints = {}
+    identities = {}
     for event in events:
-        uid = event["event_uid"]
-        if uid in fingerprints and fingerprints[uid] != event["fingerprint"]:
+        uid = _event_uid(event)
+        identity = _event_identity(event)
+        if uid in identities and identities[uid] != identity:
             fail("api.event_conflict")
-        fingerprints[uid] = event["fingerprint"]
+        identities[uid] = identity
     accepted = []
     for event in events:
-        uid = event["event_uid"]
-        existing = frappe.db.get_value(EVENT_TYPE, uid, "fingerprint")
+        uid = _event_uid(event)
+        existing = frappe.db.exists(EVENT_TYPE, uid)
         if not existing:
             frappe.get_doc({"doctype": EVENT_TYPE, **event, "synced_at": qc._now_db()}).insert(
                 ignore_permissions=True, ignore_if_duplicate=True, set_name=uid,
             )
-        stored = frappe.db.get_value(EVENT_TYPE, uid, "fingerprint", for_update=True)
-        if stored != event["fingerprint"]:
+        stored = frappe.db.get_value(EVENT_TYPE, uid, EVENT_IDENTITY_FIELDS, as_dict=True, for_update=True)
+        if not stored or _event_identity(stored) != identities[uid]:
             fail("api.event_conflict")
         accepted.append(event["local_event_id"])
     return {"acceptedCount": len(set(accepted)), "acceptedLocalEventIds": list(dict.fromkeys(accepted))}
@@ -243,8 +265,13 @@ def sync(data, endpoint):
 def _rows(device, date_key, scope=None):
     event = frappe.qb.DocType(EVENT_TYPE)
     groups = [event[field] for field in (*SCOPE.values(), "event_kind", "defect", "defect_piece_id")]
+    day = date.fromisoformat(date_key)
+    start = datetime.combine(day, time.min, qc._time_zone()).astimezone(timezone.utc)
+    end = datetime.combine(day + timedelta(days=1), time.min, qc._time_zone()).astimezone(timezone.utc)
     query = (frappe.qb.from_(event).select(*groups, Sum(event.quantity).as_("quantity"), Max(event.synced_at).as_("synced_at"))
-             .where((event.device == device.name) & (event.server_date_key == date_key)))
+             .where((event.device == device.name) &
+                    (event.occurred_at >= start.strftime("%Y-%m-%d %H:%M:%S.%f")) &
+                    (event.occurred_at < end.strftime("%Y-%m-%d %H:%M:%S.%f"))))
     for field, value in (scope or {}).items():
         query = query.where(event[field] == value)
     return query.groupby(*groups).run(as_dict=True)

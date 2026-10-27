@@ -126,7 +126,7 @@ def _seed_summary_contract(service_name):
     if frappe.db.exists(ENDPOINT_TYPE, {"operation_id": "qcInspectionSummary"}):
         return
     names = [
-        "event_type", "entity_type", "device_name", "device_no", "device_qc", "device_company",
+        "event_type", "device_name", "device_no", "device_qc", "device_company",
         "companies_code", "companies_name", "factories_code", "factories_name",
         "production_lines_code", "production_lines_name", "customers_code", "customers_name",
         "products_code", "products_name", "colors_code", "colors_name", "sizes_code", "sizes_name",
@@ -140,7 +140,7 @@ def _seed_summary_contract(service_name):
     parameters.append({"name": "quantity_summary", "in": "query", "schema": {"type": "integer"}})
     properties = {}
     columns = [
-        "eventType", "entityType", "deviceName", "deviceNo", "deviceQc", "deviceCompany",
+        "eventType", "deviceName", "deviceNo", "deviceQc", "deviceCompany",
         "companiesCode", "companiesName", "factoriesCode", "factoriesName",
         "productionLinesCode", "productionLinesName", "lineGroupsCode", "lineGroupsName",
         "customersCode", "customersName", "productsCode", "productsName",
@@ -229,8 +229,37 @@ def _seed_python_reports(service_name):
     _seed_python_report_contract(
         service_name, "qcReportDetail", "report_detail", "QC report detail",
         "Returns QC Inspection Event rows. Maximum date range: 7 days.",
-        ("name", "device", "event_type", "event_key", "entity_type", "product", "line", "color", "size", "defect", "quantity_delta", "occurred_at", "synced_at"),
+        ("name", "device", "event_type", "product", "line", "color", "size", "defect", "quantity_delta", "occurred_at", "synced_at"),
     )
+
+
+def retire_inspection_event_contract_fields():
+    """Update only retired fields in existing Desk API contracts."""
+    changes = {
+        "qcInspectionSummary": ({"entity_type"}, {"entityType"}),
+        "qcReportDetail": (set(), {"event_key", "entity_type"}),
+    }
+    for operation, (parameters_to_remove, properties_to_remove) in changes.items():
+        name = frappe.db.get_value(ENDPOINT_TYPE, {"operation_id": operation}, "name")
+        if not name:
+            continue
+        row = frappe.db.get_value(ENDPOINT_TYPE, name, ["parameters_json", "responses_json"], as_dict=True)
+        parameters = json.loads(row.parameters_json or "[]")
+        responses = json.loads(row.responses_json or "{}")
+        updated_parameters = [item for item in parameters if item.get("name") not in parameters_to_remove]
+        items = (responses.get("200", {}).get("content", {}).get("application/json", {})
+                 .get("schema", {}).get("properties", {}).get("message", {}).get("items", {}))
+        properties = items.get("properties", {})
+        changed = updated_parameters != parameters
+        for field in properties_to_remove:
+            if field in properties:
+                properties.pop(field)
+                changed = True
+        if changed:
+            frappe.db.set_value(ENDPOINT_TYPE, name, {
+                "parameters_json": json.dumps(updated_parameters, ensure_ascii=False),
+                "responses_json": json.dumps(responses, ensure_ascii=False),
+            }, update_modified=False)
 
 
 def ensure_catalog():

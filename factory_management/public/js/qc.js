@@ -1131,8 +1131,6 @@
       local_event_id: randomUuid(),
       event_type: kind === 'defect' ? (direction > 0 ? 'DefectAdd' : 'DefectSubtract')
         : (direction > 0 ? 'CumulativeAdd' : 'CumulativeSubtract'),
-      event_key: kind === 'defect' ? 'DefectQty' : 'ReceivedQty',
-      entity_type: kind === 'defect' ? 'QCDefect' : 'QCReceived',
       product, line, color: $('color').value || null,
       size: $('size').value || null, defect,
       quantity_delta: direction * qty, occurred_at: new Date().toISOString()

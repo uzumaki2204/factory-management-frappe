@@ -20,7 +20,6 @@ params = {"date_from": str(start), "date_to": str(end)}
 conditions = []
 filters = {
     "event_type": ("e.event_type", "contains"),
-    "entity_type": ("e.entity_type", "contains"),
     "device_name": ("d.device_name", "contains"),
     "device_no": ("LEFT(d.device_name, 3)", "prefix"),
     "device_qc": ("SUBSTRING(d.device_name, 4, 3)", "prefix"),
@@ -70,7 +69,6 @@ if conditions:
 query = """
 SELECT
     e.event_type AS eventType,
-    e.entity_type AS entityType,
     DATE(e.occurred_at) AS occurredDate,
     d.device_name AS deviceName,
     LEFT(d.device_name, 3) AS deviceNo,
@@ -113,7 +111,7 @@ LEFT JOIN `tabProduct Color` cl ON cl.name = e.color
 WHERE e.occurred_at >= %(date_from)s
   AND e.occurred_at < DATE_ADD(%(date_to)s, INTERVAL 1 DAY)
 """ + where_extra + """
-GROUP BY e.event_type, e.entity_type, DATE(e.occurred_at), d.device_name,
+GROUP BY e.event_type, DATE(e.occurred_at), d.device_name,
          c.company_code, c.company_name, f.factory_code, f.factory_name,
          pl.line_code, pl.line_name, lg.group_code, lg.group_name,
          cu.customer_code, cu.customer_name, p.product_code, p.product_name,
