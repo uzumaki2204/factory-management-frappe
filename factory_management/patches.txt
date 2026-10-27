@@ -1,4 +1,5 @@
 [pre_model_sync]
+factory_management.patches.rename_lines_by_code
 
 [post_model_sync]
 factory_management.patches.add_qc_report_reader

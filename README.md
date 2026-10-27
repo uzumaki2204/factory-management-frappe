@@ -128,6 +128,10 @@ bench --site <site> clear-cache
 
 Sau đó kiểm tra hai bảng sự kiện trống và mở QC/UQQC trên tablet để đăng ký lại generation. Nếu bước thực thi lỗi, giữ maintenance và khôi phục bản backup trước khi mở site.
 
+## Chuyền trong KTG Master Data
+
+`Production Line`, `Line Group` và `Line Group Assignment` thuộc module **KTG Master Data**. Tên bản ghi **Production Line** dùng `line_code`; khi nâng cấp, Frappe đổi tên bản ghi hiện có và cập nhật các Link tham chiếu. `line_code` phải có giá trị, không có khoảng trắng thừa, không vượt quá 140 ký tự và duy nhất không phân biệt hoa thường trên toàn site. Migration dừng trước khi đổi tên nếu phát hiện mã không hợp lệ hoặc trùng.
+
 ## Tài liệu API
 
 Từ màn hình `/desk`, chọn **QC** để mở trang QC trong tab mới hoặc **API Docs** để mở tài liệu và quản lý API trong Desk. Biểu tượng API Docs chỉ hiển thị cho System Manager.

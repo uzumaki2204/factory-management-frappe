@@ -88,7 +88,7 @@ MASTER_TYPES = {
         field("legacy_id", "Legacy ID", read_only=1),
     ],
     "Production Line": [
-        field("line_code", "Line Code", reqd=1, in_list_view=1),
+        field("line_code", "Line Code", reqd=1, unique=1, in_list_view=1),
         field("line_name", "Line Name", reqd=1, in_list_view=1),
         field("company", "Company", "Link", "Company"),
         field("factory", "Factory", "Link", "Factory"),
@@ -138,12 +138,16 @@ MASTER_TYPE_MODULES = {
     "Color": "KTG Master Data",
     "Size": "KTG Master Data",
     "Customer": "KTG Master Data",
+    "Line Group": "KTG Master Data",
+    "Production Line": "KTG Master Data",
+    "Line Group Assignment": "KTG Master Data",
 }
 
 # Keep shared Customer naming behavior in app metadata so it is identical on
 # every site, even when the DocType already existed before an app upgrade.
 DOCTYPE_SETTINGS = {
     "Customer": {"autoname": "hash", "allow_rename": 1},
+    "Production Line": {"naming_rule": "By fieldname", "autoname": "field:line_code", "allow_rename": 1},
 }
 
 # Connections is a derived Desk view; its source is the DocType fields and links.
@@ -521,7 +525,7 @@ def ensure_schema():
         ensure_doctype(name, fields, module=MASTER_TYPE_MODULES.get(name, "Quality Control"))
     ensure_device_schema()
     for name, fields in TRANSACTION_TYPES.items():
-        ensure_doctype(name, fields)
+        ensure_doctype(name, fields, module=MASTER_TYPE_MODULES.get(name, "Quality Control"))
     for name, fields in DOCUMENTATION_TYPES.items():
         ensure_doctype(name, fields, "API Management", is_child=name == "API Documentation Endpoint Role")
     ensure_report_reader_role()
