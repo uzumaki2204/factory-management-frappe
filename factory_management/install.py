@@ -143,10 +143,11 @@ MASTER_TYPE_MODULES = {
     "Line Group Assignment": "KTG Master Data",
 }
 
-# Keep shared Customer naming behavior in app metadata so it is identical on
+# Keep shared master naming behavior in app metadata so it is identical on
 # every site, even when the DocType already existed before an app upgrade.
 DOCTYPE_SETTINGS = {
     "Customer": {"autoname": "hash", "allow_rename": 1},
+    "Market": {"naming_rule": "By fieldname", "autoname": "field:code", "allow_rename": 1},
     "Production Line": {"naming_rule": "By fieldname", "autoname": "field:line_code", "allow_rename": 1},
 }
 

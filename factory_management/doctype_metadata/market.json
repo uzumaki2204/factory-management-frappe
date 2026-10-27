@@ -184,7 +184,7 @@
     "max_attachments": 0,
     "module": "KTG Master Data",
     "name": "Market",
-    "naming_rule": "Random",
+    "naming_rule": "By fieldname",
     "permissions": [
       {
         "amend": 0,
@@ -400,7 +400,8 @@
     "track_changes": 0,
     "track_seen": 0,
     "track_views": 0,
-    "translated_doctype": 0
+    "translated_doctype": 0,
+    "autoname": "field:code"
   },
   "property_setters": [],
   "roles": [
