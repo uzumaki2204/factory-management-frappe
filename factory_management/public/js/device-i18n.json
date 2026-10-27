@@ -27,7 +27,8 @@
     "error.product_size_label_invalid": "Không thể đặt tên ProductSize theo nhãn vì có nhãn trống, có khoảng trắng thừa hoặc dài quá 140 ký tự.",
     "error.product_size_label_duplicate": "Không thể đặt tên ProductSize theo nhãn vì nhãn {label} bị trùng.",
     "error.factory_identity_invalid": "Không thể tạo khóa Factory cho bản ghi {factory}: mã, công ty hoặc liên kết công ty trống/không hợp lệ, hoặc tên dài quá 140 ký tự.",
-    "error.factory_identity_duplicate": "Không thể đặt tên Factory vì mã {code} bị trùng trong công ty {company}."
+    "error.factory_identity_duplicate": "Không thể đặt tên Factory vì mã {code} bị trùng trong công ty {company}.",
+    "error.factory_key_schema_missing": "Không thể tạo cột khóa định danh cho DocType {doctype}; quá trình đổi tên Factory đã dừng an toàn."
   },
   "en": {
     "error.standard_doctype_missing": "Standard DocType {doctype} was not found; install the Frappe app that provides it before syncing.",
@@ -57,6 +58,7 @@
     "error.product_size_label_invalid": "ProductSize cannot use label-based naming because a label is blank, has surrounding whitespace, or exceeds 140 characters.",
     "error.product_size_label_duplicate": "ProductSize cannot use label-based naming because label {label} is duplicated.",
     "error.factory_identity_invalid": "Cannot create a company-scoped Factory key for record {factory}: its code/company is blank or invalid, or the resulting name exceeds 140 characters.",
-    "error.factory_identity_duplicate": "Factory code {code} is duplicated within company {company}; naming migration stopped."
+    "error.factory_identity_duplicate": "Factory code {code} is duplicated within company {company}; naming migration stopped.",
+    "error.factory_key_schema_missing": "Could not create the identity key column for DocType {doctype}; the Factory rename migration stopped safely."
   }
 }

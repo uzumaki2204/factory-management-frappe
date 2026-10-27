@@ -104,41 +104,63 @@ def _sync_legacy_maps(plans):
             )
 
 
-def _set_naming_metadata():
+def _ensure_naming_schema():
     factory_type = frappe.get_doc("DocType", DOCTYPE)
     code_field = next((row for row in factory_type.fields if row.fieldname == "factory_code"), None)
     key_field = next((row for row in factory_type.fields if row.fieldname == "factory_key"), None)
     company_field = next((row for row in factory_type.fields if row.fieldname == "company"), None)
-    if not code_field or not key_field or not company_field:
+    if not code_field or not company_field:
         frappe.throw(
             message("error.factory_identity_invalid").format(factory=DOCTYPE),
             frappe.ValidationError,
         )
 
-    changed = False
-    values = {
-        "naming_rule": "By fieldname",
-        "autoname": AUTONAME,
-        "allow_rename": 1,
-    }
-    for fieldname, value in values.items():
-        if factory_type.get(fieldname) != value:
-            factory_type.set(fieldname, value)
-            changed = True
+    if not key_field:
+        key_field = factory_type.append("fields", {
+            "fieldname": "factory_key",
+            "label": "Factory Key",
+            "fieldtype": "Data",
+            "hidden": 1,
+            "read_only": 1,
+            "no_copy": 1,
+            "reqd": 0,
+        })
 
-    for field in (code_field, company_field):
-        if not field.reqd:
-            field.reqd = 1
-            changed = True
+    # The metadata snapshots are applied by after_migrate, which runs after this
+    # post_model_sync patch. Save the required field and naming metadata here so
+    # DocType.on_update creates the column before this patch backfills it.
+    for fieldname, value in {
+        "label": "Factory Key",
+        "fieldtype": "Data",
+        "hidden": 1,
+        "read_only": 1,
+        "no_copy": 1,
+        "reqd": 0,
+    }.items():
+        key_field.set(fieldname, value)
 
-    if changed:
-        factory_type.save(ignore_permissions=True)
+    factory_type.naming_rule = "By fieldname"
+    factory_type.autoname = AUTONAME
+    factory_type.allow_rename = 1
+    code_field.reqd = 1
+    company_field.reqd = 1
+
+    # Saving even when the field metadata already exists makes this safe to
+    # rerun after a failed migrate that left metadata behind but not the column.
+    factory_type.save(ignore_permissions=True)
+    frappe.clear_cache(doctype=DOCTYPE)
+
+    if not frappe.db.has_column(DOCTYPE, "factory_key"):
+        frappe.throw(
+            message("error.factory_key_schema_missing").format(doctype=DOCTYPE),
+            frappe.ValidationError,
+        )
 
 
 def execute():
+    _ensure_naming_schema()
     plans = _plan_renames()
     if not plans:
-        _set_naming_metadata()
         return
 
     # Stage every changing name so code-to-name collisions cannot overwrite records.
@@ -167,5 +189,4 @@ def execute():
         frappe.db.set_value(DOCTYPE, target, "factory_key", target, update_modified=False)
 
     _sync_legacy_maps(plans)
-    _set_naming_metadata()
     frappe.clear_cache(doctype=DOCTYPE)
