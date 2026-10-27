@@ -3,6 +3,7 @@
 from collections import defaultdict
 
 import frappe
+from frappe.model.rename_doc import rename_doc
 
 from factory_management.device_registry import message
 
@@ -58,10 +59,10 @@ def execute():
         temp_name = "line-code-migration-" + frappe.generate_hash(length=24)
         while frappe.db.exists(DOCTYPE, temp_name):
             temp_name = "line-code-migration-" + frappe.generate_hash(length=24)
-        frappe.rename_doc(DOCTYPE, old_name, temp_name, force=True, ignore_permissions=True,
-                          show_alert=False, rebuild_search=False)
+        rename_doc(DOCTYPE, old_name, temp_name, force=True, ignore_permissions=True,
+                   show_alert=False, rebuild_search=False)
         staged.append((temp_name, code))
 
     for temp_name, code in staged:
-        frappe.rename_doc(DOCTYPE, temp_name, code, force=True, ignore_permissions=True,
-                          show_alert=False, rebuild_search=False)
+        rename_doc(DOCTYPE, temp_name, code, force=True, ignore_permissions=True,
+                   show_alert=False, rebuild_search=False)
