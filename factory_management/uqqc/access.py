@@ -81,8 +81,7 @@ def approved_device(device_id, endpoint=None, for_update=False):
         if not state:
             fail("api.device_missing", permission=True)
         device.update(state)
-    if (device.status != "Approved" or not device.is_active or not device.company
-            or not device_registry.access_enabled(device.name, "uqqc", for_update=for_update)):
+    if device.status != "Approved" or not device.is_active or not device.company:
         fail("api.device_pending", permission=True)
     if endpoint is not None and not token():
         require_reader(endpoint)

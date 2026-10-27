@@ -1,8 +1,7 @@
-"""Shared Frappe device identity, service grants, and browser credentials."""
+"""Shared Frappe device identity and service-specific browser credentials."""
 
 import hashlib
 import json
-import re
 from functools import lru_cache
 from pathlib import Path
 
@@ -10,7 +9,6 @@ import frappe
 
 
 DEVICE_TYPE = "Factory Device"
-ACCESS_TYPE = "Factory Device Access"
 CLIENT_TYPE = "Factory Device Client"
 
 
@@ -37,10 +35,6 @@ def credential_hash(service_key, secret=None, legacy_hash=None):
     return hashlib.sha256((service_key + ":" + legacy_hash).encode("utf-8")).hexdigest()
 
 
-def access_key(device_name, service_key):
-    return hashlib.sha256((device_name + "|" + service_key).encode("utf-8")).hexdigest()
-
-
 def validate_device(doc, method=None):
     uid = (doc.device_uid or "").strip()
     if not uid:
@@ -51,38 +45,9 @@ def validate_device(doc, method=None):
         _fail("error.duplicate_uid")
 
 
-def validate_access(doc, method=None):
-    if not doc.device or not re.fullmatch(r"[a-z0-9_-]+", doc.service_key or ""):
-        _fail("error.service_key")
-    doc.access_key = access_key(doc.device, doc.service_key)
-    existing = frappe.db.get_value(ACCESS_TYPE, {"access_key": doc.access_key}, "name")
-    if existing and existing != doc.name:
-        _fail("error.duplicate_access")
-
-
-def ensure_access(device_name, service_key):
-    key = access_key(device_name, service_key)
-    name = frappe.db.get_value(ACCESS_TYPE, {"access_key": key}, "name")
-    if name:
-        return name
-    doc = frappe.get_doc({
-        "doctype": ACCESS_TYPE, "device": device_name, "service_key": service_key,
-        "access_key": key, "is_enabled": 0,
-    }).insert(ignore_permissions=True, ignore_if_duplicate=True)
-    return doc.name if doc else frappe.db.get_value(ACCESS_TYPE, {"access_key": key}, "name")
-
-
-def access_enabled(device_name, service_key, for_update=False):
-    row = frappe.db.get_value(
-        ACCESS_TYPE, {"access_key": access_key(device_name, service_key)},
-        ["name", "is_enabled"], as_dict=True, for_update=for_update,
-    )
-    return bool(row and row.is_enabled)
-
-
-def ready(device, service_key, for_update=False):
-    return (device.status == "Approved" and bool(device.is_active)
-            and access_enabled(device.name, service_key, for_update=for_update))
+def ready(device):
+    """A shared device can use either tablet page once it is approved and active."""
+    return device.status == "Approved" and bool(device.is_active)
 
 
 def client_pairing(device, service_key, secret):
@@ -98,7 +63,7 @@ def client_pairing(device, service_key, secret):
         return None, None
     if row.status in ("Rejected", "Revoked"):
         return row.status, row.name
-    if not ready(device, service_key):
+    if not ready(device):
         return "Pending", row.name
     if row.status == "Pending":
         frappe.db.set_value(CLIENT_TYPE, row.name, "status", "Approved", update_modified=False)
@@ -108,7 +73,6 @@ def client_pairing(device, service_key, secret):
 def register_client(device, service_key, secret, browser_name="", operating_system=""):
     if not isinstance(secret, str) or not 32 <= len(secret) <= 256:
         _fail("error.token", frappe.PermissionError)
-    ensure_access(device.name, service_key)
     digest = credential_hash(service_key, secret)
     existing = frappe.db.get_value(CLIENT_TYPE, {"token_hash": digest},
                                    ["name", "device", "service_key"], as_dict=True)
@@ -117,7 +81,7 @@ def register_client(device, service_key, secret, browser_name="", operating_syst
     if not existing:
         frappe.get_doc({
             "doctype": CLIENT_TYPE, "device": device.name, "service_key": service_key,
-            "status": "Approved" if ready(device, service_key) else "Pending",
+            "status": "Approved" if ready(device) else "Pending",
             "token_hash": digest, "browser_name": str(browser_name or "")[:140],
             "operating_system": str(operating_system or "")[:140],
         }).insert(ignore_permissions=True, ignore_if_duplicate=True)

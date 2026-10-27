@@ -7,7 +7,7 @@ client DocTypes after verifying the shared client registry.
 import frappe
 
 from factory_management.device_registry import (
-    ACCESS_TYPE, CLIENT_TYPE, DEVICE_TYPE, access_key, credential_hash,
+    CLIENT_TYPE, DEVICE_TYPE, credential_hash,
     import_legacy_client, message,
 )
 from factory_management.install import ensure_device_schema, ensure_module
@@ -88,7 +88,6 @@ def _migrate_credentials():
             collect(device.name, "qc", device.get("pending_token_hash"), "Pending",
                     last_seen_at=device.get("last_seen_at"))
 
-    grants = {}
     for values in credentials.values():
         device_name, service, legacy_hash, status, browser_name, operating_system, last_seen_at = values
         import_legacy_client(device_name, service, legacy_hash, status,
@@ -101,17 +100,6 @@ def _migrate_credentials():
         if not migrated_hash:
             frappe.throw(message("error.legacy_device_token_unmigrated").format(count=1),
                          frappe.ValidationError)
-        key = (device_name, service)
-        grants[key] = grants.get(key, False) or status == "Approved"
-
-    for (device_name, service), enabled in grants.items():
-        key = access_key(device_name, service)
-        if frappe.db.exists(ACCESS_TYPE, {"access_key": key}):
-            continue  # A later administrator decision must survive a repeated migration.
-        frappe.get_doc({
-            "doctype": ACCESS_TYPE, "access_key": key, "device": device_name,
-            "service_key": service, "is_enabled": int(enabled),
-        }).insert(ignore_permissions=True)
 
 
 def _update_api_docs():

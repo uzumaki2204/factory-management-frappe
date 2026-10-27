@@ -134,12 +134,10 @@ defect,Lỗi
 UQQC Inspection Event,Sự kiện kiểm tra UQQC
 Factory Management,Quản lý nhà máy
 Factory Device,Thiết bị nhà máy
-Factory Device Access,Quyền truy cập thiết bị
 Factory Device Client,Client thiết bị nhà máy
-Access Key,Khóa quyền truy cập
 Service Key,Mã dịch vụ
 Enabled,Đã bật
-Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.,Yêu cầu X-UQQC-Token. Thiết bị phải có quyền UQQC; token được lưu tại Factory Device Client.
+Requires X-UQQC-Token. The device must be approved, active and linked to a company. QC and UQQC share device identity and keep separate tokens in Factory Device Client.,Yêu cầu X-UQQC-Token. Thiết bị phải được duyệt, đang hoạt động và gán công ty. QC và UQQC dùng chung thiết bị nhưng giữ token riêng trong Factory Device Client.
 The sync transaction conflicted. Pending data is retained and will be retried automatically.,Giao dịch đồng bộ đang xung đột. Dữ liệu chờ được giữ lại và sẽ tự động thử lại.
 UQQC Defect,Lỗi UQQC
 UQQC Defect Position,Vị trí lỗi UQQC

@@ -63,7 +63,7 @@ def _find_device(device_id):
 
 
 def _auto_pairable(doc):
-    return device_registry.ready(doc, "qc")
+    return device_registry.ready(doc)
 
 
 def _token_pairing(doc, token):

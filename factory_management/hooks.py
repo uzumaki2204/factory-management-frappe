@@ -23,9 +23,6 @@ doc_events = {
     "Factory Device": {
         "validate": "factory_management.device.on_validate",
     },
-    "Factory Device Access": {
-        "validate": "factory_management.device.on_access_validate",
-    },
 }
 
 app_include_js = [

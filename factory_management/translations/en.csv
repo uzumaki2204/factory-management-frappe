@@ -134,12 +134,10 @@ defect,defect
 UQQC Inspection Event,UQQC Inspection Event
 Factory Management,Factory Management
 Factory Device,Factory Device
-Factory Device Access,Factory Device Access
 Factory Device Client,Factory Device Client
-Access Key,Access Key
 Service Key,Service Key
 Enabled,Enabled
-Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.,Requires X-UQQC-Token. The Factory Device must have UQQC access; its token is stored in Factory Device Client.
+Requires X-UQQC-Token. The device must be approved, active and linked to a company. QC and UQQC share device identity and keep separate tokens in Factory Device Client.,Requires X-UQQC-Token. The device must be approved, active and linked to a company. QC and UQQC share device identity and keep separate tokens in Factory Device Client.
 The sync transaction conflicted. Pending data is retained and will be retried automatically.,The sync transaction conflicted. Pending data is retained and will be retried automatically.
 UQQC Defect,UQQC Defect
 UQQC Defect Position,UQQC Defect Position

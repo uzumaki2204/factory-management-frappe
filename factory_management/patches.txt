@@ -10,3 +10,4 @@ factory_management.patches.separate_uqqc_defects
 factory_management.patches.remove_qc_admin_unlock
 factory_management.patches.merge_defect_catalogs
 factory_management.patches.set_market_naming_by_code
+factory_management.patches.remove_factory_device_access

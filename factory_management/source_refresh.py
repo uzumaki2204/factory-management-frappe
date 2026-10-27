@@ -22,7 +22,7 @@ TABLES = (
 )
 MANAGED = (
     "QC Inspection Event", "UQQC Inspection Event", "QC Favorite", "QC Legacy Map",
-    "Factory Device Client", "Factory Device Access", "Factory Device",
+    "Factory Device Client", "Factory Device",
     "Product Variant", "Line Group Assignment", "QC Defect", "QC Defect Position",
     "UQQC Defect", "UQQC Defect Position", "Production Line", "Line Group",
     "Product", "Production Season", "Customer", "Product Color", "Color", "Size", "Market",
@@ -316,10 +316,6 @@ def apply(directory):
             if {row.name for row in source_rows[source]} != set(
                     frappe.get_all(target, pluck="name", limit_page_length=0)):
                 raise RefreshError("CountMismatch", target)
-        for device in frappe.get_all("Factory Device", pluck="name", limit_page_length=0):
-            for service in ("qc", "uqqc"):
-                from factory_management.device_registry import ensure_access
-                ensure_access(device, service)
         verification_checksums = _verify_identity_maps(root)
         for table, count in preview["sourceCounts"].items():
             if table == "QCInspections":
@@ -338,8 +334,6 @@ def apply(directory):
                 raise RefreshError("CountMismatch", f"{table}:{actual}/{count}")
         if frappe.db.count("UQQC Inspection Event") or frappe.db.count("Factory Device Client"):
             raise RefreshError("CountMismatch", "UQQC/clients")
-        if frappe.db.count("Factory Device Access", {"is_enabled": 1}):
-            raise RefreshError("AccessStillEnabled")
         generation = data_epoch.rotate()
         frappe.db.commit()
         frappe.clear_cache()
