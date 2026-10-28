@@ -25,6 +25,8 @@ Khi nâng cấp, tạo bản sao lưu trước, lấy mã mới từ `version-16
 
 ## Đồng bộ cấu hình DocType giữa các máy
 
+Bản `v0.1.38` bật Data Import Excel (`.xlsx`) và CSV cho 22 DocType QC, UQQC, danh mục KTG Master Data và Factory Device. Người nhập cần quyền `System Manager`; role `UQQC Catalog Manager` có thêm quyền import danh mục UQQC khi đồng thời được cấp quyền truy cập công cụ Data Import. Các bảng điều khiển nội bộ như Factory Data Epoch không mở import. File sự kiện vẫn phải đáp ứng các trường bắt buộc và liên kết hợp lệ.
+
 Metadata DocType được quản lý bằng snapshot JSON trong `factory_management/doctype_metadata/`. Snapshot gồm fields, Naming, Settings, Permissions, Actions, Links, States, Custom Fields, Property Setters và các Role được tham chiếu; tab Connections của Frappe được tạo từ các Link/field này. Snapshot không chứa tài khoản người dùng hoặc phân công Role cho người dùng. Khi có snapshot, `bench migrate` áp dụng metadata đó cho các DocType do app quản lý. Bản ghi master, sự kiện và dữ liệu người dùng vẫn được giữ.
 
 Để đưa cấu hình đang có trên máy nguồn vào app, trước hết cài bản app có hỗ trợ xuất metadata lên máy đó và chạy migrate. Lần nâng cấp đầu giữ nguyên metadata hiện tại của DocType đã tồn tại. Sau đó chạy:
