@@ -12,8 +12,7 @@ from frappe.query_builder.functions import Max, Sum
 from frappe.utils.caching import request_cache
 
 from factory_management import api as qc
-from factory_management import device_registry
-from factory_management.uqqc.access import approved_device, endpoint_policy, find_device, token, token_pairing
+from factory_management.uqqc.access import approved_device, endpoint_policy, find_device
 from factory_management.uqqc.i18n import fail, text
 
 
@@ -35,49 +34,39 @@ def _camel(key):
     return first + "".join(part.title() for part in rest)
 
 
-def _device_data(device, pairing):
-    ready = device.status == "Approved" and bool(device.is_active) and bool(device.company) and pairing == "Paired"
+def _device_data(device):
+    ready = device.status == "Approved" and bool(device.is_active) and bool(device.company)
     return {
-        "id": device.name, "deviceUid": device.device_uid, "deviceName": device.device_name,
+        "id": device.name, "device_id": device.name, "deviceName": device.device_name,
         "status": device.status if ready or device.status in ("Rejected", "Deactivated") else "PendingApproval",
-        "isActive": ready, "pairingStatus": pairing, "companyId": device.company,
+        "isActive": ready, "companyId": device.company,
         "companyName": frappe.db.get_value("Company", device.company, "company_name") if device.company else "",
         "factoryId": device.factory, "lineId": device.line,
     }
 
 
+def _request_id(data):
+    return data.get("id") or data.get("device_id") or data.get("deviceId")
+
+
 def device_register(data, endpoint):
-    device_id = data.get("deviceId")
+    device_id = _request_id(data)
     try:
-        device_id = str(uuid.UUID(str(device_id)))
+        if str(uuid.UUID(str(device_id))) != str(device_id).lower():
+            fail("api.device_id")
     except (ValueError, TypeError):
         fail("api.device_id")
-    secret = token()
-    if len(secret) < 32 or len(secret) > 256:
-        fail("api.token", permission=True)
     device = find_device(device_id)
-    pairing = token_pairing(device, secret)
-    if pairing in ("Rejected", "Revoked"):
-        fail("api.token", permission=True)
-    if not pairing:
-        pairing, _ = device_registry.register_client(
-            device, "uqqc", secret, data.get("browserName"), data.get("operatingSystem"),
-        )
-        if not pairing or pairing in ("Rejected", "Revoked"):
-            fail("api.token", permission=True)
-    return _device_data(device, pairing)
+    return _device_data(device)
 
 
 def device_check(data, endpoint):
-    device = find_device(data.get("deviceId"))
-    pairing = token_pairing(device, token())
-    if not pairing or pairing in ("Rejected", "Revoked"):
-        fail("api.token", permission=True)
-    return _device_data(device, pairing)
+    device = find_device(_request_id(data))
+    return _device_data(device)
 
 
 def bootstrap(data, endpoint):
-    device = approved_device(data.get("deviceId"), endpoint)
+    device = approved_device(_request_id(data), endpoint)
     # Shared production masters and the independent UQQC defect catalogs.
     rows = qc._rows
     definitions = {
@@ -235,7 +224,7 @@ def _event_identity(event):
 
 
 def sync(data, endpoint):
-    device = approved_device(data.get("deviceId"), for_update=True)
+    device = approved_device(_request_id(data), for_update=True)
     batches = [(data.get(key, []), kind) for key, kind in (("events", "defect"), ("passEvents", "pass"), ("reworkEvents", "rework"))]
     if any(not isinstance(batch, list) for batch, _ in batches) or sum(len(batch) for batch, _ in batches) > 500:
         fail("api.batch")
@@ -309,13 +298,13 @@ def _totals(rows):
 
 
 def snapshot(data, endpoint):
-    device = approved_device(data.get("deviceId"), endpoint)
+    device = approved_device(_request_id(data), endpoint)
     moment = clock()
     return {**_totals(_rows(device, moment["serverDateKey"], _scope(data, device))), **moment}
 
 
 def detail_snapshot(data, endpoint):
-    device = approved_device(data.get("deviceId"), endpoint)
+    device = approved_device(_request_id(data), endpoint)
     moment = clock()
     groups = defaultdict(list)
     for row in _rows(device, moment["serverDateKey"]):

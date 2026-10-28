@@ -23,7 +23,7 @@ SOURCES = {
     "QCDefects": ("QC Defect", "code"),
     "QCDefectPositionGroups": ("QC Defect Position", "code"),
     "QCDefectPositions": ("QC Defect Position", "code"),
-    "Devices": ("Factory Device", "device_id"),
+    "Devices": ("Factory Device", "name"),
 }
 DEVICE_STATUSES = {status.casefold(): status for status in ("Pending", "Approved", "Rejected", "Deactivated")}
 
@@ -143,7 +143,7 @@ def _values(table, row):
         status = DEVICE_STATUSES.get(str(row.get("Status") or "Pending").strip().casefold())
         if not status:
             _fail("error.input")
-        return {"device_id": legacy, "device_uid": str(row.get("DeviceUid") or "").strip(),
+        return {"name": legacy,
                 "device_name": row.get("DeviceName") or "", "status": status,
                 "is_active": active,
                 "company": _target("Companies", row.get("CompanyId")),
@@ -163,7 +163,7 @@ def _existing(dt, table, values, codefield):
         key = {k: values.get(k) for k in ("product", "qc_color", "size", "market")}
         return frappe.db.get_value(dt, key, "name")
     if table == "Devices":
-        return frappe.db.get_value(dt, {"device_id": values["device_id"]}, "name")
+        return frappe.db.exists(dt, values["name"])
     if table in ("QCDefectGroups", "QCDefects", "QCDefectPositionGroups", "QCDefectPositions"):
         return frappe.db.get_value(dt, {codefield: values[codefield], "record_type": values["record_type"]}, "name")
     return frappe.db.get_value(dt, {codefield: values[codefield]}, "name")
@@ -225,8 +225,6 @@ def _import_one(table, row):
         _fail("error.input")
     if table == "Factories" and not values.get("company"):
         _fail("error.factory_company_required")
-    if table == "Devices" and not values["device_uid"]:
-        _fail("error.input")
     existing = _existing(dt, table, values, codefield)
     if existing:
         if table in ("LineGroups", "ProductionLines"):

@@ -1,4 +1,4 @@
-"""Guest QC API protected by per-device random token."""
+"""Guest QC API using the approved Factory Device record ID."""
 import hashlib
 import json
 import uuid
@@ -37,17 +37,13 @@ def _digest(value):
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-def _token_from_request():
-    return (frappe.request.headers.get("X-QC-Token") or "").strip()
-
-
-def _device_info(doc, pairing_status=None):
+def _device_info(doc):
     return {
+        "id": doc.name,
         "device_id": doc.name,
-        "device_uid": doc.device_uid,
         "device_name": doc.device_name,
         "status": doc.status,
-        "pairing_status": pairing_status if pairing_status is not None else "Unpaired",
+        "pairing_status": "Paired" if device_registry.ready(doc) else "Pending",
         "is_active": bool(doc.is_active),
         "company": doc.company,
         "factory": doc.factory,
@@ -62,27 +58,12 @@ def _find_device(device_id):
     return frappe.get_doc(device_registry.DEVICE_TYPE, str(device_id))
 
 
-def _auto_pairable(doc):
-    return device_registry.ready(doc)
-
-
-def _token_pairing(doc, token):
-    return device_registry.client_pairing(doc, "qc", token)
-
-
-def _approved_device(device_id):
-    doc = _find_device(device_id)
-    if not _auto_pairable(doc):
+def _approved_device(id):
+    doc = _find_device(id)
+    if not device_registry.ready(doc):
         _fail("error.pending", frappe.PermissionError)
-    pairing_status, client_name = _token_pairing(doc, _token_from_request())
-    if not pairing_status or pairing_status in ("Rejected", "Revoked"):
-        _fail("error.token", frappe.PermissionError)
-    if pairing_status != "Paired":
-        _fail("error.pairing", frappe.PermissionError)
     now = _now_db()
     frappe.db.set_value(device_registry.DEVICE_TYPE, doc.name, "last_seen_at", now, update_modified=False)
-    if client_name:
-        frappe.db.set_value(device_registry.CLIENT_TYPE, client_name, "last_seen_at", now, update_modified=False)
     return doc
 
 
@@ -131,50 +112,40 @@ def _rows(doctype, fields, filters=None, limit=20000):
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def register_device(device_id=None, device_uid=None, token=None, device_name=None,
-                    browser_name=None, operating_system=None):
+def register_device(id=None, device_id=None, deviceId=None, device_name=None, **_legacy):
     epoch.require_current()
+    requested_id = id or device_id or deviceId
     try:
-        device_id = str(uuid.UUID(str(device_id))) if device_id else str(uuid.uuid4())
+        if requested_id:
+            if str(uuid.UUID(str(requested_id))) != str(requested_id).lower():
+                _fail("error.input")
+        device_id = str(requested_id) if requested_id else str(uuid.uuid4())
     except (TypeError, ValueError):
-        _fail("error.input")
-    device_uid = str(device_uid or device_id).strip()[:100]
-    if not device_uid or not isinstance(token, str) or len(token) < 32:
         _fail("error.input")
     if frappe.db.exists(device_registry.DEVICE_TYPE, device_id):
         doc = frappe.get_doc(device_registry.DEVICE_TYPE, device_id)
     else:
         doc = frappe.get_doc({
             "doctype": device_registry.DEVICE_TYPE,
-            "device_id": device_id,
-            "device_uid": device_uid,
+            "name": device_id,
             "device_name": (device_name or "")[:140],
             "status": "Pending",
             "is_active": 1,
         }).insert(ignore_permissions=True)
-    pairing_status, _ = device_registry.register_client(
-        doc, "qc", token, browser_name, operating_system,
-    )
-    if pairing_status in ("Rejected", "Revoked"):
-        _fail("error.client_revoked", frappe.PermissionError)
-    notice_key = "ok.paired" if pairing_status == "Paired" and _auto_pairable(doc) else "ok.register"
-    return {"device": _device_info(doc, pairing_status=pairing_status), "notice": message(notice_key)}
+    notice_key = "ok.paired" if device_registry.ready(doc) else "ok.register"
+    return {"device": _device_info(doc), "notice": message(notice_key)}
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def check_device(device_id=None):
+def check_device(id=None, device_id=None, deviceId=None):
     epoch.require_current()
-    doc = _find_device(device_id)
-    token = _token_from_request()
-    pairing_status, _ = _token_pairing(doc, token)
-    if not pairing_status or pairing_status in ("Rejected", "Revoked"):
-        _fail("error.token", frappe.PermissionError)
-    return _device_info(doc, pairing_status=pairing_status)
+    doc = _find_device(id or device_id or deviceId)
+    return _device_info(doc)
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
-def bootstrap(device_id=None):
-    _approved_device(device_id)
+def bootstrap(id=None, device_id=None, deviceId=None):
+    _approved_device(id or device_id or deviceId)
     companies = _rows("Company", ["name", "company_code", "company_name", "active"], {"active": 1})
     factories = _rows("Factory", ["name", "factory_code", "factory_name", "company"], {"is_active": 1})
     customers = _rows("Customer", ["name", "customer_code", "customer_name"], {"is_active": 1})
@@ -238,9 +209,9 @@ def _validate_event(item, device):
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def sync_events(device_id=None, events=None):
+def sync_events(device_id=None, events=None, id=None, deviceId=None):
     epoch.require_current()
-    device = _approved_device(device_id)
+    device = _approved_device(id or device_id or deviceId)
     items = _data(events, [])
     if not isinstance(items, list) or len(items) > 500:
         _fail("error.input")
@@ -281,8 +252,8 @@ def _is_received(item):
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def snapshot(device_id=None, product=None, line=None, color=None, size=None):
-    device = _approved_device(device_id)
+def snapshot(device_id=None, product=None, line=None, color=None, size=None, id=None, deviceId=None):
+    device = _approved_device(id or device_id or deviceId)
     now = datetime.now(_time_zone())
     start = datetime.combine(now.date(), time.min, _time_zone()).astimezone(timezone.utc)
     end = start + timedelta(days=1)
@@ -312,8 +283,8 @@ def snapshot(device_id=None, product=None, line=None, color=None, size=None):
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def detail_snapshot(device_id=None, pending_ids=None):
-    device = _approved_device(device_id)
+def detail_snapshot(device_id=None, pending_ids=None, id=None, deviceId=None):
+    device = _approved_device(id or device_id or deviceId)
     pending = _data(pending_ids, [])
     if (not isinstance(pending, list) or len(pending) > 10000 or
             any(not isinstance(value, str) or len(value) > 100 for value in pending)):
@@ -359,17 +330,17 @@ def detail_snapshot(device_id=None, pending_ids=None):
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
-def get_favorites(device_id=None):
-    device = _approved_device(device_id)
+def get_favorites(device_id=None, id=None, deviceId=None):
+    device = _approved_device(id or device_id or deviceId)
     rows = _rows("QC Favorite", ["defect", "modified"], {"device": device.name})
     return {"defect_ids": [x.defect for x in rows],
             "updated_at_utc": max((str(x.modified) for x in rows), default=None)}
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def replace_favorites(device_id=None, defect_ids=None):
+def replace_favorites(device_id=None, defect_ids=None, id=None, deviceId=None):
     epoch.require_current()
-    device = _approved_device(device_id)
+    device = _approved_device(id or device_id or deviceId)
     wanted = set(str(x) for x in _data(defect_ids, []) or [])
     if len(wanted) > 200 or any(
         not frappe.db.exists("QC Defect", x) or

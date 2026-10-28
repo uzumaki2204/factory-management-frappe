@@ -16,30 +16,26 @@ from factory_management import device_registry
 from factory_management import api as qc_api
 from factory_management import data_epoch
 from factory_management.uqqc import api
-from factory_management.uqqc.access import OPERATIONS, READER_ROLE
+from factory_management.uqqc.access import OPERATIONS
 from factory_management.uqqc.provision import CATALOG_MANAGER_ROLE
 
 
 def browser_fixture():
     """Create a dedicated browser test device; never attach to a production device."""
     device_id = str(uuid.uuid4())
-    secret = uuid.uuid4().hex + uuid.uuid4().hex
     line = frappe.db.get_value("Production Line", {"is_active": 1, "company": ["is", "set"]}, ["name", "company"], as_dict=True)
     assert line
     frappe.get_doc({
-        "doctype": device_registry.DEVICE_TYPE, "device_id": device_id, "device_uid": "uqqc-browser-" + device_id,
+        "doctype": device_registry.DEVICE_TYPE, "name": device_id,
         "device_name": "UQQC browser verification", "status": "Approved", "is_active": 1,
         "company": line.company, "line": line.name,
     }).insert(ignore_permissions=True)
-    device_registry.register_client(frappe.get_doc(device_registry.DEVICE_TYPE, device_id), "uqqc", secret)
-    return {"device_id": device_id, "token": secret}
+    return {"id": device_id}
 
 
 def remove_browser_fixture(device_id: str):
-    device = frappe.get_doc(device_registry.DEVICE_TYPE, device_id)
-    assert device.device_uid == "uqqc-browser-" + device_id
+    frappe.get_doc(device_registry.DEVICE_TYPE, device_id)
     frappe.db.delete(api.EVENT_TYPE, {"device": device_id})
-    frappe.db.delete(device_registry.CLIENT_TYPE, {"device": device_id})
     frappe.delete_doc(device_registry.DEVICE_TYPE, device_id, ignore_permissions=True)
 
 
@@ -60,31 +56,28 @@ def run():
         position = frappe.db.get_value("UQQC Defect Position", {"is_active": 1, "record_type": "Position"}, "name")
         assert line and variant and defect and position
         device_id = str(uuid.uuid4())
-        qc_secret = uuid.uuid4().hex + uuid.uuid4().hex
-        uqqc_secret = uuid.uuid4().hex + uuid.uuid4().hex
         frappe.get_doc({
-            "doctype": device_registry.DEVICE_TYPE, "device_id": device_id, "device_uid": device_id,
+            "doctype": device_registry.DEVICE_TYPE, "name": device_id,
             "device_name": "UQQC verification", "status": "Approved", "is_active": 1,
             "company": line.company, "line": line.name,
         }).insert(ignore_permissions=True)
-        device_registry.register_client(frappe.get_doc(device_registry.DEVICE_TYPE, device_id), "qc", qc_secret)
-        assert device_registry.client_pairing(frappe.get_doc(device_registry.DEVICE_TYPE, device_id), "qc", qc_secret)[0] == "Paired"
         qc_request = EnvironBuilder(path="/api/method/factory_management.api.bootstrap", method="GET",
-                                    headers={"X-QC-Token": qc_secret})
+                                    headers={data_epoch.HEADER: data_epoch.current()["generation"]})
         frappe.local.request = Request(qc_request.get_environ())
         assert "catalog" in qc_api.bootstrap(device_id)
+        assert qc_api.check_device(id=device_id)["id"] == device_id
         qc_request.close()
         scope = {"lineId": line.name, "productId": variant.product, "colorId": variant.qc_color,
                  "sizeId": variant.size, "marketId": variant.market}
 
-        def invoke(operation, payload=None, auth=uqqc_secret, session="Guest", path=None, method=None,
+        def invoke(operation, payload=None, session="Guest", path=None, method=None,
                    generation=None):
             frappe.set_user(session)
-            http_method, route, _ = OPERATIONS[operation]
-            payload = {"deviceId": device_id, **(payload or {})}
+            http_method, route = OPERATIONS[operation]
+            payload = {"id": device_id, **(payload or {})}
             actual_method = method or http_method
             body = {"query_string": payload} if actual_method == "GET" else {"data": json.dumps(payload)}
-            headers = {"X-UQQC-Token": auth} if auth else {}
+            headers = {}
             headers[data_epoch.HEADER] = generation if generation is not None else data_epoch.current()["generation"]
             builder = EnvironBuilder(path=path or "/api/method/" + route, method=actual_method,
                                      headers=headers,
@@ -109,10 +102,10 @@ def run():
                 return
             raise AssertionError(operation)
 
-        denied("bootstrap", auth=qc_secret)  # A QC-only credential cannot access UQQC.
-        assert invoke("device_register", auth=uqqc_secret)["isActive"]
+        denied("bootstrap", {"id": str(uuid.uuid4())})
+        assert invoke("device_register")["isActive"]
         assert invoke("device_check")["id"] == device_id
-        denied("bootstrap", auth=qc_secret)
+        assert invoke("device_register", {"id": None, "deviceId": device_id})["id"] == device_id
         catalog = invoke("bootstrap")
         assert any(item["id"] == line.name for item in catalog["lines"])
         assert all(item["companyId"] == line.company for item in catalog["lines"])
@@ -122,17 +115,7 @@ def run():
         position = catalog["defectPositions"][0]["id"]
         passed.append("six_script_activation_and_bootstrap")
         for operation in OPERATIONS:
-            denied(operation, auth="invalid")
-        client_name = frappe.db.get_value(device_registry.CLIENT_TYPE,
-                                          {"device": device_id, "service_key": "uqqc"}, "name")
-        frappe.db.set_value(device_registry.CLIENT_TYPE, client_name, "status", "Revoked")
-        denied("bootstrap")
-        denied("device_register")
-        denied("device_check")
-        assert device_registry.client_pairing(
-            frappe.get_doc(device_registry.DEVICE_TYPE, device_id), "qc", qc_secret,
-        )[0] == "Paired"
-        frappe.db.set_value(device_registry.CLIENT_TYPE, client_name, "status", "Approved")
+            denied(operation, {"id": str(uuid.uuid4())})
         denied("bootstrap", path="/api/method/factory_management.uqqc.api.dispatch")
         denied("sync", method="GET")
         frappe.db.set_value(device_registry.DEVICE_TYPE, device_id, "is_active", 0)
@@ -141,7 +124,7 @@ def run():
         frappe.db.set_value(device_registry.DEVICE_TYPE, device_id, "status", "Pending")
         denied("sync")
         frappe.db.set_value(device_registry.DEVICE_TYPE, device_id, "status", "Approved")
-        passed.append("token_status_method_and_alias_guards")
+        passed.append("id_status_method_and_alias_guards")
 
         now = datetime.now(timezone.utc).isoformat()
         piece = str(uuid.uuid4())
@@ -166,8 +149,7 @@ def run():
                     "color": variant.qc_color, "size": variant.size,
                     "quantity_delta": 1, "occurred_at": now}
         qc_builder = EnvironBuilder(path="/api/method/factory_management.api.sync_events", method="POST",
-                                    headers={"X-QC-Token": qc_secret,
-                                             data_epoch.HEADER: data_epoch.current()["generation"]})
+                                    headers={data_epoch.HEADER: data_epoch.current()["generation"]})
         frappe.local.request = Request(qc_builder.get_environ())
         try:
             assert qc_api.sync_events(device_id, [qc_event])["accepted_count"] == 1
@@ -198,29 +180,18 @@ def run():
         assert invoke("snapshot", scope)["pass"] == 2
         passed.append("validation_atomicity_company_fence_and_site_day")
 
-        frappe.set_user("Administrator")
-        email = "uqqc-" + uuid.uuid4().hex + "@example.invalid"
-        user = frappe.get_doc({"doctype": "User", "email": email, "first_name": "UQQC verification",
-                               "enabled": 1, "send_welcome_email": 0, "user_type": "Website User",
-                               "company": line.company,
-                               "roles": [{"role": READER_ROLE}]}).insert(ignore_permissions=True).name
-        assert invoke("snapshot", scope, auth="", session=user)["pass"] == 2
-        denied("sync", batch, auth="", session=user)
-        denied("snapshot", scope, auth="", session="Administrator")
+        assert invoke("snapshot", scope, session="Guest")["pass"] == 2
         endpoint = frappe.db.get_value("API Documentation Endpoint", {"operation_id": "uqqc_snapshot"}, "name")
         frappe.db.set_value("API Documentation Endpoint", endpoint, "is_active", 0)
         denied("snapshot", scope)
         frappe.db.set_value("API Documentation Endpoint", endpoint, "is_active", 1)
-        frappe.db.delete("API Documentation Endpoint Role", {"parent": endpoint})
-        denied("snapshot", scope, auth="", session=user)
         assert invoke("snapshot", scope)["pass"] == 2
-        passed.append("live_role_allowlist_and_device_auth_independence")
-        assert not frappe.has_permission(api.EVENT_TYPE, "read", user=user)
+        passed.append("live_endpoint_and_device_id_auth")
         frappe.set_user("Administrator")
         from factory_management.api_docs import openapi
         contract = openapi("uqqc")
         assert len(contract["paths"]) == 6
-        assert "UQQCDeviceToken" in contract["components"]["securitySchemes"]
+        assert "UQQCDeviceToken" not in contract["components"]["securitySchemes"]
         from factory_management.uqqc.provision import ensure_catalog, ensure_scripts
         from factory_management.uqqc.web_page import ensure_page
         script = frappe.get_doc("Server Script", "UQQC Bootstrap")
@@ -264,8 +235,7 @@ def run():
             "doctype": "UQQC Defect Position", "record_type": "Position", "code": "UQ-" + suffix, "title": "UQQC only",
             "position_group": uqqc_position_group, "is_active": 1,
         }).insert(ignore_permissions=True)
-        qc_request = EnvironBuilder(path="/api/method/factory_management.api.bootstrap", method="GET",
-                                    headers={"X-QC-Token": qc_secret})
+        qc_request = EnvironBuilder(path="/api/method/factory_management.api.bootstrap", method="GET")
         frappe.local.request = Request(qc_request.get_environ())
         qc_catalog = qc_api.bootstrap(device_id)["catalog"]
         qc_request.close()

@@ -7,14 +7,13 @@ from factory_management import data_epoch
 from factory_management.uqqc.i18n import fail
 
 
-READER_ROLE = "UQQC API Reader"
 OPERATIONS = {
-    "bootstrap": ("GET", "uqqc-bootstrap", True),
-    "device_register": ("POST", "uqqc-device-register", False),
-    "device_check": ("POST", "uqqc-device-check", False),
-    "sync": ("POST", "uqqc-inspections-sync", False),
-    "snapshot": ("POST", "uqqc-inspections-snapshot", True),
-    "detail_snapshot": ("POST", "uqqc-inspections-detail-snapshot", True),
+    "bootstrap": ("GET", "uqqc-bootstrap"),
+    "device_register": ("POST", "uqqc-device-register"),
+    "device_check": ("POST", "uqqc-device-check"),
+    "sync": ("POST", "uqqc-inspections-sync"),
+    "snapshot": ("POST", "uqqc-inspections-snapshot"),
+    "detail_snapshot": ("POST", "uqqc-inspections-detail-snapshot"),
 }
 
 
@@ -24,7 +23,7 @@ def endpoint_policy(operation):
     rule = OPERATIONS.get(operation)
     if not rule:
         fail("api.forbidden", permission=True)
-    method, api_method, _ = rule
+    method, api_method = rule
     if frappe.request.method != method or frappe.request.path.rstrip("/") != "/api/method/" + api_method:
         fail("api.forbidden", permission=True)
     endpoint = frappe.db.get_value(
@@ -38,31 +37,6 @@ def endpoint_policy(operation):
     if not service or service.service_key != "uqqc" or service.is_active != 1:
         fail("api.forbidden", permission=True)
     return endpoint
-
-
-def require_reader(endpoint):
-    user = frappe.session.user
-    if not user or user == "Guest":
-        fail("api.forbidden", permission=True)
-    allowed = set(frappe.get_all(
-        "API Documentation Endpoint Role",
-        filters={"parent": endpoint.name, "parenttype": "API Documentation Endpoint",
-                 "parentfield": "allowed_roles"}, pluck="role",
-    ))
-    assigned = set(frappe.get_all(
-        "Has Role", filters={"parent": user, "parenttype": "User", "parentfield": "roles"}, pluck="role",
-    ))
-    if not allowed.intersection(assigned):
-        fail("api.forbidden", permission=True)
-
-
-def token():
-    return (frappe.request.headers.get("X-UQQC-Token") or "").strip()
-
-
-def token_pairing(device, secret):
-    pairing, _ = device_registry.client_pairing(device, "uqqc", secret)
-    return pairing
 
 
 def find_device(device_id):
@@ -83,9 +57,4 @@ def approved_device(device_id, endpoint=None, for_update=False):
         device.update(state)
     if device.status != "Approved" or not device.is_active or not device.company:
         fail("api.device_pending", permission=True)
-    if endpoint is not None and not token():
-        require_reader(endpoint)
-    else:
-        if token_pairing(device, token()) != "Paired":
-            fail("api.token", permission=True)
     return device

@@ -17,9 +17,9 @@
         if (epochReloading) throw new Error(t('apiFailed'));
         if (!generation || generation === epochGeneration) return epochGeneration;
         epochReloading = true;
-        const deviceId = localStorage.getItem(PREFIX + 'device-id');
+        const deviceId = localStorage.getItem(PREFIX + 'id') || localStorage.getItem(PREFIX + 'device-id');
         Object.keys(localStorage).filter(key => key.startsWith(PREFIX)).forEach(key => localStorage.removeItem(key));
-        if (deviceId) localStorage.setItem(PREFIX + 'device-id', deviceId);
+        if (deviceId) localStorage.setItem(PREFIX + 'id', deviceId);
         localStorage.setItem(epochKey, generation);
         epochGeneration = generation;
         if ('caches' in window) {
@@ -31,18 +31,6 @@
         window.location.reload();
         throw new Error(t('apiFailed'));
     }
-    const tokenKey = PREFIX + 'device-token';
-    function deviceToken(deviceId) {
-        const key = tokenKey + ':' + deviceId;
-        let value = localStorage.getItem(key);
-        if (!value) {
-            const bytes = new Uint8Array(32);
-            crypto.getRandomValues(bytes);
-            value = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
-            localStorage.setItem(key, value);
-        }
-        return value;
-    }
     const ALL_GROUPS = 'all';
     const FAVORITES_FILTER = 'favorite';
     const ALL_SEASONS = 'all';
@@ -50,9 +38,9 @@
     const MAX_RECENT_PRODUCTS = 12;
     const uqqcCollator = new Intl.Collator('vi', { numeric: true, sensitivity: 'base' });
     const UNIQLO_CUSTOMER = 'UNIQLO';
-    const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const keys = {
-        deviceId: PREFIX + 'device-id',
+        deviceId: PREFIX + 'id',
         deviceProfile: PREFIX + 'device-profile',
         catalog: PREFIX + 'catalog',
         queue: PREFIX + 'offline-queue',
@@ -68,6 +56,27 @@
         lastSync: PREFIX + 'last-sync',
         detailSnapshots: PREFIX + 'detail-snapshots'
     };
+    const cachedProfile = (() => {
+        try { return JSON.parse(localStorage.getItem(keys.deviceProfile) || '{}') || {}; }
+        catch { return {}; }
+    })();
+    const storedIds = [localStorage.getItem(keys.deviceId), localStorage.getItem(PREFIX + 'device-id'),
+        cachedProfile.id, cachedProfile.deviceId, cachedProfile.device_id]
+        .filter(Boolean).map(value => String(value).trim());
+    let identityConflict = new Set(storedIds.map(value => value.toLowerCase())).size > 1;
+    if (!identityConflict && storedIds.length) {
+        localStorage.setItem(keys.deviceId, storedIds[0]);
+        localStorage.removeItem(PREFIX + 'device-id');
+        if (cachedProfile.id || cachedProfile.deviceId || cachedProfile.device_id) {
+            cachedProfile.id = storedIds[0];
+            delete cachedProfile.deviceId;
+            delete cachedProfile.device_id;
+            delete cachedProfile.deviceUid;
+            localStorage.setItem(keys.deviceProfile, JSON.stringify(cachedProfile));
+        }
+    }
+    Object.keys(localStorage).filter(key => key.startsWith(PREFIX + 'device-token'))
+        .forEach(key => localStorage.removeItem(key));
     const serverConfig = (() => {
         try {
             const el = document.getElementById('uqqc-clientConfig');
@@ -240,7 +249,7 @@
                 const previousScopes = { ...state.detailSnapshots.scopes };
                 const requestedDateKey = state.catalog.serverDateKey;
                 const data = await requestJson('/api/method/uqqc-inspections-detail-snapshot', {
-                    method: 'POST', body: JSON.stringify({ deviceId })
+                    method: 'POST', body: JSON.stringify({ id: deviceId })
                 });
                 if (state.device?.id !== deviceId || !state.catalog) return null;
                 // A successful but incomplete response must not erase acknowledged local data.
@@ -377,18 +386,15 @@
     }
 
     async function requestJson(url, options) {
+        if (identityConflict) throw new Error(t('deviceIdentityConflict'));
         const requestEpoch = await ensureDataEpoch();
         if (epochReloading) throw new Error(t('apiFailed'));
-        let requestDevice = storedDeviceId();
-        if (options?.body) {
-            try { requestDevice = JSON.parse(options.body).deviceId || requestDevice; } catch { /* Invalid JSON is rejected by the API. */ }
-        }
-        if (options?.method === 'GET') url += '?deviceId=' + encodeURIComponent(storedDeviceId());
+        if (options?.method === 'GET') url += '?id=' + encodeURIComponent(storedDeviceId());
         let response;
         try {
             response = await fetch(url, {
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-UQQC-Token': deviceToken(requestDevice), 'X-Factory-Data-Epoch': requestEpoch, 'Accept-Language': document.documentElement.lang, ...(window.frappe?.csrf_token ? { 'X-Frappe-CSRF-Token': frappe.csrf_token } : {}) },
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Factory-Data-Epoch': requestEpoch, 'Accept-Language': document.documentElement.lang, ...(window.frappe?.csrf_token ? { 'X-Frappe-CSRF-Token': frappe.csrf_token } : {}) },
                 ...options
             });
         } catch (networkError) {
@@ -469,6 +475,9 @@
     }
 
     function saveDevice(device) {
+        delete device.deviceId;
+        delete device.device_id;
+        delete device.deviceUid;
         const previousId = String(state.device?.id || localStorage.getItem(keys.deviceId) || '').toLowerCase();
         if (previousId && device?.id && previousId !== String(device.id).toLowerCase()) {
             resetDeviceWorkState();
@@ -480,7 +489,7 @@
     }
 
     function isApproved() {
-        return state.device && String(state.device.status).toLowerCase() === 'approved' && state.device.isActive;
+        return !identityConflict && state.device && String(state.device.status).toLowerCase() === 'approved' && state.device.isActive;
     }
 
     function updateNetwork() {
@@ -617,6 +626,10 @@
     }
 
     async function activateDevice() {
+        if (identityConflict) {
+            setMessage(elements.deviceMessage, t('deviceIdentityConflict'), true);
+            return;
+        }
         if (state.activating) return;
         const deviceId = String(elements.manualDeviceId.value || storedDeviceId()).trim();
         if (!deviceId) {
@@ -639,11 +652,7 @@
             const device = await requestJson('/api/method/uqqc-device-register', {
                 method: 'POST',
                 body: JSON.stringify({
-                    deviceId,
-                    browserName: browserName(),
-                    browserVersion: browserVersion(),
-                    operatingSystem: operatingSystem(),
-                    userAgent: navigator.userAgent
+                    id: deviceId
                 })
             });
             saveDevice(device);
@@ -666,6 +675,11 @@
     }
 
     async function checkDevice() {
+        if (identityConflict) {
+            renderInactiveScope();
+            openDevicePanel(t('deviceIdentityConflict'), true);
+            return;
+        }
         const id = storedDeviceId();
         if (!id) {
             renderInactiveScope();
@@ -676,7 +690,7 @@
         try {
             const device = await requestJson('/api/method/uqqc-device-check', {
                 method: 'POST',
-                body: JSON.stringify({ deviceId: id })
+                body: JSON.stringify({ id })
             });
             saveDevice(device);
         } catch (error) {
@@ -1931,7 +1945,7 @@
             const data = await requestJson('/api/method/uqqc-inspections-sync', {
                 method: 'POST',
                 body: JSON.stringify({
-                    deviceId: state.device.id,
+                    id: state.device.id,
                     events: defectEvents,
                     passEvents,
                     reworkEvents
@@ -1964,7 +1978,7 @@
                 try {
                     const snapshot = await requestJson('/api/method/uqqc-inspections-snapshot', {
                         method: 'POST',
-                        body: JSON.stringify({ deviceId: state.device.id, ...group.scope })
+                        body: JSON.stringify({ id: state.device.id, ...group.scope })
                     });
                     updateServerClock(snapshot.serverNowUtc);
                     if (snapshot.serverDateKey !== state.catalog?.serverDateKey) {
@@ -2051,7 +2065,7 @@
             const requestedDeviceId = state.device.id;
             const snapshot = await requestJson('/api/method/uqqc-inspections-snapshot', {
                 method: 'POST',
-                body: JSON.stringify({ deviceId: requestedDeviceId, ...requestedScope })
+                body: JSON.stringify({ id: requestedDeviceId, ...requestedScope })
             });
             if (state.clearingCache || state.device?.id !== requestedDeviceId || !state.catalog) return;
             updateServerClock(snapshot.serverNowUtc);
@@ -2325,7 +2339,7 @@
                 let data;
                 try {
                     data = await requestJson('/api/method/uqqc-inspections-detail-snapshot', {
-                        method: 'POST', body: JSON.stringify({ deviceId: state.device.id })
+                        method: 'POST', body: JSON.stringify({ id: state.device.id })
                     });
                 } catch {
                     showToast(t('clearCacheUnverified'), true);

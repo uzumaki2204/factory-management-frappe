@@ -237,8 +237,6 @@ DEVICE_TYPES = {
         field("reset_at_utc", "Reset At UTC", "Datetime", reqd=1),
     ],
     "Factory Device": [
-        field("device_id", "Device ID", reqd=1, unique=1, in_list_view=1),
-        field("device_uid", "Device UID", reqd=1, unique=1, in_list_view=1),
         field("device_name", "Device Name", in_list_view=1),
         field("status", "Status", "Select", "Pending\nApproved\nRejected\nDeactivated", default="Pending", in_list_view=1),
         field("is_active", "Active", "Check", default="1"),
@@ -246,15 +244,6 @@ DEVICE_TYPES = {
         field("factory", "Factory", "Link", "Factory"),
         field("line", "Line", "Link", "Production Line"),
         field("client_lock_enabled", "Client Lock Enabled", "Check", default="1"),
-        field("last_seen_at", "Last Seen", "Datetime"),
-    ],
-    "Factory Device Client": [
-        field("device", "Device", "Link", "Factory Device", reqd=1, in_list_view=1),
-        field("service_key", "Service Key", reqd=1, in_list_view=1),
-        field("status", "Status", "Select", "Pending\nApproved\nRejected\nRevoked", default="Pending", reqd=1, in_list_view=1),
-        field("token_hash", "Token Hash", unique=1, hidden=1, read_only=1, no_copy=1),
-        field("browser_name", "Browser Name", in_list_view=1),
-        field("operating_system", "Operating System", in_list_view=1),
         field("last_seen_at", "Last Seen", "Datetime"),
     ],
 }
@@ -307,7 +296,7 @@ def _doctype_definition(name, fields, module, is_child):
         "name": name,
         "module": module,
         "custom": 1,
-        "autoname": "field:device_id" if name == "Factory Device" else "hash",
+        "autoname": "prompt" if name == "Factory Device" else "hash",
         "issingle": 0,
         "istable": 1 if is_child else 0,
         "track_changes": 1,

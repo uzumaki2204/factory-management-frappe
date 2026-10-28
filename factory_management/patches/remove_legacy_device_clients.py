@@ -1,9 +1,9 @@
-"""Remove obsolete client DocTypes after every credential reaches the shared registry."""
+"""Remove obsolete QC/UQQC client DocTypes during older upgrade paths."""
 
 import frappe
 
 from factory_management.device_registry import (
-    CLIENT_TYPE, DEVICE_TYPE, credential_hash, message,
+    DEVICE_TYPE, message,
 )
 
 
@@ -18,10 +18,10 @@ def _fail(key, doctype):
 
 
 def _preflight():
-    if not frappe.db.exists("DocType", DEVICE_TYPE) or not frappe.db.exists("DocType", CLIENT_TYPE):
+    if not frappe.db.exists("DocType", DEVICE_TYPE):
         _fail("error.legacy_client_registry_missing", DEVICE_TYPE)
 
-    for doctype, service_key in LEGACY_CLIENTS:
+    for doctype, _ in LEGACY_CLIENTS:
         meta = frappe.db.get_value("DocType", doctype, ["custom", "module"], as_dict=True)
         table_exists = frappe.db.table_exists(doctype, cached=False)
         if not meta and not table_exists:
@@ -37,17 +37,7 @@ def _preflight():
             _fail("error.legacy_client_referenced", doctype)
         if frappe.db.count("Server Script", {"script": ["like", "%" + doctype + "%"]}):
             _fail("error.legacy_client_referenced", doctype)
-        rows = frappe.db.sql(f"SELECT device, token_hash FROM `tab{doctype}`", as_dict=True)
-        for row in rows:
-            if not row.device or not row.token_hash:
-                _fail("error.legacy_client_unmigrated", doctype)
-            migrated = frappe.db.exists(CLIENT_TYPE, {
-                "device": row.device,
-                "service_key": service_key,
-                "token_hash": credential_hash(service_key, legacy_hash=row.token_hash),
-            })
-            if not migrated:
-                _fail("error.legacy_client_unmigrated", doctype)
+        # These service tokens are discarded by the ID-only device migration.
 
 
 def execute():

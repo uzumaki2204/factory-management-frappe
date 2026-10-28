@@ -4,7 +4,7 @@ import frappe
 
 from factory_management import __version__
 from factory_management.device_registry import (
-    CLIENT_TYPE, DEVICE_TYPE, credential_hash, message,
+    DEVICE_TYPE,
 )
 from factory_management.install import ensure_schema
 
@@ -40,27 +40,8 @@ def _legacy_token_rows(columns=None):
 
 def _unmigrated_tokens(columns=None):
     columns = columns if columns is not None else _columns()
-    if not any(field in columns for field in TOKEN_FIELDS):
-        return []
-
-    if not frappe.db.table_exists(CLIENT_TYPE, cached=False):
-        return [row for row in _legacy_token_rows(columns)
-                for field in TOKEN_FIELDS if row.get(field)]
-
-    missing = []
-    for row in _legacy_token_rows(columns):
-        for field in TOKEN_FIELDS:
-            legacy_hash = row.get(field)
-            if not legacy_hash:
-                continue
-            migrated = frappe.db.exists(CLIENT_TYPE, {
-                "device": row.name,
-                "service_key": "qc",
-                "token_hash": credential_hash("qc", legacy_hash=legacy_hash),
-            })
-            if not migrated:
-                missing.append((row.name, field))
-    return missing
+    return [(row.name, field) for row in _legacy_token_rows(columns)
+            for field in TOKEN_FIELDS if row.get(field)]
 
 
 def status():
@@ -103,14 +84,11 @@ def execute():
     if not frappe.db.exists("DocType", DEVICE_TYPE):
         return
 
+    # This historical patch still runs before the ID-only patch on older sites.
+    # Validate the duplicated identity before ensure_schema applies its new snapshot.
+    from factory_management.patches.use_factory_device_record_id import _preflight
+    _preflight()
     columns = _columns()
-    unmigrated = _unmigrated_tokens(columns)
-    if unmigrated:
-        frappe.throw(
-            message("error.legacy_device_token_unmigrated").format(count=len(unmigrated)),
-            frappe.ValidationError,
-        )
-
     _delete_legacy_metadata()
     ensure_schema()
 

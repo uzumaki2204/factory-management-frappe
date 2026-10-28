@@ -6,6 +6,7 @@ selected Docker backend after creating a full site backup.
 
 import hashlib
 import json
+import uuid
 from pathlib import Path
 
 import frappe
@@ -22,7 +23,7 @@ TABLES = (
 )
 MANAGED = (
     "QC Inspection Event", "UQQC Inspection Event", "QC Favorite", "QC Legacy Map",
-    "Factory Device Client", "Factory Device",
+    "Factory Device",
     "Product Variant", "Line Group Assignment", "QC Defect", "QC Defect Position",
     "UQQC Defect", "UQQC Defect Position", "Production Line", "Line Group",
     "Product", "Production Season", "Customer", "Product Color", "Color", "ProductSize", "Market",
@@ -121,10 +122,15 @@ def _check_relations(directory):
                         raise RefreshError("DuplicateSourceCode", table + ":" + code)
                     seen_codes.add(code)
             if table == "Devices":
+                try:
+                    uuid.UUID(source_id)
+                except ValueError:
+                    raise RefreshError("InvalidSnapshot", "Devices.Id") from None
                 uid = str(row.get("DeviceUid") or "").strip().casefold()
-                if not uid or uid in uids:
+                if uid and uid in uids:
                     raise RefreshError("DuplicateDeviceUid", uid)
-                uids.add(uid)
+                if uid:
+                    uids.add(uid)
             if table == "ProductVariants":
                 variant = tuple(str(row.get(field) or "").lower() for field in
                                 ("ProductId", "ColorId", "SizeId", "MarketId"))
@@ -170,7 +176,7 @@ def _check_relations(directory):
                     raise RefreshError("MissingReference", f"{table}.{field}:{reference}")
             if table == "QCInspections":
                 device_uid = str(row.get("DeviceUid") or "").strip().casefold()
-                if device_uid not in uids:
+                if not row.get("DeviceActivationId") and device_uid not in uids:
                     raise RefreshError("MissingReference", f"QCInspections.DeviceUid:{device_uid}")
 
 
@@ -251,11 +257,11 @@ def _import_master(table, row):
         importer._import_one(table, current)
 
 
-def _import_event(row):
+def _import_event(row, uid_to_id):
     from factory_management import api as qc_api
     device = importer._target("Devices", row.get("DeviceActivationId"))
     if not device:
-        device = frappe.db.get_value("Factory Device", {"device_uid": row["DeviceUid"]}, "name")
+        device = importer._target("Devices", uid_to_id.get(str(row.get("DeviceUid") or "").strip().casefold()))
     if not device:
         raise RefreshError("MissingReference", "QCInspections.DeviceUid")
     local_id = str(row.get("LocalEventId") or "sql:" + str(row["Id"]))
@@ -280,7 +286,7 @@ def _import_event(row):
     }).insert(ignore_permissions=True)
 
 
-def _verify_identity_maps(directory):
+def _verify_identity_maps(directory, uid_to_id):
     checksums = {}
     mapped_devices = {}
     for table in TABLES[:-1]:
@@ -305,7 +311,9 @@ def _verify_identity_maps(directory):
     for row in _rows(directory, "QCInspections"):
         device = mapped_devices.get(str(row.get("DeviceActivationId") or "").casefold())
         if not device:
-            device = frappe.db.get_value("Factory Device", {"device_uid": row["DeviceUid"]}, "name")
+            device = mapped_devices.get(uid_to_id.get(str(row.get("DeviceUid") or "").strip().casefold()))
+        if not device:
+            raise RefreshError("MissingReference", "QCInspections.DeviceUid")
         local_id = str(row.get("LocalEventId") or "sql:" + str(row["Id"]))
         expected_events.add(hashlib.sha256((device + "|" + local_id.casefold()).encode("utf-8")).hexdigest())
     actual_events = set(frappe.get_all("QC Inspection Event", pluck="event_uid", limit_page_length=0))
@@ -324,6 +332,8 @@ def apply(directory):
     if not frappe.conf.maintenance_mode:
         raise RefreshError("MaintenanceRequired")
     root = Path(directory)
+    uid_to_id = {str(row.get("DeviceUid") or "").strip().casefold(): str(row["Id"]).casefold()
+                 for row in _rows(root, "Devices") if row.get("DeviceUid")}
     try:
         files = frappe.get_all("File", filters={"attached_to_doctype": ["in", list(MANAGED)]},
                                pluck="name", limit_page_length=0)
@@ -335,7 +345,7 @@ def apply(directory):
             for row in _rows(root, table):
                 _import_master(table, row)
         for row in _rows(root, "QCInspections"):
-            _import_event(row)
+            _import_event(row, uid_to_id)
         source_rows = {source: frappe.get_all(source, fields=["name", *fields],
                                               limit_page_length=0)
                        for source, _, fields in CATALOGS}
@@ -344,7 +354,7 @@ def apply(directory):
             if {row.name for row in source_rows[source]} != set(
                     frappe.get_all(target, pluck="name", limit_page_length=0)):
                 raise RefreshError("CountMismatch", target)
-        verification_checksums = _verify_identity_maps(root)
+        verification_checksums = _verify_identity_maps(root, uid_to_id)
         for table, count in preview["sourceCounts"].items():
             if table == "QCInspections":
                 actual = frappe.db.count("QC Inspection Event")
@@ -360,8 +370,8 @@ def apply(directory):
                 actual = frappe.db.count(importer.SOURCES[table][0])
             if actual != count:
                 raise RefreshError("CountMismatch", f"{table}:{actual}/{count}")
-        if frappe.db.count("UQQC Inspection Event") or frappe.db.count("Factory Device Client"):
-            raise RefreshError("CountMismatch", "UQQC/clients")
+        if frappe.db.count("UQQC Inspection Event"):
+            raise RefreshError("CountMismatch", "UQQC")
         generation = data_epoch.rotate()
         frappe.db.commit()
         frappe.clear_cache()

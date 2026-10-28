@@ -172,7 +172,7 @@ test('fresh browser restores all five-dimensional scopes and groups product/line
         ]));
     });
     await client.hydrateDetailSnapshots();
-    assert.deepEqual(requests, [{ url: '/api/method/uqqc-inspections-detail-snapshot', body: { deviceId: 'device' } }]);
+    assert.deepEqual(requests, [{ url: '/api/method/uqqc-inspections-detail-snapshot', body: { id: 'device' } }]);
     assert.equal(Object.keys(client.state.detailSnapshots.scopes).length, 2);
     assert.equal(client.detailRows().length, 1);
     assert.equal(client.detailRows()[0].inspected, 186);
@@ -405,17 +405,17 @@ test('sync started during restore waits and cannot double count pending events i
 });
 
 
-test('Frappe requests carry a persistent UQQC token and unwrap message', async () => {
+test('Frappe requests use the device record ID without a token and unwrap message', async () => {
     const calls = [];
     const client = createClient(async (url, options) => { calls.push({ url, options }); return response({ ready: true }); });
     assert.equal((await client.requestJson('/api/method/uqqc-bootstrap', { method: 'GET' })).ready, true);
     await client.requestJson('/api/method/uqqc-device-check', { method: 'POST', body: '{}' });
-    assert.match(calls[0].options.headers['X-UQQC-Token'], /^[a-f0-9]{64}$/);
-    assert.equal(calls[0].options.headers['X-UQQC-Token'], calls[1].options.headers['X-UQQC-Token']);
-    assert.equal(calls[0].url, '/api/method/uqqc-bootstrap?deviceId=device');
+    assert.equal(calls[0].options.headers['X-UQQC-Token'], undefined);
+    assert.equal(calls[1].options.headers['X-UQQC-Token'], undefined);
+    assert.equal(calls[0].url, '/api/method/uqqc-bootstrap?id=device');
 });
 
-test('new data generation clears stale UQQC queue and token before sync', async () => {
+test('new data generation clears stale UQQC queue and migrates the saved ID', async () => {
     const storage = new Storage();
     storage.setItem(prefix + 'device-id', 'device');
     storage.setItem(prefix + 'offline-queue', JSON.stringify([{ localEventId: 'old' }]));
@@ -427,7 +427,8 @@ test('new data generation clears stale UQQC queue and token before sync', async 
     assert.equal(writes, 0);
     assert.equal(storage.getItem(prefix + 'offline-queue'), null);
     assert.equal(storage.getItem(prefix + 'device-token:device'), null);
-    assert.equal(storage.getItem(prefix + 'device-id'), 'device');
+    assert.equal(storage.getItem(prefix + 'id'), 'device');
+    assert.equal(storage.getItem(prefix + 'device-id'), null);
     assert.equal(storage.getItem(prefix + 'data-epoch'), 'new');
     assert.equal(client.reloads, 1);
 });
@@ -476,14 +477,19 @@ test('the day watchdog is safe before device activation and catalog loading', ()
     assert.equal(client.syncServerDay(), false);
 });
 
-test('each device uses a separate persistent UQQC browser token', async () => {
-    const tokens = [];
-    const client = createClient(async (_, options) => { tokens.push(options.headers['X-UQQC-Token']); return response({}); });
-    await client.requestJson('/api/method/uqqc-device-register', { method: 'POST', body: JSON.stringify({ deviceId: 'first' }) });
-    await client.requestJson('/api/method/uqqc-device-register', { method: 'POST', body: JSON.stringify({ deviceId: 'second' }) });
-    await client.requestJson('/api/method/uqqc-device-register', { method: 'POST', body: JSON.stringify({ deviceId: 'first' }) });
-    assert.notEqual(tokens[0], tokens[1]);
-    assert.equal(tokens[0], tokens[2]);
+test('conflicting saved IDs preserve the offline queue and block API writes', async () => {
+    const storage = new Storage();
+    storage.setItem(prefix + 'id', 'first');
+    storage.setItem(prefix + 'device-id', 'second');
+    storage.setItem(prefix + 'offline-queue', JSON.stringify([{ localEventId: 'pending' }]));
+    let requests = 0;
+    const client = createClient(async () => { requests++; return response({}); }, storage);
+    await assert.rejects(client.requestJson('/api/method/uqqc-inspections-sync',
+        { method: 'POST', body: JSON.stringify({ id: 'first' }) }), /deviceIdentityConflict/);
+    assert.equal(requests, 0);
+    assert.equal(client.state.queue.length, 1);
+    assert.equal(storage.getItem(prefix + 'id'), 'first');
+    assert.equal(storage.getItem(prefix + 'device-id'), 'second');
 });
 
 test('an authorization failure disables new input while retaining pending events', async () => {

@@ -25,8 +25,6 @@ Khi nâng cấp, tạo bản sao lưu trước, lấy mã mới từ `version-16
 
 ## Đồng bộ cấu hình DocType giữa các máy
 
-Bản `v0.1.38` bật Data Import Excel (`.xlsx`) và CSV cho 22 DocType QC, UQQC, danh mục KTG Master Data và Factory Device. Người nhập cần quyền `System Manager`; role `UQQC Catalog Manager` có thêm quyền import danh mục UQQC khi đồng thời được cấp quyền truy cập công cụ Data Import. Các bảng điều khiển nội bộ như Factory Data Epoch không mở import. File sự kiện vẫn phải đáp ứng các trường bắt buộc và liên kết hợp lệ.
-
 Metadata DocType được quản lý bằng snapshot JSON trong `factory_management/doctype_metadata/`. Snapshot gồm fields, Naming, Settings, Permissions, Actions, Links, States, Custom Fields, Property Setters và các Role được tham chiếu; tab Connections của Frappe được tạo từ các Link/field này. Snapshot không chứa tài khoản người dùng hoặc phân công Role cho người dùng. Khi có snapshot, `bench migrate` áp dụng metadata đó cho các DocType do app quản lý. Bản ghi master, sự kiện và dữ liệu người dùng vẫn được giữ.
 
 Để đưa cấu hình đang có trên máy nguồn vào app, trước hết cài bản app có hỗ trợ xuất metadata lên máy đó và chạy migrate. Lần nâng cấp đầu giữ nguyên metadata hiện tại của DocType đã tồn tại. Sau đó chạy:
@@ -83,15 +81,19 @@ Manifest ghi Frappe 16.53.0 làm phiên bản chuẩn kiểm tra theo revision `
 
 ## Generation dữ liệu sau khi làm mới QC
 
-`GET /api/method/factory_management.api.data_epoch` trả `{generation, resetAtUtc}` trong `message`. Trước lần làm mới, `generation` rỗng và hợp đồng cũ tiếp tục hoạt động. Sau lần làm mới, các lệnh ghi/đăng ký/kiểm tra thiết bị QC và UQQC cần header `X-Factory-Data-Epoch` bằng generation hiện tại; request cũ bị từ chối. Client QC/UQQC đọc generation trước khi đồng bộ và xóa queue, token, cache cũ khi generation đổi. DocType `Factory Data Epoch` chỉ lưu generation của site, không chứa token. Luồng làm mới do MigrationFrappe chạy cục bộ bằng Bench trong Docker; không có API HTTP để xóa dữ liệu.
+`GET /api/method/factory_management.api.data_epoch` trả `{generation, resetAtUtc}` trong `message`. Trước lần làm mới, `generation` rỗng. Sau lần làm mới, các lệnh ghi/đăng ký/kiểm tra thiết bị QC và UQQC cần header `X-Factory-Data-Epoch` bằng generation hiện tại; request cũ bị từ chối. Client QC/UQQC đọc generation trước khi đồng bộ và xóa queue, cache cũ khi generation đổi. DocType `Factory Data Epoch` chỉ lưu generation của site. Luồng làm mới do MigrationFrappe chạy cục bộ bằng Bench trong Docker; không có API HTTP để xóa dữ liệu.
 
-Lần làm mới lấy master, thiết bị và `QCInspections` từ SQL Server .NET, dựng lại danh mục lỗi UQQC từ QC, để trống sự kiện UQQC và xóa token client Frappe để quản trị viên ghép nối lại thiết bị. Cần backup và kiểm tra xung đột Link với app khác trước khi chạy. Không thay đổi dữ liệu QCBrother trong SQL Server.
+Lần làm mới lấy master, thiết bị và `QCInspections` từ SQL Server .NET, dựng lại danh mục lỗi UQQC từ QC và để trống sự kiện UQQC. Cần backup và kiểm tra xung đột Link với app khác trước khi chạy. Không thay đổi dữ liệu QCBrother trong SQL Server.
 
 ## UQQC
 
+### ID Factory Device
+
+Factory Device dùng khóa chính Frappe `name` với giá trị UUID. Hook `before_naming` cấp UUID cho thiết bị mới và giữ ID UUID đã được cung cấp; DocType dùng quy tắc `prompt` để giữ kiểu cột khóa chính hiện có khi nâng cấp site có dữ liệu. Khi nâng cấp, migration kiểm tra mọi `device_id` cũ bằng `name`, giữ nguyên ID hiện có và Link từ QC/UQQC, rồi xóa `device_id`, `device_uid` và DocType `Factory Device Client`. Thiết bị không còn token; API tablet dùng tham số `id`, vẫn nhận tạm `device_id`/`deviceId` và trả alias `device_id` cho client cũ. Trước khi chạy migration trên site có dữ liệu, sao lưu database cùng public/private files bằng `bench --site <site> backup --with-files`, sau đó chạy `bench --site <site> migrate` và kiểm tra lại các liên kết thiết bị. Nếu hai ID cũ không khớp, migration dừng trước khi xóa cột.
+
 UQQC dùng stylesheet mặc định `desk.bundle.css` và các thành phần chuẩn của Frappe Desk, không có CSS tùy biến riêng. Với trang đã tồn tại, chạy `bench --site <site> execute factory_management.uqqc.web_page.apply_desk_style` để áp dụng lại bố cục mặc định và xóa CSS của Web Page; lệnh này thay thế HTML hiện tại của riêng trang UQQC.
 
-Trang tablet nằm tại `/uqqc`, có shortcut **UQQC** trong Desk. Module **UQQC**, package `factory_management.uqqc`, DocType **UQQC Inspection Event** và toàn bộ tài nguyên `/assets/factory_management/uqqc/` được đặt riêng. QC và UQQC dùng chung master **Factory Device** trong module **Factory Management**. Mọi thiết bị đã duyệt và đang hoạt động có thể ghép nối với cả hai trang; token trình duyệt của từng trang vẫn được lưu riêng trong **Factory Device Client**. Không ghi token vào sự kiện QC. Migration xóa **QC Device Client** và **UQQC Device Client** sau khi đối chiếu từng token với registry mới. Chỉ **System Manager** được sửa Web Page UQQC và quản lý thiết bị.
+Trang tablet nằm tại `/uqqc`, có shortcut **UQQC** trong Desk. Module **UQQC**, package `factory_management.uqqc`, DocType **UQQC Inspection Event** và toàn bộ tài nguyên `/assets/factory_management/uqqc/` được đặt riêng. QC và UQQC dùng chung **Factory Device** trong module **Factory Management**. ID bản ghi Frappe (`name`) là định danh duy nhất; hai trang kiểm tra ID, trạng thái Approved và Active. UQQC còn yêu cầu thiết bị được gán Công ty. Migration xóa **Factory Device Client** và token cũ. Chỉ **System Manager** được sửa Web Page UQQC và quản lý thiết bị.
 
 Danh mục lỗi QC dùng hai DocType **QC Defect** và **QC Defect Position**. Mỗi DocType lưu cả bản ghi nhóm và bản ghi lỗi/vị trí, phân biệt bằng `record_type` và liên kết nhóm tự tham chiếu. UQQC dùng hai DocType độc lập tương ứng mang tiền tố **UQQC**. Migration chuyển các nhóm cũ sang DocType gộp, giữ nguyên tên bản ghi được liên kết trong sự kiện, mục yêu thích và ánh xạ dữ liệu, rồi xóa DocType nhóm cũ. Dữ liệu QC và UQQC tiếp tục được quản lý độc lập; API tablet giữ nguyên URL và payload. Import `QCDefect*` từ .NET chỉ cập nhật QC. **System Manager** và người có role **UQQC Catalog Manager** được quản lý danh mục UQQC trong Desk.
 
@@ -99,18 +101,18 @@ Chạy `bench --site <site> migrate` khi cài/nâng cấp app; patch `separate_u
 
 | Phương thức | API Method | Chức năng |
 | --- | --- | --- |
-| GET | `/api/method/uqqc-bootstrap` | Master data dùng chung, danh mục lỗi UQQC và đồng hồ site; nhận `deviceId` trong query |
-| POST | `/api/method/uqqc-device-register` | Ghép token của trình duyệt với Device ID đã có |
-| POST | `/api/method/uqqc-device-check` | Kiểm tra trạng thái và ghép nối |
+| GET | `/api/method/uqqc-bootstrap` | Master data dùng chung, danh mục lỗi UQQC và đồng hồ site; nhận `id` trong query |
+| POST | `/api/method/uqqc-device-register` | Kiểm tra ID thiết bị đã có |
+| POST | `/api/method/uqqc-device-check` | Kiểm tra trạng thái thiết bị |
 | POST | `/api/method/uqqc-inspections-sync` | Gửi `events`, `passEvents`, `reworkEvents`; tối đa 500 sự kiện |
 | POST | `/api/method/uqqc-inspections-snapshot` | Tổng hợp một lựa chọn trong ngày |
 | POST | `/api/method/uqqc-inspections-detail-snapshot` | Toàn bộ lựa chọn của thiết bị trong ngày |
 
-Các POST nhận JSON có `deviceId`; snapshot cần thêm `lineId`, `productId`, `colorId`, `sizeId`, `marketId`. Phản hồi dùng envelope Frappe `message`. `defectId` và `defectPositionId` trong API đồng bộ phải thuộc danh mục UQQC đang hoạt động. URL, header token, tên trường và ID trong payload không đổi. Server Scripts gọi các dịch vụ kiểm tra dữ liệu trong package UQQC; sửa orchestration ở **Server Script**, sửa nghiệp vụ dùng chung trong package.
+Các POST nhận JSON có `id`; snapshot cần thêm `lineId`, `productId`, `colorId`, `sizeId`, `marketId`. Phản hồi dùng envelope Frappe `message`. `defectId` và `defectPositionId` trong API đồng bộ phải thuộc danh mục UQQC đang hoạt động. Giai đoạn tương thích còn nhận `deviceId` và `device_id`; phản hồi có alias `device_id`. Server Scripts gọi các dịch vụ kiểm tra dữ liệu trong package UQQC.
 
-Tablet tự sinh token ngẫu nhiên cho từng Device ID, lưu riêng trong trình duyệt và gửi qua `X-UQQC-Token`; không chứa API key/secret của User. Thiết bị phải được duyệt, đang hoạt động, gán công ty và có token UQQC hợp lệ. Không cần bật quyền theo từng trang. Thu hồi token tại **Factory Device Client** với `service_key=uqqc`; token QC không được chấp nhận bởi UQQC.
+Tablet gửi `id` của Factory Device, không gửi token. Thiết bị phải được duyệt, đang hoạt động và gán công ty. Người biết ID của một thiết bị đủ điều kiện có thể gọi API tablet QC/UQQC tương ứng; ID không phải bí mật.
 
-Trong **API Management**, chọn Service **UQQC API**. Bootstrap và hai API snapshot còn hỗ trợ User Frappe/API key có role trong **Allowed Roles**, mặc định là `UQQC API Reader`. Việc gán role cho User do quản trị viên thực hiện. Role này không cấp quyền ghi sự kiện hoặc đọc DocType trực tiếp. Xóa allowlist chặn truy cập theo User; tablet vẫn dùng token thiết bị. Tắt Endpoint hoặc Service chặn mọi cách gọi API tương ứng. Administrator/System Manager cũng phải khớp allowlist khi đọc bằng danh tính User.
+Trong **API Management**, chọn Service **UQQC API**. Tắt Endpoint hoặc Service sẽ chặn mọi cách gọi API tương ứng. Các endpoint tablet dùng điều kiện trạng thái thiết bị, không dùng Allowed Roles.
 
 Resource ngôn ngữ dùng chung frontend/backend là `factory_management/public/uqqc/i18n.json` (Việt/Anh). Trang mặc định tiếng Việt; mở `/uqqc?lang=en` để dùng tiếng Anh. Dữ liệu thời gian lưu UTC, ngày tổng hợp theo múi giờ Frappe site. Hai lỗi trên cùng một `defectPieceId` tính là hai lỗi nhưng một sản phẩm lỗi. Gửi lại cùng mã sự kiện được xác nhận mà không ghi thêm; dùng lại mã với nội dung khác bị từ chối và giữ hàng đợi trên tablet.
 
@@ -148,7 +150,7 @@ Từ màn hình `/desk`, chọn **QC** để mở trang QC trong tab mới hoặ
 - Catalog QC mô tả `/api/method/qc-inspection-summary`, `/api/method/factory_management.api.report_summary` và `/api/method/factory_management.api.report_detail`. Swagger UI cho phép xem schema, role được phép, gọi thử API và tải tệp OpenAPI JSON.
 - Trang tài liệu và API xuất hợp đồng chỉ dành cho vai trò **System Manager**. Chỉnh sửa hợp đồng cập nhật tài liệu; mã xử lý của API được sửa tại Server Script hoặc mã app tương ứng.
 
-Để cấp quyền đọc báo cáo, mở **User → Roles** và gán `QC Report Reader` cho User cần gọi API. Sau đó mở **API Management → API Documentation Endpoint → Allowed Roles** để chọn role được phép ở từng API. Ba API báo cáo nhận `QC Report Reader` khi nâng cấp lần đầu; thay đổi trong Desk được giữ lại sau các lần nâng cấp tiếp theo. Một User có nhiều role chỉ cần khớp một role được phép; System Manager và Administrator cũng phải có role khớp. API key và API secret dùng quyền của User sở hữu chúng. Các API tablet tiếp tục xác thực bằng `X-QC-Token`.
+Để cấp quyền đọc báo cáo, mở **User → Roles** và gán `QC Report Reader` cho User cần gọi API. Sau đó mở **API Management → API Documentation Endpoint → Allowed Roles** để chọn role được phép ở từng API. Ba API báo cáo nhận `QC Report Reader` khi nâng cấp lần đầu; thay đổi trong Desk được giữ lại sau các lần nâng cấp tiếp theo. Một User có nhiều role chỉ cần khớp một role được phép; System Manager và Administrator cũng phải có role khớp. API key và API secret dùng quyền của User sở hữu chúng. Các API tablet dùng `id` của Factory Device.
 
 Sau khi cài app, chạy `bench --site <site> migrate`. API `qc-inspection-summary` là Server Script; để tạo nó trên site mới, bật `server_script_enabled` và chạy `bench --site <site> execute factory_management.provision.ensure_qc_inspection_summary`.
 

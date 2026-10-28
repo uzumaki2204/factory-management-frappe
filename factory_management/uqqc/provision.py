@@ -6,7 +6,7 @@ from pathlib import Path
 import frappe
 
 from factory_management.install import ensure_doctype, field
-from factory_management.uqqc.access import OPERATIONS, READER_ROLE
+from factory_management.uqqc.access import OPERATIONS
 from factory_management.uqqc.i18n import text
 
 
@@ -43,8 +43,6 @@ def ensure_schema():
             frappe.throw(text("api.namespace_conflict"), frappe.ValidationError)
     if not frappe.db.exists("Module Def", "UQQC"):
         frappe.get_doc({"doctype": "Module Def", "module_name": "UQQC", "app_name": "factory_management"}).insert(ignore_permissions=True)
-    if not frappe.db.exists("Role", READER_ROLE):
-        frappe.get_doc({"doctype": "Role", "role_name": READER_ROLE, "desk_access": 0}).insert(ignore_permissions=True)
     if not frappe.db.exists("Role", CATALOG_MANAGER_ROLE):
         frappe.get_doc({"doctype": "Role", "role_name": CATALOG_MANAGER_ROLE, "desk_access": 1}).insert(ignore_permissions=True)
     catalog = {
@@ -96,6 +94,7 @@ def ensure_catalog():
             "version": "1.0.0", "description": text("docs.description", "en"), "is_active": 1,
         }).insert(ignore_permissions=True).name
     string = {"type": "string"}
+    device_id_schema = {"type": "string", "format": "uuid"}
     scope_properties = {key: string for key in ("lineId", "productId", "colorId", "sizeId", "marketId")}
     event_properties = {
         **scope_properties, "localEventId": {"type": "string", "minLength": 1, "maxLength": 100},
@@ -105,20 +104,10 @@ def ensure_catalog():
     }
     event_schema = {"type": "object", "properties": event_properties,
                     "required": [*scope_properties, "localEventId", "occurredAt"]}
-    for operation, (method, api_method, readable) in OPERATIONS.items():
+    for operation, (method, api_method) in OPERATIONS.items():
         existing = frappe.db.get_value("API Documentation Endpoint", {"operation_id": "uqqc_" + operation}, "name")
-        if existing:
-            if operation in ("bootstrap", "sync"):
-                previous = text("docs.reader" if readable else "docs.device", "en")
-                current = frappe.db.get_value("API Documentation Endpoint", existing, "description")
-                if current == previous:
-                    frappe.db.set_value("API Documentation Endpoint", existing, "description",
-                                        text("docs." + operation + "_catalog", "en"), update_modified=False)
-            continue
-        properties = {"deviceId": string}
-        required = ["deviceId"]
-        if operation == "device_register":
-            properties.update(browserName=string, operatingSystem=string)
+        properties = {"id": device_id_schema}
+        required = ["id"]
         if operation == "snapshot":
             properties.update(scope_properties)
             required += list(scope_properties)
@@ -128,27 +117,41 @@ def ensure_catalog():
         body = {} if method == "GET" else {"required": True, "content": {"application/json": {"schema": {
             "type": "object", "properties": properties, "required": required,
         }}}}
-        security = [{"UQQCDeviceToken": []}]
-        if readable:
-            security += [{"ApiToken": []}, {"FrappeSession": []}]
+        security = []
+        description = text("docs." + operation + "_catalog", "en") if operation in ("bootstrap", "sync") else text("docs.device", "en")
+        parameters = [{"name": "id", "in": "query", "required": True, "schema": device_id_schema}] if method == "GET" else []
+        if existing:
+            current = frappe.db.get_value("API Documentation Endpoint", existing,
+                                          ["security_json", "parameters_json", "request_body_json"], as_dict=True)
+            old_contract = "UQQCDeviceToken" in (current.security_json or "") or any(
+                '"deviceId"' in (value or "") for value in
+                (current.parameters_json, current.request_body_json))
+            if old_contract:
+                frappe.db.set_value("API Documentation Endpoint", existing, {
+                    "description": description,
+                    "parameters_json": json.dumps(parameters),
+                    "request_body_json": json.dumps(body),
+                    "security_json": json.dumps(security),
+                }, update_modified=False)
+                frappe.db.delete("API Documentation Endpoint Role", {"parent": existing})
+            continue
         frappe.get_doc({
             "doctype": "API Documentation Endpoint", "service": service, "operation_id": "uqqc_" + operation,
             "path": "/api/method/" + api_method, "http_method": method, "summary": text("docs." + operation, "en"),
-            "description": text("docs." + operation + "_catalog", "en") if operation in ("bootstrap", "sync")
-                           else text("docs.reader" if readable else "docs.device", "en"),
+            "description": description,
             "tags_json": json.dumps(["UQQC"]),
-            "parameters_json": json.dumps([{"name": "deviceId", "in": "query", "required": True, "schema": string}] if method == "GET" else []),
+            "parameters_json": json.dumps(parameters),
             "request_body_json": json.dumps(body), "security_json": json.dumps(security),
             "responses_json": json.dumps({"200": {"description": text("docs.success", "en"), "content": {"application/json": {"schema": {
                 "type": "object", "properties": {"message": {"type": "object"}}, "required": ["message"],
             }}}}, "403": {"description": text("api.forbidden", "en")},
                 "409": {"description": text("api.retry_sync", "en")}, "417": {"description": text("api.input", "en")}}),
-            "allowed_roles": [{"role": READER_ROLE}] if readable else [], "is_active": 1,
+            "allowed_roles": [], "is_active": 1,
         }).insert(ignore_permissions=True)
 
 
 def ensure_scripts():
-    for operation, (_, api_method, _) in OPERATIONS.items():
+    for operation, (_, api_method) in OPERATIONS.items():
         name = "UQQC " + operation.replace("_", " ").title()
         existing = frappe.db.get_value("Server Script", {"api_method": api_method}, "name")
         if existing:

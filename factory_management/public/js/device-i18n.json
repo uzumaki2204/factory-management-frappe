@@ -28,7 +28,10 @@
     "error.product_size_label_duplicate": "Không thể đặt tên ProductSize theo nhãn vì nhãn {label} bị trùng.",
     "error.factory_identity_invalid": "Không thể tạo khóa Factory cho bản ghi {factory}: mã, công ty hoặc liên kết công ty trống/không hợp lệ, hoặc tên dài quá 140 ký tự.",
     "error.factory_identity_duplicate": "Không thể đặt tên Factory vì mã {code} bị trùng trong công ty {company}.",
-    "error.factory_key_schema_missing": "Không thể tạo cột khóa định danh cho DocType {doctype}; quá trình đổi tên Factory đã dừng an toàn."
+    "error.factory_key_schema_missing": "Không thể tạo cột khóa định danh cho DocType {doctype}; quá trình đổi tên Factory đã dừng an toàn.",
+    "error.device_id_name_mismatch": "ID của thiết bị {device} không hợp lệ hoặc không khớp với Device ID cũ; đã dừng migration để giữ nguyên liên kết.",
+    "error.device_id_invalid": "ID thiết bị phải là UUID hợp lệ ở dạng chuẩn.",
+    "error.device_client_referenced": "Factory Device Client vẫn được trường hoặc Server Script khác tham chiếu; đã dừng migration."
   },
   "en": {
     "error.standard_doctype_missing": "Standard DocType {doctype} was not found; install the Frappe app that provides it before syncing.",
@@ -59,6 +62,9 @@
     "error.product_size_label_duplicate": "ProductSize cannot use label-based naming because label {label} is duplicated.",
     "error.factory_identity_invalid": "Cannot create a company-scoped Factory key for record {factory}: its code/company is blank or invalid, or the resulting name exceeds 140 characters.",
     "error.factory_identity_duplicate": "Factory code {code} is duplicated within company {company}; naming migration stopped.",
-    "error.factory_key_schema_missing": "Could not create the identity key column for DocType {doctype}; the Factory rename migration stopped safely."
+    "error.factory_key_schema_missing": "Could not create the identity key column for DocType {doctype}; the Factory rename migration stopped safely.",
+    "error.device_id_name_mismatch": "Device {device} has an invalid record ID or it differs from the legacy Device ID; migration stopped to preserve links.",
+    "error.device_id_invalid": "Device ID must be a canonical UUID.",
+    "error.device_client_referenced": "Factory Device Client is still referenced by a field or Server Script; migration stopped."
   }
 }

@@ -115,7 +115,6 @@ def openapi(service="qc"):
             "securitySchemes": {
                 "FrappeSession": {"type": "apiKey", "in": "cookie", "name": "sid", "description": _("Frappe Desk session")},
                 "ApiToken": {"type": "apiKey", "in": "header", "name": "Authorization", "description": _("token api_key:api_secret")},
-                **({"UQQCDeviceToken": {"type": "apiKey", "in": "header", "name": "X-UQQC-Token"}} if doc.service_key == "uqqc" else {}),
             }
         },
         "paths": paths,

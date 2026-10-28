@@ -22,7 +22,7 @@
   const state = {
     language: null,
     device: read('device', null),
-    token: read('token', null),
+    identityConflict: false,
     catalog: read('catalog', null),
     queue: read('queue', []),
     favorites: read('favorites', []),
@@ -47,6 +47,25 @@
     lineFactoryFilter: '',
     lastSync: read('last_sync', '')
   };
+
+  function migrateStoredDeviceId() {
+    localStorage.removeItem(PREFIX + 'token');
+    const profile = state.device || {};
+    const candidates = [profile.id, profile.device_id, localStorage.getItem('qc_device_id')]
+      .filter(Boolean).map(value => String(value).trim());
+    if (new Set(candidates.map(value => value.toLowerCase())).size > 1) {
+      state.identityConflict = true;
+      return;
+    }
+    if (candidates.length) {
+      state.device = {...(state.device || oldDevice() || {}), id: candidates[0]};
+      delete state.device.device_id;
+      delete state.device.device_uid;
+      save('device', state.device);
+      localStorage.removeItem('qc_device_id');
+    }
+  }
+  migrateStoredDeviceId();
 
   function t(key) {
     return (state.language && (state.language.vi[key] || state.language.en[key] || state.language.vi['ui.no_data'])) || '';
@@ -124,14 +143,14 @@
   function openDevice() {
     const dialog = $('device-dialog');
     if (!dialog.open) dialog.showModal();
-    (state.device?.device_id ? $('device-name') : $('device-id')).focus();
+    (state.device?.id ? $('device-name') : $('device-id')).focus();
   }
   function closeDevice() {
     if ($('device-dialog').open) $('device-dialog').close();
   }
   async function loadLanguage() {
     try {
-      const response = await fetch('/assets/factory_management/js/qc-i18n.json?v=44');
+      const response = await fetch('/assets/factory_management/js/qc-i18n.json?v=45');
       if (response.ok) {
         state.language = await response.json();
         save('language', state.language);
@@ -147,10 +166,6 @@
       node.title = t(node.dataset.i18nAria);
     });
   }
-  function randomToken() {
-    const bytes = crypto.getRandomValues(new Uint8Array(32));
-    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
-  }
   function randomUuid() {
     const bytes = crypto.getRandomValues(new Uint8Array(16));
     bytes[6] = (bytes[6] & 15) | 64;
@@ -165,24 +180,26 @@
     let metadata = {};
     try { metadata = JSON.parse(localStorage.getItem('fm.client.device') || '{}'); } catch (_) {}
     return {
-      device_id: id,
-      device_uid: metadata.deviceUid || id,
+      id,
       device_name: metadata.deviceName || '',
       status: 'Pending',
-      pairing_status: 'Unpaired',
       is_active: false
     };
   }
   function persistDevice() {
+    if (state.identityConflict) return;
+    if (state.device) {
+      delete state.device.device_id;
+      delete state.device.device_uid;
+    }
     save('device', state.device);
-    save('token', state.token);
   }
   function deviceActivated() {
     return state.device?.status === 'Approved' &&
-      state.device.pairing_status === 'Paired' && Boolean(state.device.is_active);
+      Boolean(state.device.is_active);
   }
   function statusReady() {
-    return deviceActivated() && state.token;
+    return deviceActivated() && !state.identityConflict;
   }
   function updateNetwork() {
     const node = $('network');
@@ -251,8 +268,8 @@
     const title = name || t('ui.title');
     $('page-title').textContent = title;
     document.title = title;
-    $('device-id').value = state.device?.device_id || '';
-    const registered = Boolean(state.device?.device_id);
+    $('device-id').value = state.device?.id || '';
+    const registered = Boolean(state.device?.id);
     $('device-id').readOnly = registered;
     $('device-id').setAttribute('aria-readonly', String(registered));
     $('scan').disabled = registered;
@@ -264,7 +281,7 @@
     $('device-status').textContent = state.device?.status ? t('status.' + state.device.status) : t('ui.no_data');
     $('pairing-status').textContent = !state.device ? t('ui.register_prompt')
       : statusReady() ? t('ui.ready')
-      : state.device.status === 'Approved' ? t('ui.waiting_pairing') : t('ui.waiting_approval');
+      : t('ui.waiting_approval');
     $('entry-panel').hidden = !statusReady();
     $('pending-total').textContent = String(state.queue.length);
     updateNetwork();
@@ -283,7 +300,7 @@
     try {
       response = await fetch(endpoint, {
         method: verb,
-        headers: {'Content-Type': 'application/json', 'X-QC-Token': state.token || '',
+        headers: {'Content-Type': 'application/json',
           'X-Factory-Data-Epoch': requestEpoch},
         credentials: 'omit',
         body: verb === 'GET' ? undefined : JSON.stringify(data)
@@ -324,7 +341,7 @@
     if (epochReloading) throw new Error(t('error.network'));
     if (!generation || generation === epochGeneration) return epochGeneration;
     epochReloading = true;
-    const deviceId = state.device?.device_id || localStorage.getItem('qc_device_id') || '';
+    const deviceId = state.device?.id || localStorage.getItem('qc_device_id') || '';
     Object.keys(localStorage).filter(key => key.startsWith(PREFIX)).forEach(key => localStorage.removeItem(key));
     localStorage.removeItem('fm.client.device');
     if (deviceId) localStorage.setItem('qc_device_id', deviceId);
@@ -370,8 +387,9 @@
     } catch (_) { notice('error.storage', true); }
   }
   async function register() {
+    if (state.identityConflict) { notice('error.device_identity_conflict', true); return; }
     const raw = $('device-id').value.trim();
-    const registeredId = String(state.device?.device_id || '').trim();
+    const registeredId = String(state.device?.id || '').trim();
     if (registeredId && raw && registeredId.toLowerCase() !== raw.toLowerCase()) {
       notice('error.device_id_locked', true); return;
     }
@@ -379,15 +397,9 @@
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
       notice('error.input', true); return;
     }
-    const old = registeredId ? state.device : null;
-    const uid = String(old?.device_uid || '').trim() || id;
-    if (!old || typeof state.token !== 'string' || state.token.trim().length < 32) state.token = randomToken();
     try {
       const result = await call('register_device', {
-        device_id: id, device_uid: uid, token: state.token,
-        device_name: $('device-name').value.trim(),
-        browser_name: navigator.userAgent.slice(0, 120),
-        operating_system: navigator.platform || ''
+        id, device_name: $('device-name').value.trim()
       });
       state.device = result.device;
       state.pollingBlocked = false;
@@ -407,11 +419,11 @@
     }
   }
   async function check(silent = false) {
-    if (!state.pageUnlocked || state.checking || !state.device?.device_id || !state.token || !navigator.onLine) return;
+    if (!state.pageUnlocked || state.checking || !state.device?.id || state.identityConflict || !navigator.onLine) return;
     state.checking = true;
     if (!silent) state.pollingBlocked = false;
     try {
-      state.device = await call('check_device', {device_id: state.device.device_id});
+      state.device = await call('check_device', {id: state.device.id});
       state.pollingBlocked = false;
       persistDevice();
       renderStatus();
@@ -449,7 +461,7 @@
   }
   function selectedProduct() { return $('product').value; }
   function scopeKey() {
-    return [state.device?.device_id || '', selectedProduct(), $('line').value,
+    return [state.device?.id || '', selectedProduct(), $('line').value,
       $('color').value, $('size').value, localDate(new Date())].join('|');
   }
   function localDate(date) {
@@ -911,7 +923,7 @@
   async function loadBootstrap() {
     if (!state.pageUnlocked || !navigator.onLine || !statusReady()) return;
     try {
-      const result = await call('bootstrap', {device_id: state.device.device_id}, 'GET');
+      const result = await call('bootstrap', {id: state.device.id}, 'GET');
       state.catalog = result.catalog;
       save('catalog', state.catalog);
       renderCatalog();
@@ -920,7 +932,7 @@
   async function loadFavorites() {
     if (!state.pageUnlocked || !navigator.onLine || !statusReady() || state.favoritesDirty) return;
     try {
-      const result = await call('get_favorites', {device_id: state.device.device_id}, 'GET');
+      const result = await call('get_favorites', {id: state.device.id}, 'GET');
       state.favorites = result.defect_ids || [];
       save('favorites', state.favorites);
       renderFavorites();
@@ -1091,7 +1103,7 @@
         const pendingIds = state.queue.filter(event =>
           localDate(new Date(event.occurred_at)) === today).map(event => event.local_event_id);
         const result = await call('detail_snapshot',
-          {device_id: state.device.device_id, pending_ids: pendingIds});
+          {id: state.device.id, pending_ids: pendingIds});
         state.detail = {date: result.server_date_key, received: result.received || [],
           defects: result.defects || [], already_synced: result.already_synced || []};
         save('detail', state.detail);
@@ -1109,7 +1121,7 @@
     try {
       const key = scopeKey();
       const result = await call('snapshot', {
-        device_id: state.device.device_id,
+        id: state.device.id,
         product: selectedProduct(), line: $('line').value,
         color: $('color').value || null, size: $('size').value || null
       });
@@ -1146,13 +1158,14 @@
     }
   }
   async function sync() {
+    if (state.identityConflict) { notice('error.device_identity_conflict', true); return; }
     if (!state.pageUnlocked || state.syncing || !navigator.onLine || !statusReady()) return;
     state.syncing = true;
     try {
       while (state.pageUnlocked && state.queue.length) {
         const batch = state.queue.slice(0, 100);
         const result = await call('sync_events', {
-          device_id: state.device.device_id, events: batch
+          id: state.device.id, events: batch
         });
         const accepted = new Set(result.accepted_local_event_ids || []);
         if (!accepted.size) throw new Error(t('error.sync'));
@@ -1161,7 +1174,7 @@
       }
       if (state.pageUnlocked && state.favoritesDirty) {
         await call('replace_favorites', {
-          device_id: state.device.device_id, defect_ids: state.favorites
+          id: state.device.id, defect_ids: state.favorites
         });
         state.favoritesDirty = false;
         save('favorites_dirty', false);
@@ -1209,7 +1222,7 @@
     $('scan').textContent = t('ui.scan');
   }
   async function scan() {
-    if (state.device?.device_id) { notice('error.device_id_locked', true); return; }
+    if (state.device?.id) { notice('error.device_id_locked', true); return; }
     if (state.camera) { stopCamera(); return; }
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia ||
         !('BarcodeDetector' in window)) { notice('ui.camera_permission', true); return; }
@@ -1340,7 +1353,7 @@
       resizeFrame = requestAnimationFrame(renderDefects);
     });
     window.setInterval(() => {
-      if ($('device-dialog').open && !statusReady() && !state.pollingBlocked && state.device?.device_id && state.token && navigator.onLine) check(true);
+      if ($('device-dialog').open && !statusReady() && !state.pollingBlocked && state.device?.id && navigator.onLine) check(true);
     }, 5000);
     window.addEventListener('online', () => { updateNetwork(); check(); });
     window.addEventListener('offline', updateNetwork);
@@ -1362,7 +1375,6 @@
       try { await ensureDataEpoch(); } catch (_) { if (epochReloading) return; }
     }
     if (!state.device) state.device = oldDevice();
-    if (state.device && !state.token) state.token = randomToken();
     persistDevice();
     attach();
     renderToolbar();
@@ -1373,6 +1385,7 @@
     showPageLock();
     await initialUnlock;
     if (!statusReady()) openDevice();
+    if (state.identityConflict) notice('error.device_identity_conflict', true);
     try {
       if (sessionStorage.getItem(PREFIX + 'cache_cleared') === '1') {
         sessionStorage.removeItem(PREFIX + 'cache_cleared');
@@ -1383,7 +1396,7 @@
       navigator.serviceWorker.register('/qc-sw.js', {scope: '/'}).catch(() => {});
     }
     if (navigator.onLine) {
-      if (state.device?.device_id) await check();
+      if (state.device?.id) await check();
     }
   }
   init();

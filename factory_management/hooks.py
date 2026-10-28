@@ -5,6 +5,15 @@ app_description = "Quality Control"
 app_email = ""
 app_license = "Proprietary"
 
+add_to_apps_screen = [
+    {
+        "name": app_name,
+        "title": app_title,
+        "logo": "/assets/factory_management/images/qc-desktop.svg",
+        "route": "/qc",
+    }
+]
+
 after_install = "factory_management.install.after_install"
 after_migrate = "factory_management.install.ensure_schema"
 update_website_context = [
@@ -20,10 +29,8 @@ doc_events = {
     "QC Defect Position": {"validate": "factory_management.catalog.validate_qc_position"},
     "UQQC Defect": {"validate": "factory_management.catalog.validate_uqqc_defect"},
     "UQQC Defect Position": {"validate": "factory_management.catalog.validate_uqqc_position"},
+    "Factory Device": {"before_naming": "factory_management.device_registry.before_naming"},
     "Factory": {"before_naming": "factory_management.factory_naming.before_naming"},
-    "Factory Device": {
-        "validate": "factory_management.device.on_validate",
-    },
 }
 
 app_include_js = [
