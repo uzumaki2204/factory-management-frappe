@@ -1,7 +1,7 @@
-const CACHE_NAME = 'fm-uqqc-pwa-v61';
+const CACHE_NAME = 'fm-uqqc-pwa-v62';
 const ASSET_ROOT = '/assets/factory_management/uqqc/';
 const FRAPPE_ASSET_ROOT = '/assets/frappe/dist/';
-const SHELL = ['/uqqc', ...['client.js?v=54', 'i18n.js?v=44', 'brand.css?v=49', 'manifest.json', 'logo.png', 'icon.svg'].map(name => ASSET_ROOT + name)];
+const SHELL = ['/uqqc', ...['client.js?v=55', 'i18n.js?v=44', 'brand.css?v=49', 'manifest.json', 'logo.png', 'icon.svg'].map(name => ASSET_ROOT + name)];
 
 self.addEventListener('install', event => {
     event.waitUntil((async () => {

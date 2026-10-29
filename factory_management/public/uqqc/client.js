@@ -889,6 +889,8 @@
 
     function optionText(item) { return item.code && item.name ? `${item.code} - ${item.name}` : (item.code || item.name || t('notAvailable')); }
 
+    function seasonCodeText(item) { return item.code || t('notAvailable'); }
+
     function scopeOptionText(kind, item) {
         return kind === 'product' ? (item.code || t('notAvailable')) : optionText(item);
     }
@@ -1023,13 +1025,13 @@
             const allowedSeasonIds = new Set(state.scopeOptions.product.map(item => item.seasonId).filter(Boolean));
             const seasons = normalizeArray(state.catalog?.seasons)
                 .filter(item => allowedSeasonIds.has(item.id))
-                .sort((left, right) => uqqcCollator.compare(optionText(left), optionText(right)) ||
+                .sort((left, right) => uqqcCollator.compare(seasonCodeText(left), seasonCodeText(right)) ||
                     uqqcCollator.compare(String(left.id || ''), String(right.id || '')));
             const validFilters = new Set([ALL_SEASONS, RECENT_PRODUCTS, ...seasons.map(item => item.id)]);
             if (!validFilters.has(state.scopePickerFilters.product)) state.scopePickerFilters.product = ALL_SEASONS;
             appendFilter(RECENT_PRODUCTS, t('recentProducts'));
             appendFilter(ALL_SEASONS, t('allSeasons'));
-            seasons.forEach(item => appendFilter(item.id, optionText(item)));
+            seasons.forEach(item => appendFilter(item.id, seasonCodeText(item)));
         }
         elements.scopePickerFilters.replaceChildren(fragment);
         elements.scopePickerFilters.hidden = false;
