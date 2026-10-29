@@ -5,15 +5,6 @@ app_description = "Quality Control"
 app_email = ""
 app_license = "Proprietary"
 
-add_to_apps_screen = [
-    {
-        "name": app_name,
-        "title": app_title,
-        "logo": "/assets/factory_management/images/qc-desktop.svg",
-        "route": "/qc",
-    }
-]
-
 after_install = "factory_management.install.after_install"
 after_migrate = "factory_management.install.ensure_schema"
 update_website_context = [
