@@ -1,6 +1,7 @@
 [pre_model_sync]
 factory_management.patches.rename_lines_by_code
 factory_management.patches.rename_size_to_product_size
+factory_management.patches.use_product_variant_color
 
 [post_model_sync]
 factory_management.patches.add_qc_report_reader

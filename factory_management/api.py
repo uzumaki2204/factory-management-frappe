@@ -154,7 +154,7 @@ def bootstrap(id=None, device_id=None, deviceId=None):
     colors = _rows("Product Color", ["name", "color_code", "color_name"], {"is_active": 1})
     sizes = _rows("ProductSize", ["name", "size_code", "size_label"], {"is_active": 1})
     markets = _rows("Market", ["name", "code", "name_en"], {"is_active": 1})
-    variants = _rows("Product Variant", ["name", "product", "qc_color", "size", "market"], {"is_active": 1})
+    variants = _rows("Product Variant", ["name", "product", "product_color", "size", "market"], {"is_active": 1})
     lines = _rows("Production Line", ["name", "line_code", "line_name", "company", "factory"], {"is_active": 1})
     groups = _rows("QC Defect", ["name", "code", "title"], {"is_active": 1, "record_type": "Group"})
     defects = _rows("QC Defect", ["name", "code", "title", "defect_group", "severity"],
@@ -174,7 +174,7 @@ def bootstrap(id=None, device_id=None, deviceId=None):
         "colors": [_option(x, "color_code", "color_name") for x in colors],
         "sizes": [_option(x, "size_code", "size_label") for x in sizes],
         "markets": [_option(x, "code", "name_en") for x in markets],
-        "product_variants": [{"product_id": x.product, "color_id": x.qc_color, "size_id": x.size, "market_id": x.market} for x in variants if x.qc_color and x.size],
+        "product_variants": [{"product_id": x.product, "color_id": x.product_color, "size_id": x.size, "market_id": x.market} for x in variants if x.product_color and x.size],
         "lines": [_option(x, "line_code", "line_name", company_id=x.company, factory_id=x.factory) for x in lines],
         "defects": [{"id": x.name, "code": x.code, "name": x.title, "group_code": gm[x.defect_group].code if x.defect_group in gm else "", "group_name": gm[x.defect_group].title if x.defect_group in gm else "", "severity": x.severity} for x in defects],
         "defect_position_groups": [_option(x, "code", "title") for x in position_groups],

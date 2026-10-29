@@ -54,7 +54,7 @@ MASTER_TYPES = {
     "Product Variant": [
         field("product", "Product", "Link", "Product"),
         field("market", "Market", "Link", "Market"),
-        field("color", "Color", "Link", "Color"),
+        field("product_color", "Product Color", "Link", "Product Color", in_list_view=1),
         field("size", "Size", "Link", "ProductSize"),
         field("is_active", "Active", "Check", default="0"),
     ],
@@ -512,10 +512,14 @@ def ensure_custom_field(dt, name, label, kind="Data", options=None):
 
 
 def ensure_schema():
+    from factory_management.patches.use_product_variant_color import finalize, prepare
+
     ensure_module()
+    prepare()
     _ensure_snapshot_doctype_shells()
     for name, fields in MASTER_TYPES.items():
         ensure_doctype(name, fields, module=MASTER_TYPE_MODULES.get(name, "Quality Control"))
+    finalize()
     ensure_device_schema()
     for name, fields in TRANSACTION_TYPES.items():
         ensure_doctype(name, fields, module=MASTER_TYPE_MODULES.get(name, "Quality Control"))
@@ -527,7 +531,6 @@ def ensure_schema():
     ensure_custom_field("API Documentation Endpoint", "allowed_roles", "Allowed Roles", "Table", "API Documentation Endpoint Role")
     ensure_custom_field("Product", "customer", "Customer", "Link", "Customer")
     ensure_custom_field("Product", "production_season", "Production Season", "Link", "Production Season")
-    ensure_custom_field("Product Variant", "qc_color", "QC Color", "Link", "Product Color")
     from factory_management.api_docs import ensure_catalog
     ensure_catalog()
     from factory_management.qc_web_page import ensure_qc_web_page, ensure_qc_web_page_permissions

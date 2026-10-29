@@ -140,6 +140,8 @@ DocType `Size` được đổi thành **ProductSize**, thuộc **KTG Master Data
 
 `Factory`, `Product Color` và `Production Season` cũng thuộc **KTG Master Data**, lần lượt dùng `factory_code`, `color_code` và `season_code` để đặt tên bản ghi mới. **QC Defect** vẫn thuộc **Quality Control** và dùng `code`. Thay đổi quy tắc không đổi tên các bản ghi hiện có để giữ nguyên Link; mã dùng để tạo tên mới cần duy nhất trong DocType.
 
+`Product Variant` dùng trường `product_color` (nhãn **Product Color**) Link tới danh mục `Product Color`. Khi nâng cấp, app chuyển giá trị `qc_color` và các giá trị `color` khớp chính xác tên bản ghi `Product Color` sang trường mới, sau đó gỡ hai trường cũ. Migrate dừng trước khi gỡ trường nếu có mã màu không khớp hoặc các giá trị mâu thuẫn. Tích hợp dùng trực tiếp Frappe Resource API cần đổi fieldname `qc_color` thành `product_color`; payload QC/UQQC tiếp tục dùng `colorId`, `color_id` và `colors`.
+
 ## Tài liệu API
 
 Từ màn hình `/desk`, chọn **QC** để mở trang QC trong tab mới hoặc **API Docs** để mở tài liệu và quản lý API trong Desk. Biểu tượng API Docs chỉ hiển thị cho System Manager.

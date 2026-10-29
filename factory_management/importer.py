@@ -111,7 +111,7 @@ def _values(table, row):
         return {"code": code, "name_en": title, "is_active": active}
     if table == "ProductVariants":
         return {"product": _target("Products", row.get("ProductId")),
-                "qc_color": _target("Colors", row.get("ColorId")),
+                "product_color": _target("Colors", row.get("ColorId")),
                 "size": _target("Sizes", row.get("SizeId")),
                 "market": _target("Markets", row.get("MarketId")),
                 "is_active": active}
@@ -160,7 +160,7 @@ def _existing(dt, table, values, codefield):
             "name",
         )
     if table == "ProductVariants":
-        key = {k: values.get(k) for k in ("product", "qc_color", "size", "market")}
+        key = {k: values.get(k) for k in ("product", "product_color", "size", "market")}
         return frappe.db.get_value(dt, key, "name")
     if table == "Devices":
         return frappe.db.exists(dt, values["name"])

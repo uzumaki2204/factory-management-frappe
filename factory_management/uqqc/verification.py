@@ -51,7 +51,7 @@ def run():
     try:
         frappe.set_user("Administrator")
         line = frappe.db.get_value("Production Line", {"is_active": 1, "company": ["is", "set"]}, ["name", "company"], as_dict=True)
-        variant = frappe.db.get_value("Product Variant", {"is_active": 1, "qc_color": ["is", "set"], "size": ["is", "set"], "market": ["is", "set"]}, ["product", "qc_color", "size", "market"], as_dict=True)
+        variant = frappe.db.get_value("Product Variant", {"is_active": 1, "product_color": ["is", "set"], "size": ["is", "set"], "market": ["is", "set"]}, ["product", "product_color", "size", "market"], as_dict=True)
         defect = frappe.db.get_value("UQQC Defect", {"is_active": 1, "record_type": "Defect"}, "name")
         position = frappe.db.get_value("UQQC Defect Position", {"is_active": 1, "record_type": "Position"}, "name")
         assert line and variant and defect and position
@@ -67,7 +67,7 @@ def run():
         assert "catalog" in qc_api.bootstrap(device_id)
         assert qc_api.check_device(id=device_id)["id"] == device_id
         qc_request.close()
-        scope = {"lineId": line.name, "productId": variant.product, "colorId": variant.qc_color,
+        scope = {"lineId": line.name, "productId": variant.product, "colorId": variant.product_color,
                  "sizeId": variant.size, "marketId": variant.market}
 
         def invoke(operation, payload=None, session="Guest", path=None, method=None,
@@ -146,7 +146,7 @@ def run():
 
         qc_event = {"local_event_id": "qc-verification-" + uuid.uuid4().hex,
                     "event_type": "CumulativeAdd", "product": variant.product, "line": line.name,
-                    "color": variant.qc_color, "size": variant.size,
+                    "color": variant.product_color, "size": variant.size,
                     "quantity_delta": 1, "occurred_at": now}
         qc_builder = EnvironBuilder(path="/api/method/factory_management.api.sync_events", method="POST",
                                     headers={data_epoch.HEADER: data_epoch.current()["generation"]})
@@ -155,7 +155,7 @@ def run():
             assert qc_api.sync_events(device_id, [qc_event])["accepted_count"] == 1
             assert qc_api.sync_events(device_id, [qc_event])["accepted_count"] == 0
             assert qc_api.snapshot(device_id, variant.product, line.name,
-                                   variant.qc_color, variant.size)["received"] == 1
+                                   variant.product_color, variant.size)["received"] == 1
         finally:
             qc_builder.close()
         passed.append("qc_sync_replay_and_snapshot_without_retired_fields")

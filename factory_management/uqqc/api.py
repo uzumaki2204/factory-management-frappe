@@ -92,9 +92,9 @@ def bootstrap(data, endpoint):
             catalog[key].append(option)
     valid_ids = {key: {item["id"] for item in values} for key, values in catalog.items()}
     catalog["productVariants"] = [
-        {"productId": row.product, "colorId": row.qc_color, "sizeId": row.size, "marketId": row.market}
-        for row in rows("Product Variant", ["product", "qc_color", "size", "market"], {"is_active": 1})
-        if row.product in valid_ids["products"] and row.qc_color in valid_ids["colors"]
+        {"productId": row.product, "colorId": row.product_color, "sizeId": row.size, "marketId": row.market}
+        for row in rows("Product Variant", ["product", "product_color", "size", "market"], {"is_active": 1})
+        if row.product in valid_ids["products"] and row.product_color in valid_ids["colors"]
         and row.size in valid_ids["sizes"] and row.market in valid_ids["markets"]
     ]
     position_group_rows = rows("UQQC Defect Position", ["name", "code", "title"],
@@ -128,7 +128,7 @@ def _master_value(doctype, name, field):
 
 @request_cache
 def _variant(product, color, size, market):
-    return frappe.db.exists("Product Variant", {"product": product, "qc_color": color, "size": size,
+    return frappe.db.exists("Product Variant", {"product": product, "product_color": color, "size": size,
                                                "market": market, "is_active": 1})
 
 
