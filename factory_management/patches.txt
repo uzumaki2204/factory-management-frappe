@@ -16,3 +16,4 @@ factory_management.patches.remove_factory_device_access
 factory_management.patches.set_master_naming_and_modules
 factory_management.patches.set_factory_company_scoped_naming
 factory_management.patches.use_factory_device_record_id
+factory_management.patches.sync_uqqc_catalog_snapshot
