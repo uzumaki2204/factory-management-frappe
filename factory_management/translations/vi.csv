@@ -1,4 +1,4 @@
-QC_REPORT_FORBIDDEN,Người dùng không có vai trò được phép truy cập API báo cáo QC này
+﻿QC_REPORT_FORBIDDEN,Người dùng không có vai trò được phép truy cập API báo cáo QC này
 QC_REPORT_SCRIPT_MIGRATION_REQUIRED,Cần cập nhật thủ công phần kiểm tra quyền của Server Script QC Inspection Summary vì nội dung đã được tùy chỉnh
 QC_REPORT_DATES_REQUIRED,Cần nhập đủ ngày bắt đầu và ngày kết thúc
 QC_REPORT_INVALID_DATE,Ngày báo cáo không hợp lệ
@@ -138,7 +138,7 @@ Factory Device,Thiết bị nhà máy
 Factory Device Client,Client thiết bị nhà máy
 Service Key,Mã dịch vụ
 Enabled,Đã bật
-Requires X-UQQC-Token. The device must be approved, active and linked to a company. QC and UQQC share device identity and keep separate tokens in Factory Device Client.,Yêu cầu X-UQQC-Token. Thiết bị phải được duyệt, đang hoạt động và gán công ty. QC và UQQC dùng chung thiết bị nhưng giữ token riêng trong Factory Device Client.
+"Requires X-UQQC-Token. The device must be approved, active and linked to a company. QC and UQQC share device identity and keep separate tokens in Factory Device Client.","Yêu cầu X-UQQC-Token. Thiết bị phải được duyệt, đang hoạt động và gán công ty. QC và UQQC dùng chung thiết bị nhưng giữ token riêng trong Factory Device Client."
 The sync transaction conflicted. Pending data is retained and will be retried automatically.,Giao dịch đồng bộ đang xung đột. Dữ liệu chờ được giữ lại và sẽ tự động thử lại.
 UQQC Defect,Lỗi UQQC
 UQQC Defect Position,Vị trí lỗi UQQC
@@ -158,3 +158,173 @@ Defect,Lỗi
 Position,Vị trí
 Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position groups are stored as record types in their respective UQQC catalog DocTypes; production masters remain shared.,Tablet dùng X-UQQC-Token; User Frappe cần role trong Allowed Roles. Nhóm lỗi và nhóm vị trí được lưu thành các loại bản ghi trong DocType danh mục UQQC tương ứng; dữ liệu sản xuất tiếp tục dùng chung.
 Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.,Yêu cầu X-UQQC-Token. defectId và defectPositionId phải tham chiếu danh mục UQQC đang hoạt động; ID và cấu trúc payload tablet được giữ nguyên.
+SPL PO Import,Nhập PO từ SPL
+SPL Import Settings,Cấu hình nhập SPL
+SPL Import Run,Lượt nhập SPL
+SPL Import Runs,Lịch sử nhập SPL
+SPL Purchase Order,Đơn hàng SPL
+SPL Purchase Order Item,Dòng đơn hàng SPL
+SPL Base URL,Địa chỉ SPL
+SPL User ID,Tài khoản SPL
+SPL Password,Mật khẩu SPL
+Client Certificate,Chứng chỉ client
+Certificate Password,Mật khẩu chứng chỉ
+Automatic Import Enabled,Bật nhập tự động
+Schedule Times,Giờ chạy lịch
+Schedule Time Zone,Múi giờ chạy lịch
+Request Timeout Seconds,Thời gian chờ yêu cầu (giây)
+Answer Status ID,Mã trạng thái trả lời
+Item Brand ID,Mã nhãn hàng
+Year Season IDs,Mã năm mùa
+Management Factory ID,Mã nhà máy quản lý
+Document Status IDs,Mã trạng thái tài liệu
+Report Offset,Vị trí bắt đầu báo cáo
+Test SPL Connection,Kiểm tra kết nối SPL
+Preview SPL Report,Xem trước báo cáo SPL
+Upload Workbook,Tải workbook lên
+Uploading workbook,Đang tải workbook lên
+Import Selected Rows,Nhập các dòng đã chọn
+Select,Chọn
+Select PO,Chọn PO
+Row,Dòng
+Previous,Trước
+Next,Tiếp
+Page {0} of {1},Trang {0}/{1}
+Select row {0},Chọn dòng {0}
+Valid,Hợp lệ
+Queued,Đang chờ
+Running,Đang chạy
+Preview Ready,Sẵn sàng xem trước
+Success,Thành công
+Partial Success,Thành công một phần
+Failed,Thất bại
+Expired,Hết hạn
+Manual,Thủ công
+Scheduled,Theo lịch
+Upload,Tải lên
+Connection Test,Kiểm tra kết nối
+SPL_JOB_QUEUED,Đã đưa tác vụ vào hàng đợi
+SPL_PREVIEW_SUMMARY,{0} dòng · {1} PO · {2} lỗi · {3} master cần tạo
+SPL_FORBIDDEN,Chỉ System Manager được nhập PO SPL
+SPL_CUSTOMER_REQUIRED,Cần chọn Customer hợp lệ trong cấu hình SPL
+SPL_HOST_INVALID,SPL Base URL phải là HTTPS và thuộc danh sách host cho phép của site
+SPL_CERT_REQUIRED,Cần chọn chứng chỉ client
+SPL_CERT_PRIVATE_REQUIRED,Chứng chỉ client phải là File riêng tư
+SPL_CERT_INVALID,Không đọc được chứng chỉ client hoặc mật khẩu chứng chỉ không đúng
+SPL_CREDENTIALS_REQUIRED,Cần nhập tài khoản và mật khẩu SPL
+SPL_CONNECTION_FAILED,Không kết nối được tới SPL
+SPL_HTTP_FAILED,SPL trả về lỗi HTTP
+SPL_LOGIN_INVALID,Phản hồi đăng nhập SPL không hợp lệ
+SPL_REPORT_INVALID,Đường dẫn báo cáo SPL không hợp lệ
+SPL_FILE_TOO_LARGE,Workbook SPL vượt giới hạn 20 MB
+SPL_FILE_SIZE_INVALID,Workbook trống hoặc vượt giới hạn 20 MB
+SPL_FILE_FORMAT_INVALID,Chỉ hỗ trợ workbook .xls hoặc .xlsx
+SPL_NO_ROWS,Workbook không có dòng PO hợp lệ
+SPL_SHEET_MISSING,Thiếu sheet {sheet}
+SPL_COLUMNS_MISSING,Thiếu cột bắt buộc: {columns}
+SPL_ROW_LIMIT,Workbook vượt giới hạn 50.000 dòng
+SPL_VALUE_REQUIRED,"Thiếu dữ liệu dòng {row}, cột {column}"
+SPL_INVALID_DATE,"Ngày không hợp lệ ở dòng {row}, cột {column}"
+SPL_INVALID_NUMBER,"Số không hợp lệ ở dòng {row}, cột {column}"
+SPL_SAMPLE_INVALID,Sample Code không hợp lệ ở dòng {row}
+SPL_UPLOAD_PRIVATE_REQUIRED,Workbook tải lên phải là File riêng tư
+SPL_UPLOAD_FAILED,Không tải được workbook lên
+SPL_CONNECTION_OK,Kết nối SPL thành công
+SPL_PREVIEW_READY,Đã tạo bản xem trước; có hiệu lực 15 phút
+SPL_PREVIEW_INVALID,Bản xem trước không hợp lệ hoặc cấu hình Customer đã thay đổi
+SPL_PREVIEW_EXPIRED,Bản xem trước đã hết hạn; hãy tải lại
+SPL_SELECTION_INVALID,Lựa chọn dòng không hợp lệ
+SPL_SELECTION_INCOMPLETE,Phải chọn đủ mọi dòng của một PO và revision
+SPL_DUPLICATE_ITEM,"PO {po} / revision {revision} có dòng hàng trùng mã hàng, màu và size"
+SPL_MARKET_CONFLICT,PO {po} / revision {revision} chứa nhiều market
+SPL_GROUP_INVALID,PO {po} / revision {revision} không hợp lệ
+SPL_MASTER_AMBIGUOUS,{doctype} có nhiều bản ghi cho mã {code}
+SPL_MASTER_WILL_CREATE,Sẽ tạo {doctype} mã {code}
+Missing Masters,Master cần tạo
+SPL_ALREADY_RUNNING,Đã có tác vụ nhập SPL đang chạy
+SPL_IMPORT_COMPLETE,Nhập PO SPL hoàn tất
+SPL_IMPORT_PARTIAL,Một số PO nhập thất bại; xem chi tiết lượt nhập
+SPL_IMPORT_FAILED,Nhập PO SPL thất bại; kiểm tra cấu hình và dữ liệu
+SPL_SCHEDULE_INVALID,Giờ chạy lịch phải có dạng HH:MM và không được trống khi bật lịch
+SPL_TIMEZONE_INVALID,Múi giờ chạy lịch không hợp lệ
+SPL_TIMEOUT_INVALID,Thời gian chờ SPL phải từ 10 đến 600 giây
+SPL_OFFSET_INVALID,Vị trí bắt đầu báo cáo không được âm
+Allocation Order Number,Số đơn phân bổ
+Answered Status External,Trạng thái trả lời từ SPL
+Approval Date,Ngày duyệt
+Approver,Người duyệt
+Bill To Address,Địa chỉ thanh toán
+Bill To Name,Tên người nhận hóa đơn
+Bill To Person In Charge,Người phụ trách thanh toán
+Bill To Telephone,Số điện thoại thanh toán
+Business Unit,Đơn vị kinh doanh
+Completed At,Hoàn thành lúc
+Contracted ETD,Ngày xuất dự kiến theo hợp đồng
+Currency,Tiền tệ
+Customer,Khách hàng
+Deadline Date,Ngày hạn chót
+Decision Date,Ngày quyết định
+Delivery Date,Ngày giao hàng
+Department,Bộ phận
+Document Status External,Trạng thái tài liệu từ SPL
+ETA WH,Ngày đến kho dự kiến
+Error Detail,Chi tiết lỗi
+External Remark,Ghi chú từ SPL
+Failed Orders,Số PO thất bại
+Global Business Unit,Đơn vị kinh doanh toàn cầu
+Import Line Key,Khóa dòng nhập
+Imported At,Nhập lúc
+Imported Items,Số dòng đã nhập
+Imported Orders,Số PO đã nhập
+Incoterms,Điều kiện Incoterms
+Item Brand,Nhãn hàng
+Item Code,Mã sản phẩm SPL
+Item Name,Tên sản phẩm SPL
+Items,Các dòng hàng
+Last Source File Path,Đường dẫn tệp nguồn gần nhất
+Message,Thông báo
+Mode,Chế độ
+Order Conditions,Điều kiện đặt hàng
+Order Date,Ngày đặt hàng
+Order Plan Number,Số kế hoạch đặt hàng
+Order Qty,Số lượng đặt
+Original Sales Price Text,Giá bán gốc từ SPL
+PO Number,Số PO
+Pattern Dimension Code,Mã kích thước mẫu
+Payment Currency,Tiền tệ thanh toán
+Payment Terms,Điều kiện thanh toán
+Planning Season Code,Mã mùa kế hoạch
+Planning Year,Năm kế hoạch
+Product Variant,Biến thể sản phẩm
+Production Season,Mùa sản xuất
+Representative Sample Code,Mã mẫu đại diện
+Requested By,Người yêu cầu
+Revised Date,Ngày sửa đổi
+Revision No,Số phiên bản
+SKU,Mã SKU
+SKU Code For Shipping,Mã SKU vận chuyển
+Sales Contract No,Số hợp đồng bán hàng
+Sample Code,Mã mẫu
+Schedule Slot,Khung giờ chạy lịch
+Ship Date,Ngày vận chuyển
+Snapshot Expires At,Bản xem trước hết hạn lúc
+Snapshot Path,Đường dẫn bản xem trước
+Snapshot Token,Mã bản xem trước
+Source File Path,Đường dẫn tệp nguồn
+Source Key,Khóa nguồn
+Source Row Number,Số dòng nguồn
+Started At,Bắt đầu lúc
+Total Orders,Tổng số PO
+Total Quantity,Tổng số lượng
+Total Rows,Tổng số dòng
+Transportation Method,Phương thức vận chuyển
+Trigger Source,Nguồn kích hoạt
+Unit Price,Đơn giá
+PO Status,Trạng thái PO
+Note,Ghi chú
+Barcode,Mã barcode
+Confirmed,Đã xác nhận
+In Progress,Đang thực hiện
+Completed,Hoàn thành
+Cancelled,Đã hủy
+Draft,Bản nháp

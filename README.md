@@ -79,6 +79,20 @@ Script cũng tạo hai archive phụ trợ từ cùng tag trong `dist/`: bộ c�
 
 Manifest ghi Frappe 16.53.0 làm phiên bản chuẩn kiểm tra theo revision `e8d41dd0061a32ee781caefe5d0b0d2bb7c15362` ([bản phát hành chính thức](https://github.com/frappe/frappe/releases/tag/v16.53.0)). Metadata Bench trong `pyproject.toml` khai báo app tương thích Frappe `>=16.53.0,<17.0.0`. Các phụ thuộc runtime theo [hướng dẫn cài Frappe](https://docs.frappe.io/framework/user/en/installation). Bench tải mã bằng `get-app`, cài app vào site bằng `install-app` và cập nhật schema bằng `migrate` theo [tài liệu Bench](https://docs.frappe.io/framework/user/en/bench/bench-commands).
 
+## Nhập PO từ SPL
+
+Từ bản `0.1.45`, trang Desk `/app/spl-po-import` trong module **Factory Management** cho System Manager kiểm tra kết nối, lấy workbook SPL, xem trước theo trang, chọn dòng và xác nhận nhập. Có thể tải lên workbook `.xls` hoặc `.xlsx` riêng tư thay cho tải trực tiếp. Trang dùng các DocType **SPL Purchase Order**, **SPL Purchase Order Item**, **SPL Import Settings** và **SPL Import Run**; `bench migrate` tạo schema qua patch `add_spl_po_import` và đăng ký lịch.
+
+Trong **SPL Import Settings**, chọn Customer, nhập tài khoản/mật khẩu SPL và chọn chứng chỉ PFX/P12 đã tải lên dạng **Private File** cùng mật khẩu chứng chỉ. URL mặc định là `https://spl.fastretailing.com`; chỉ HTTPS và host trong `spl_po_allowed_hosts` của site config được phép. Mặc định chỉ cho phép `spl.fastretailing.com`. Không lưu password hoặc token trong workbook, snapshot và lịch sử nhập. Các bộ lọc SPL mặc định tương ứng project .NET; có thể điều chỉnh trong Settings.
+
+Preview có hiệu lực 15 phút và nằm trong `sites/<site>/private/files/spl_po/`. Nút nhập xác nhận đúng snapshot đã xem; mỗi PO/revision là một giao dịch và nhập lại sẽ cập nhật các dòng của PO đó. Chỉ chọn một PO nếu đã chọn đủ tất cả dòng của PO. Master thiếu được hiển thị trong preview và tự tạo khi nhập; Product tạo inactive như importer .NET. Kiểm tra bản ghi **SPL Import Run** để xem PO thất bại và xử lý dữ liệu trước khi nhập lại.
+
+Desk gọi các method System Manager `factory_management.spl_po.api.test_connection`, `start_preview`, `get_run`, `get_preview_page` và `start_import` qua `/api/method/`. `start_preview` nhận tùy chọn `file_url` của Private File; `get_run` trả `run_name`, trạng thái và `snapshot_token` khi preview sẵn sàng; `get_preview_page` nhận `run_name`, `token`, `page`; `start_import` nhận `run_name`, `token`, `selected_rows="all"` và `excluded_rows` (JSON array). Các method tạo tác vụ chỉ nhận POST và đưa công việc vào queue `long`.
+
+Lịch mặc định tắt. Khi bật, nhập các giờ địa phương dạng `08:00,13:00` trong **Schedule Times** và múi giờ IANA (mặc định `Asia/Ho_Chi_Minh`); Frappe scheduler kiểm tra mỗi phút và tự tải/nhập. Cần worker queue `long` hoạt động. Trước khi cập nhật Pilot, chạy `bench --site <site> backup --with-files`; sau cập nhật app, chạy migrate nếu Pilot chưa thực hiện, kiểm tra Settings, preview bằng workbook đã làm sạch rồi mới nhập dữ liệu thật.
+
+Kiểm thử parser/gateway không cần site (cài thêm extra `.[test]` để tạo fixture `.xls`): `python -m unittest discover -s tests -p 'test_spl_po*.py' -v`. Kiểm thử upsert trên site thử: `bench --site <site-thu> run-tests --app factory_management --module factory_management.spl_po.test_spl_po_frappe`.
+
 ## Generation dữ liệu sau khi làm mới QC
 
 `GET /api/method/factory_management.api.data_epoch` trả `{generation, resetAtUtc}` trong `message`. Trước lần làm mới, `generation` rỗng. Sau lần làm mới, các lệnh ghi/đăng ký/kiểm tra thiết bị QC và UQQC cần header `X-Factory-Data-Epoch` bằng generation hiện tại; request cũ bị từ chối. Client QC/UQQC đọc generation trước khi đồng bộ và xóa queue, cache cũ khi generation đổi. DocType `Factory Data Epoch` chỉ lưu generation của site. Luồng làm mới do MigrationFrappe chạy cục bộ bằng Bench trong Docker; không có API HTTP để xóa dữ liệu.

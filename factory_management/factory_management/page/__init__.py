@@ -1,0 +1,1 @@
+"""Factory Management Desk pages."""

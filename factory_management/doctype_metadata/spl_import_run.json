@@ -1,0 +1,134 @@
+{
+  "doctype": {
+    "doctype": "DocType",
+    "name": "SPL Import Run",
+    "module": "Factory Management",
+    "custom": 1,
+    "autoname": "hash",
+    "issingle": 0,
+    "istable": 0,
+    "track_changes": 1,
+    "allow_import": 0,
+    "fields": [
+      {
+        "fieldname": "status",
+        "label": "Status",
+        "fieldtype": "Select",
+        "options": "Queued\nRunning\nPreview Ready\nSuccess\nPartial Success\nFailed\nExpired",
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "trigger_source",
+        "label": "Trigger Source",
+        "fieldtype": "Select",
+        "options": "Manual\nScheduled\nUpload\nConnection Test",
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "requested_by",
+        "label": "Requested By",
+        "fieldtype": "Link",
+        "options": "User"
+      },
+      {
+        "fieldname": "schedule_slot",
+        "label": "Schedule Slot",
+        "fieldtype": "Data",
+        "unique": 1
+      },
+      {
+        "fieldname": "started_at",
+        "label": "Started At",
+        "fieldtype": "Datetime",
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "completed_at",
+        "label": "Completed At",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "snapshot_token",
+        "label": "Snapshot Token",
+        "fieldtype": "Data",
+        "read_only": 1
+      },
+      {
+        "fieldname": "snapshot_path",
+        "label": "Snapshot Path",
+        "fieldtype": "Data",
+        "read_only": 1,
+        "hidden": 1
+      },
+      {
+        "fieldname": "snapshot_expires_at",
+        "label": "Snapshot Expires At",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "source_file_path",
+        "label": "Source File Path",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "total_rows",
+        "label": "Total Rows",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "total_orders",
+        "label": "Total Orders",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "imported_orders",
+        "label": "Imported Orders",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "imported_items",
+        "label": "Imported Items",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "failed_orders",
+        "label": "Failed Orders",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "missing_masters",
+        "label": "Missing Masters",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "message",
+        "label": "Message",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "error_detail",
+        "label": "Error Detail",
+        "fieldtype": "Long Text"
+      }
+    ],
+    "permissions": [
+      {
+        "role": "System Manager",
+        "read": 1,
+        "write": 0,
+        "create": 0,
+        "delete": 0,
+        "report": 1
+      }
+    ],
+    "actions": [],
+    "links": [],
+    "states": []
+  },
+  "custom_fields": [],
+  "property_setters": [],
+  "custom_permissions": [],
+  "custom_links": [],
+  "custom_actions": [],
+  "roles": []
+}

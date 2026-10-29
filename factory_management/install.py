@@ -338,6 +338,7 @@ def _ensure_snapshot_doctype_shells():
             data.get("module") or "Factory Management",
             bool(data.get("istable")),
         )
+        shell["issingle"] = int(bool(data.get("issingle")))
         # A shell has no user fields yet, so use an autoname mode that does not
         # depend on a field being installed in the later metadata sync.
         shell["autoname"] = "hash"
@@ -439,6 +440,7 @@ def ensure_doctype(name, fields, module="Quality Control", is_child=False):
 def export_doctype_metadata():
     """Export current app-managed DocType metadata for source-controlled releases."""
     from factory_management.uqqc.provision import CATALOG_TYPES
+    from factory_management.spl_po.schema import TYPES as SPL_TYPES
 
     names = (
         *MASTER_TYPES,
@@ -446,6 +448,7 @@ def export_doctype_metadata():
         *TRANSACTION_TYPES,
         *DOCUMENTATION_TYPES,
         *CATALOG_TYPES,
+        *SPL_TYPES,
         "UQQC Inspection Event",
     )
     METADATA_DIRECTORY.mkdir(parents=True, exist_ok=True)
@@ -538,6 +541,8 @@ def ensure_schema():
     ensure_qc_web_page()
     from factory_management.uqqc.provision import ensure as ensure_uqqc
     ensure_uqqc()
+    from factory_management.spl_po.provision import ensure as ensure_spl_po
+    ensure_spl_po()
     frappe.clear_cache()
 
 

@@ -1,0 +1,136 @@
+{
+  "doctype": {
+    "doctype": "DocType",
+    "name": "SPL Import Settings",
+    "module": "Factory Management",
+    "custom": 1,
+    "autoname": "hash",
+    "issingle": 1,
+    "istable": 0,
+    "track_changes": 1,
+    "allow_import": 0,
+    "fields": [
+      {
+        "fieldname": "base_url",
+        "label": "SPL Base URL",
+        "fieldtype": "Data",
+        "default": "https://spl.fastretailing.com",
+        "reqd": 1
+      },
+      {
+        "fieldname": "spl_user_id",
+        "label": "SPL User ID",
+        "fieldtype": "Data",
+        "reqd": 1
+      },
+      {
+        "fieldname": "spl_password",
+        "label": "SPL Password",
+        "fieldtype": "Password"
+      },
+      {
+        "fieldname": "client_certificate",
+        "label": "Client Certificate",
+        "fieldtype": "Link",
+        "options": "File"
+      },
+      {
+        "fieldname": "certificate_password",
+        "label": "Certificate Password",
+        "fieldtype": "Password"
+      },
+      {
+        "fieldname": "customer",
+        "label": "Customer",
+        "fieldtype": "Link",
+        "options": "Customer",
+        "reqd": 1
+      },
+      {
+        "fieldname": "auto_enabled",
+        "label": "Automatic Import Enabled",
+        "fieldtype": "Check",
+        "default": "0"
+      },
+      {
+        "fieldname": "schedule_times",
+        "label": "Schedule Times",
+        "fieldtype": "Data",
+        "default": ""
+      },
+      {
+        "fieldname": "schedule_timezone",
+        "label": "Schedule Time Zone",
+        "fieldtype": "Data",
+        "default": "Asia/Ho_Chi_Minh"
+      },
+      {
+        "fieldname": "request_timeout_seconds",
+        "label": "Request Timeout Seconds",
+        "fieldtype": "Int",
+        "default": "120"
+      },
+      {
+        "fieldname": "mode",
+        "label": "Mode",
+        "fieldtype": "Data",
+        "default": "01"
+      },
+      {
+        "fieldname": "answer_status_id",
+        "label": "Answer Status ID",
+        "fieldtype": "Data",
+        "default": "0003"
+      },
+      {
+        "fieldname": "item_brand_id",
+        "label": "Item Brand ID",
+        "fieldtype": "Data",
+        "default": "010"
+      },
+      {
+        "fieldname": "year_season_ids",
+        "label": "Year Season IDs",
+        "fieldtype": "Data",
+        "default": "20252,20261,20262,20271"
+      },
+      {
+        "fieldname": "management_factory_id",
+        "label": "Management Factory ID",
+        "fieldtype": "Data",
+        "default": "015J"
+      },
+      {
+        "fieldname": "document_status_ids",
+        "label": "Document Status IDs",
+        "fieldtype": "Data",
+        "default": "0001,0002,0003,0004"
+      },
+      {
+        "fieldname": "report_offset",
+        "label": "Report Offset",
+        "fieldtype": "Int",
+        "default": "0"
+      }
+    ],
+    "permissions": [
+      {
+        "role": "System Manager",
+        "read": 1,
+        "write": 1,
+        "create": 1,
+        "delete": 1,
+        "report": 1
+      }
+    ],
+    "actions": [],
+    "links": [],
+    "states": []
+  },
+  "custom_fields": [],
+  "property_setters": [],
+  "custom_permissions": [],
+  "custom_links": [],
+  "custom_actions": [],
+  "roles": []
+}

@@ -1,0 +1,9 @@
+{
+  "doctype": "Page",
+  "name": "spl-po-import",
+  "page_name": "spl-po-import",
+  "title": "SPL PO Import",
+  "module": "Factory Management",
+  "standard": "Yes",
+  "roles": [{"role": "System Manager"}]
+}

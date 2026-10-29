@@ -138,7 +138,7 @@ Factory Device,Factory Device
 Factory Device Client,Factory Device Client
 Service Key,Service Key
 Enabled,Enabled
-Requires X-UQQC-Token. The device must be approved, active and linked to a company. QC and UQQC share device identity and keep separate tokens in Factory Device Client.,Requires X-UQQC-Token. The device must be approved, active and linked to a company. QC and UQQC share device identity and keep separate tokens in Factory Device Client.
+"Requires X-UQQC-Token. The device must be approved, active and linked to a company. QC and UQQC share device identity and keep separate tokens in Factory Device Client.","Requires X-UQQC-Token. The device must be approved, active and linked to a company. QC and UQQC share device identity and keep separate tokens in Factory Device Client."
 The sync transaction conflicted. Pending data is retained and will be retried automatically.,The sync transaction conflicted. Pending data is retained and will be retried automatically.
 UQQC Defect,UQQC Defect
 UQQC Defect Position,UQQC Defect Position
@@ -158,3 +158,173 @@ Defect,Defect
 Position,Position
 Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position groups are stored as record types in their respective UQQC catalog DocTypes; production masters remain shared.,Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position groups are stored as record types in their respective UQQC catalog DocTypes; production masters remain shared.
 Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.,Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.
+SPL PO Import,SPL PO Import
+SPL Import Settings,SPL Import Settings
+SPL Import Run,SPL Import Run
+SPL Import Runs,SPL Import Runs
+SPL Purchase Order,SPL Purchase Order
+SPL Purchase Order Item,SPL Purchase Order Item
+SPL Base URL,SPL Base URL
+SPL User ID,SPL User ID
+SPL Password,SPL Password
+Client Certificate,Client Certificate
+Certificate Password,Certificate Password
+Automatic Import Enabled,Automatic Import Enabled
+Schedule Times,Schedule Times
+Schedule Time Zone,Schedule Time Zone
+Request Timeout Seconds,Request Timeout Seconds
+Answer Status ID,Answer Status ID
+Item Brand ID,Item Brand ID
+Year Season IDs,Year Season IDs
+Management Factory ID,Management Factory ID
+Document Status IDs,Document Status IDs
+Report Offset,Report Offset
+Test SPL Connection,Test SPL Connection
+Preview SPL Report,Preview SPL Report
+Upload Workbook,Upload Workbook
+Uploading workbook,Uploading workbook
+Import Selected Rows,Import Selected Rows
+Select,Select
+Select PO,Select PO
+Row,Row
+Previous,Previous
+Next,Next
+Page {0} of {1},Page {0} of {1}
+Select row {0},Select row {0}
+Valid,Valid
+Queued,Queued
+Running,Running
+Preview Ready,Preview Ready
+Success,Success
+Partial Success,Partial Success
+Failed,Failed
+Expired,Expired
+Manual,Manual
+Scheduled,Scheduled
+Upload,Upload
+Connection Test,Connection Test
+SPL_JOB_QUEUED,Job queued
+SPL_PREVIEW_SUMMARY,{0} rows · {1} POs · {2} errors · {3} masters to create
+SPL_FORBIDDEN,Only System Manager can import SPL POs
+SPL_CUSTOMER_REQUIRED,Select a valid Customer in SPL settings
+SPL_HOST_INVALID,SPL Base URL must use HTTPS and an allowed site host
+SPL_CERT_REQUIRED,Select a client certificate
+SPL_CERT_PRIVATE_REQUIRED,Client certificate must be a private File
+SPL_CERT_INVALID,Client certificate or its password is invalid
+SPL_CREDENTIALS_REQUIRED,Enter SPL user ID and password
+SPL_CONNECTION_FAILED,Cannot connect to SPL
+SPL_HTTP_FAILED,SPL returned an HTTP error
+SPL_LOGIN_INVALID,Invalid SPL login response
+SPL_REPORT_INVALID,Invalid SPL report path
+SPL_FILE_TOO_LARGE,SPL workbook exceeds 20 MB
+SPL_FILE_SIZE_INVALID,Workbook is empty or exceeds 20 MB
+SPL_FILE_FORMAT_INVALID,Only .xls or .xlsx workbooks are supported
+SPL_NO_ROWS,Workbook contains no valid PO rows
+SPL_SHEET_MISSING,Worksheet {sheet} is missing
+SPL_COLUMNS_MISSING,Required columns missing: {columns}
+SPL_ROW_LIMIT,"Workbook exceeds 50,000 rows"
+SPL_VALUE_REQUIRED,"Required value missing at row {row}, column {column}"
+SPL_INVALID_DATE,"Invalid date at row {row}, column {column}"
+SPL_INVALID_NUMBER,"Invalid number at row {row}, column {column}"
+SPL_SAMPLE_INVALID,Invalid Sample Code at row {row}
+SPL_UPLOAD_PRIVATE_REQUIRED,Uploaded workbook must be a private File
+SPL_UPLOAD_FAILED,Workbook upload failed
+SPL_CONNECTION_OK,SPL connection succeeded
+SPL_PREVIEW_READY,Preview ready for 15 minutes
+SPL_PREVIEW_INVALID,Preview is invalid or Customer setting changed
+SPL_PREVIEW_EXPIRED,Preview expired; fetch again
+SPL_SELECTION_INVALID,Invalid row selection
+SPL_SELECTION_INCOMPLETE,Select every row of a PO and revision
+SPL_DUPLICATE_ITEM,"PO {po} / revision {revision} has duplicate product, color and size"
+SPL_MARKET_CONFLICT,PO {po} / revision {revision} contains multiple markets
+SPL_GROUP_INVALID,PO {po} / revision {revision} is invalid
+SPL_MASTER_AMBIGUOUS,{doctype} has ambiguous code {code}
+SPL_MASTER_WILL_CREATE,Will create {doctype} code {code}
+Missing Masters,Masters to create
+SPL_ALREADY_RUNNING,Another SPL import is running
+SPL_IMPORT_COMPLETE,SPL PO import completed
+SPL_IMPORT_PARTIAL,Some POs failed; see import run details
+SPL_IMPORT_FAILED,SPL PO import failed; check settings and data
+SPL_SCHEDULE_INVALID,Schedule times must use HH:MM and cannot be empty when enabled
+SPL_TIMEZONE_INVALID,Invalid schedule time zone
+SPL_TIMEOUT_INVALID,SPL request timeout must be between 10 and 600 seconds
+SPL_OFFSET_INVALID,Report offset cannot be negative
+Allocation Order Number,Allocation Order Number
+Answered Status External,Answered Status External
+Approval Date,Approval Date
+Approver,Approver
+Bill To Address,Bill To Address
+Bill To Name,Bill To Name
+Bill To Person In Charge,Bill To Person In Charge
+Bill To Telephone,Bill To Telephone
+Business Unit,Business Unit
+Completed At,Completed At
+Contracted ETD,Contracted ETD
+Currency,Currency
+Customer,Customer
+Deadline Date,Deadline Date
+Decision Date,Decision Date
+Delivery Date,Delivery Date
+Department,Department
+Document Status External,Document Status External
+ETA WH,ETA WH
+Error Detail,Error Detail
+External Remark,External Remark
+Failed Orders,Failed Orders
+Global Business Unit,Global Business Unit
+Import Line Key,Import Line Key
+Imported At,Imported At
+Imported Items,Imported Items
+Imported Orders,Imported Orders
+Incoterms,Incoterms
+Item Brand,Item Brand
+Item Code,Item Code
+Item Name,Item Name
+Items,Items
+Last Source File Path,Last Source File Path
+Message,Message
+Mode,Mode
+Order Conditions,Order Conditions
+Order Date,Order Date
+Order Plan Number,Order Plan Number
+Order Qty,Order Qty
+Original Sales Price Text,Original Sales Price Text
+PO Number,PO Number
+Pattern Dimension Code,Pattern Dimension Code
+Payment Currency,Payment Currency
+Payment Terms,Payment Terms
+Planning Season Code,Planning Season Code
+Planning Year,Planning Year
+Product Variant,Product Variant
+Production Season,Production Season
+Representative Sample Code,Representative Sample Code
+Requested By,Requested By
+Revised Date,Revised Date
+Revision No,Revision No
+SKU,SKU
+SKU Code For Shipping,SKU Code For Shipping
+Sales Contract No,Sales Contract No
+Sample Code,Sample Code
+Schedule Slot,Schedule Slot
+Ship Date,Ship Date
+Snapshot Expires At,Snapshot Expires At
+Snapshot Path,Snapshot Path
+Snapshot Token,Snapshot Token
+Source File Path,Source File Path
+Source Key,Source Key
+Source Row Number,Source Row Number
+Started At,Started At
+Total Orders,Total Orders
+Total Quantity,Total Quantity
+Total Rows,Total Rows
+Transportation Method,Transportation Method
+Trigger Source,Trigger Source
+Unit Price,Unit Price
+PO Status,PO Status
+Note,Note
+Barcode,Barcode
+Confirmed,Confirmed
+In Progress,In Progress
+Completed,Completed
+Cancelled,Cancelled
+Draft,Draft

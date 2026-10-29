@@ -1,0 +1,149 @@
+{
+  "doctype": {
+    "doctype": "DocType",
+    "name": "SPL Purchase Order Item",
+    "module": "Factory Management",
+    "custom": 1,
+    "autoname": "hash",
+    "issingle": 0,
+    "istable": 1,
+    "track_changes": 1,
+    "allow_import": 0,
+    "fields": [
+      {
+        "fieldname": "product",
+        "label": "Product",
+        "fieldtype": "Link",
+        "options": "Product",
+        "reqd": 1,
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "product_variant",
+        "label": "Product Variant",
+        "fieldtype": "Link",
+        "options": "Product Variant"
+      },
+      {
+        "fieldname": "market",
+        "label": "Market",
+        "fieldtype": "Link",
+        "options": "Market"
+      },
+      {
+        "fieldname": "product_color",
+        "label": "Product Color",
+        "fieldtype": "Link",
+        "options": "Product Color",
+        "reqd": 1,
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "size",
+        "label": "Size",
+        "fieldtype": "Link",
+        "options": "ProductSize",
+        "reqd": 1,
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "order_qty",
+        "label": "Order Qty",
+        "fieldtype": "Int",
+        "reqd": 1,
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "unit_price",
+        "label": "Unit Price",
+        "fieldtype": "Currency"
+      },
+      {
+        "fieldname": "currency",
+        "label": "Currency",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "import_line_key",
+        "label": "Import Line Key",
+        "fieldtype": "Data",
+        "read_only": 1
+      },
+      {
+        "fieldname": "item_code",
+        "label": "Item Code",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "item_name",
+        "label": "Item Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "pattern_dimension_code",
+        "label": "Pattern Dimension Code",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "barcode",
+        "label": "Barcode",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "sku",
+        "label": "SKU",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "sku_code_for_shipping",
+        "label": "SKU Code For Shipping",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "sample_code",
+        "label": "Sample Code",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "representative_sample_code",
+        "label": "Representative Sample Code",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "allocation_order_number",
+        "label": "Allocation Order Number",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "original_sales_price_text",
+        "label": "Original Sales Price Text",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "external_remark",
+        "label": "External Remark",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "note",
+        "label": "Note",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "source_row_number",
+        "label": "Source Row Number",
+        "fieldtype": "Int"
+      }
+    ],
+    "permissions": [],
+    "actions": [],
+    "links": [],
+    "states": []
+  },
+  "custom_fields": [],
+  "property_setters": [],
+  "custom_permissions": [],
+  "custom_links": [],
+  "custom_actions": [],
+  "roles": []
+}

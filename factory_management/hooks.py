@@ -7,6 +7,10 @@ app_license = "Proprietary"
 
 after_install = "factory_management.install.after_install"
 after_migrate = "factory_management.install.ensure_schema"
+scheduler_events = {
+    "cron": {"* * * * *": ["factory_management.spl_po.schedule.tick"]},
+    "daily": ["factory_management.spl_po.service.cleanup_snapshots"],
+}
 update_website_context = [
     "factory_management.qc_web_page.update_website_context",
     "factory_management.uqqc.web_page.update_website_context",
@@ -14,6 +18,7 @@ update_website_context = [
 has_permission = {"Web Page": "factory_management.web_page_permissions.has_permission"}
 permission_query_conditions = {"Web Page": "factory_management.web_page_permissions.query_conditions"}
 doc_events = {
+    "SPL Import Settings": {"validate": "factory_management.spl_po.settings.validate"},
     "API Documentation Service": {"validate": "factory_management.api_docs.validate_service"},
     "API Documentation Endpoint": {"validate": "factory_management.api_docs.validate_endpoint"},
     "QC Defect": {"validate": "factory_management.catalog.validate_qc_defect"},

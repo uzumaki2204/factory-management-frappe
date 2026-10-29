@@ -1,0 +1,255 @@
+{
+  "doctype": {
+    "doctype": "DocType",
+    "name": "SPL Purchase Order",
+    "module": "Factory Management",
+    "custom": 1,
+    "autoname": "hash",
+    "issingle": 0,
+    "istable": 0,
+    "track_changes": 1,
+    "allow_import": 0,
+    "fields": [
+      {
+        "fieldname": "source_key",
+        "label": "Source Key",
+        "fieldtype": "Data",
+        "reqd": 1,
+        "unique": 1,
+        "read_only": 1
+      },
+      {
+        "fieldname": "customer",
+        "label": "Customer",
+        "fieldtype": "Link",
+        "options": "Customer",
+        "reqd": 1,
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "po_number",
+        "label": "PO Number",
+        "fieldtype": "Data",
+        "reqd": 1,
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "revision_no",
+        "label": "Revision No",
+        "fieldtype": "Data",
+        "in_list_view": 1
+      },
+      {
+        "fieldname": "production_season",
+        "label": "Production Season",
+        "fieldtype": "Link",
+        "options": "Production Season"
+      },
+      {
+        "fieldname": "market",
+        "label": "Market",
+        "fieldtype": "Link",
+        "options": "Market"
+      },
+      {
+        "fieldname": "order_date",
+        "label": "Order Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "delivery_date",
+        "label": "Delivery Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "ship_date",
+        "label": "Ship Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "total_quantity",
+        "label": "Total Quantity",
+        "fieldtype": "Int",
+        "read_only": 1
+      },
+      {
+        "fieldname": "planning_year",
+        "label": "Planning Year",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "planning_season_code",
+        "label": "Planning Season Code",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "global_business_unit",
+        "label": "Global Business Unit",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "business_unit",
+        "label": "Business Unit",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "item_brand",
+        "label": "Item Brand",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "department",
+        "label": "Department",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "revised_date",
+        "label": "Revised Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "document_status_external",
+        "label": "Document Status External",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "approver",
+        "label": "Approver",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "approval_date",
+        "label": "Approval Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "deadline_date",
+        "label": "Deadline Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "answered_status_external",
+        "label": "Answered Status External",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "decision_date",
+        "label": "Decision Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "sales_contract_no",
+        "label": "Sales Contract No",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "bill_to_name",
+        "label": "Bill To Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "bill_to_address",
+        "label": "Bill To Address",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "bill_to_telephone",
+        "label": "Bill To Telephone",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "bill_to_person_in_charge",
+        "label": "Bill To Person In Charge",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "incoterms",
+        "label": "Incoterms",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "transportation_method",
+        "label": "Transportation Method",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "payment_terms",
+        "label": "Payment Terms",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "payment_currency",
+        "label": "Payment Currency",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "order_conditions",
+        "label": "Order Conditions",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "order_plan_number",
+        "label": "Order Plan Number",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "contracted_etd",
+        "label": "Contracted ETD",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "eta_wh",
+        "label": "ETA WH",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "imported_at",
+        "label": "Imported At",
+        "fieldtype": "Datetime",
+        "read_only": 1
+      },
+      {
+        "fieldname": "last_source_file_path",
+        "label": "Last Source File Path",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "status",
+        "label": "PO Status",
+        "fieldtype": "Select",
+        "options": "Draft\nConfirmed\nIn Progress\nCompleted\nCancelled",
+        "default": "Confirmed"
+      },
+      {
+        "fieldname": "note",
+        "label": "Note",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "items",
+        "label": "Items",
+        "fieldtype": "Table",
+        "options": "SPL Purchase Order Item"
+      }
+    ],
+    "permissions": [
+      {
+        "role": "System Manager",
+        "read": 1,
+        "write": 1,
+        "create": 1,
+        "delete": 1,
+        "report": 1
+      }
+    ],
+    "actions": [],
+    "links": [],
+    "states": []
+  },
+  "custom_fields": [],
+  "property_setters": [],
+  "custom_permissions": [],
+  "custom_links": [],
+  "custom_actions": [],
+  "roles": []
+}
