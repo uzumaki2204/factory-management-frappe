@@ -49,6 +49,7 @@ def ensure_schema():
         "UQQC Defect": [
             _field("record_type", "Select", "Group\nDefect", reqd=1, default="Defect", in_list_view=1),
             _field("code", reqd=1, in_list_view=1),
+            _field("format_code"),
             _field("title", reqd=1, in_list_view=1),
             _field("defect_group", "Link", "UQQC Defect"),
             _field("severity"),
@@ -58,6 +59,7 @@ def ensure_schema():
         "UQQC Defect Position": [
             _field("record_type", "Select", "Group\nPosition", reqd=1, default="Position", in_list_view=1),
             _field("code", reqd=1, in_list_view=1),
+            _field("format_code"),
             _field("title", reqd=1, in_list_view=1),
             _field("position_group", "Link", "UQQC Defect Position"),
             _field("is_active", "Check", default="1"),
