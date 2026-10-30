@@ -342,9 +342,10 @@ def _ensure_snapshot_doctype_shells():
             bool(data.get("istable")),
         )
         shell["issingle"] = int(bool(data.get("issingle")))
-        # A shell has no user fields yet, so use an autoname mode that does not
-        # depend on a field being installed in the later metadata sync.
+        # Shells have no user fields; naming and titles follow the field sync.
         shell["autoname"] = "hash"
+        shell.pop("title_field", None)
+        shell["show_title_field_in_link"] = 0
         frappe.get_doc(shell).insert(ignore_permissions=True)
 
 
