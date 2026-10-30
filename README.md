@@ -81,7 +81,7 @@ Manifest ghi Frappe 16.53.0 làm phiên bản chuẩn kiểm tra theo revision `
 
 ## Nhập PO từ SPL
 
-Từ bản `0.1.45`, trang Desk `/app/spl-po-import` trong module **Factory Management** cho System Manager kiểm tra kết nối, lấy workbook SPL, xem trước theo trang, chọn dòng và xác nhận nhập. Có thể tải lên workbook `.xls` hoặc `.xlsx` riêng tư thay cho tải trực tiếp. Trang dùng các DocType **SPL Purchase Order**, **SPL Purchase Order Item**, **SPL Import Settings** và **SPL Import Run**; `bench migrate` tạo schema qua patch `add_spl_po_import` và đăng ký lịch.
+Từ bản `0.1.45`, trang Desk `/desk/factory-management/spl-po-import` trong module **Factory Management** cho System Manager kiểm tra kết nối, lấy workbook SPL, xem trước theo trang, chọn dòng và xác nhận nhập. Bản `0.1.46` thêm biểu tượng **Import SPL** trên màn hình Desktop của System Manager. Có thể tải lên workbook `.xls` hoặc `.xlsx` riêng tư thay cho tải trực tiếp. Trang dùng các DocType **SPL Purchase Order**, **SPL Purchase Order Item**, **SPL Import Settings** và **SPL Import Run**; `bench migrate` tạo schema qua patch `add_spl_po_import` và đăng ký lịch.
 
 Trong **SPL Import Settings**, chọn Customer, nhập tài khoản/mật khẩu SPL và chọn chứng chỉ PFX/P12 đã tải lên dạng **Private File** cùng mật khẩu chứng chỉ. URL mặc định là `https://spl.fastretailing.com`; chỉ HTTPS và host trong `spl_po_allowed_hosts` của site config được phép. Mặc định chỉ cho phép `spl.fastretailing.com`. Không lưu password hoặc token trong workbook, snapshot và lịch sử nhập. Các bộ lọc SPL mặc định tương ứng project .NET; có thể điều chỉnh trong Settings.
 

@@ -3,3 +3,9 @@
         grid-template-columns: repeat(8, 1fr);
     }
 }
+
+@media (min-width: 1400px) {
+    body.desktop-page .icons.factory-management-shortcuts {
+        grid-template-columns: repeat(9, minmax(0, 1fr));
+    }
+}

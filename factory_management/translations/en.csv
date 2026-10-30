@@ -159,6 +159,7 @@ Position,Position
 Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position groups are stored as record types in their respective UQQC catalog DocTypes; production masters remain shared.,Tablets use X-UQQC-Token; Frappe users need a role in Allowed Roles. Defect and position groups are stored as record types in their respective UQQC catalog DocTypes; production masters remain shared.
 Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.,Requires X-UQQC-Token. defectId and defectPositionId must reference active UQQC catalog records; tablet IDs and payload shape are unchanged.
 SPL PO Import,SPL PO Import
+Import SPL,Import SPL
 SPL Import Settings,SPL Import Settings
 SPL Import Run,SPL Import Run
 SPL Import Runs,SPL Import Runs

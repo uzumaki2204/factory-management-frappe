@@ -21,6 +21,13 @@
             href: "/desk/api-management/qc-api-docs",
             systemManagerOnly: true,
         },
+        {
+            id: "spl-po-import",
+            label: "Import SPL",
+            logo: "/assets/factory_management/images/spl-import-desktop.svg",
+            href: "/desk/factory-management/spl-po-import",
+            systemManagerOnly: true,
+        },
     ];
 
     function addShortcuts() {
@@ -28,15 +35,15 @@
         if (!grid || !window.frappe || typeof frappe.render_template !== "function") return;
         grid.classList.add("factory-management-shortcuts");
 
-        const canManageApi = frappe.session?.user === "Administrator" ||
+        const isSystemManager = frappe.session?.user === "Administrator" ||
             frappe.user?.has_role?.("System Manager") === true;
 
         for (const shortcut of shortcuts) {
-            if (shortcut.systemManagerOnly && !canManageApi) continue;
+            if (shortcut.systemManagerOnly && !isSystemManager) continue;
             if (grid.querySelector(`[data-factory-shortcut="${shortcut.id}"]`)) continue;
 
             const markup = frappe.render_template("desktop_icon", {
-                icon: { label: shortcut.label, logo_url: shortcut.logo },
+                icon: { label: __(shortcut.label), logo_url: shortcut.logo },
             });
             const tile = document.createElement("div");
             tile.innerHTML = markup.trim();
