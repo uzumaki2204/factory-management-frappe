@@ -110,7 +110,7 @@
       },
       {
         "fieldname": "status_filter_selector",
-        "label": "",
+        "label": "Status Filters",
         "fieldtype": "HTML"
       },
       {

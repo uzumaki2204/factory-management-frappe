@@ -95,7 +95,7 @@ SETTINGS = [
     f("year_season_ids", "Year Season IDs", default="20252,20261,20262,20271"),
     f("management_factory_id", "Management Factory ID", default="015J"),
     f("document_status_ids", "Document Status IDs", default="0001,0002,0003,0004", hidden=1),
-    f("status_filter_selector", "", "HTML"),
+    f("status_filter_selector", "Status Filters", "HTML"),
     f("report_offset", "Report Offset", "Int", default="0"),
 ]
 

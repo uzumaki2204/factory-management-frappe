@@ -1,3 +1,7 @@
+.frappe-control[data-fieldname="status_filter_selector"] .control-label {
+	display: none;
+}
+
 .spl-status-filter-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(260px, 1fr));
