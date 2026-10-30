@@ -170,6 +170,8 @@ Từ màn hình `/desk`, chọn **QC** để mở trang QC trong tab mới hoặ
 - Catalog QC mô tả `/api/method/qc-inspection-summary`, `/api/method/factory_management.api.report_summary` và `/api/method/factory_management.api.report_detail`. Swagger UI cho phép xem schema, role được phép, gọi thử API và tải tệp OpenAPI JSON.
 - Trang tài liệu và API xuất hợp đồng chỉ dành cho vai trò **System Manager**. Chỉnh sửa hợp đồng cập nhật tài liệu; mã xử lý của API được sửa tại Server Script hoặc mã app tương ứng.
 
+Khi **Base URL** của service để trống, OpenAPI dùng đường dẫn gốc `/`. Swagger UI gọi API theo origin của trang đang mở, nên trang HTTPS gọi HTTPS và trang HTTP gọi HTTP. Nếu Base URL được đặt cùng host nhưng khác giao thức, Swagger cũng dùng giao thức của trang hiện tại. Chuyển hướng HTTP sang HTTPS tại proxy/CDN được cấu hình riêng ngoài app Frappe.
+
 Để cấp quyền đọc báo cáo, mở **User → Roles** và gán `QC Report Reader` cho User cần gọi API. Sau đó mở **API Management → API Documentation Endpoint → Allowed Roles** để chọn role được phép ở từng API. Các API báo cáo nhận `QC Report Reader` khi được tạo lần đầu; thay đổi trong Desk được giữ lại sau các lần nâng cấp tiếp theo. Một User có nhiều role chỉ cần khớp một role được phép; System Manager và Administrator cũng phải có role khớp. API key và API secret dùng quyền của User sở hữu chúng. Các API tablet dùng `id` của Factory Device.
 
 ### Báo cáo InspectionSummary và InspectionAggregate từ UQQC

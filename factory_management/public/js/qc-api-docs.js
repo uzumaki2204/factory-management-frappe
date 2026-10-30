@@ -44,8 +44,13 @@
       currentSpec = spec;
       currentKey = key;
       setStatus('');
+      const firstServer = spec.servers?.[0]?.url;
+      const displaySpec = !selected?.openapiUrl && firstServer &&
+        new URL(firstServer, location.origin).host === location.host
+        ? { ...spec, servers: [{ ...spec.servers[0], url: location.origin }, ...spec.servers.slice(1)] }
+        : spec;
       SwaggerUIBundle({
-        spec,
+        spec: displaySpec,
         dom_id: '#swagger-ui',
         deepLinking: true,
         defaultModelsExpandDepth: 1,

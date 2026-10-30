@@ -110,7 +110,7 @@ def openapi(service="qc"):
             "version": doc.version or "1.0.0",
             "description": _(doc.description) if doc.description else "",
         },
-        "servers": [{"url": (doc.base_url or frappe.utils.get_url()).rstrip("/")}],
+        "servers": [{"url": doc.base_url.rstrip("/") if doc.base_url else "/"}],
         "components": {
             "securitySchemes": {
                 "FrappeSession": {"type": "apiKey", "in": "cookie", "name": "sid", "description": _("Frappe Desk session")},
