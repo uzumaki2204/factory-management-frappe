@@ -170,7 +170,7 @@ Từ màn hình `/desk`, chọn **QC** để mở trang QC trong tab mới hoặ
 
 Để cấp quyền đọc báo cáo, mở **User → Roles** và gán `QC Report Reader` cho User cần gọi API. Sau đó mở **API Management → API Documentation Endpoint → Allowed Roles** để chọn role được phép ở từng API. Các API báo cáo nhận `QC Report Reader` khi được tạo lần đầu; thay đổi trong Desk được giữ lại sau các lần nâng cấp tiếp theo. Một User có nhiều role chỉ cần khớp một role được phép; System Manager và Administrator cũng phải có role khớp. API key và API secret dùng quyền của User sở hữu chúng. Các API tablet dùng `id` của Factory Device.
 
-### Báo cáo InspectionSummary từ UQQC và InspectionAggregate từ SQL Server
+### Báo cáo InspectionSummary và InspectionAggregate từ UQQC
 
 Từ bản `0.1.53`, service **QC API** có hai GET method. Từ `0.1.56`, các API QC/UQQC trả dữ liệu thành công trực tiếp: báo cáo trả mảng `[...]`, API tablet trả đối tượng `{...}`, không bọc trong `message`. Lỗi giữ cấu trúc và HTTP status của Frappe. Client QC/UQQC đọc được cả hai cấu trúc trong thời gian nâng cấp; các client bên ngoài cần bỏ truy cập `.message`. RPC quản trị tài liệu và API hệ thống Frappe giữ hợp đồng riêng. Patch `unwrap_qc_api_responses` cập nhật schema/example của các operation hiện có và nâng service mặc định lên `2.0.0`, giữ các chỉnh sửa khác trong Desk. Tải lại trang tablet sau khi nâng cấp để nhận client mới; phiên bản asset và service worker cũng được tăng.
 
@@ -179,7 +179,7 @@ Từ bản `0.1.53`, service **QC API** có hai GET method. Từ `0.1.56`, các 
 
 `InspectionSummary` đọc `UQQC Inspection Event` và master data trong Frappe. Defect có `eventNo` rỗng; pass và rework có `PASS` và `REWORK`. Sự kiện được gộp theo ngày local và các chiều của DTO, cộng `quantity`. `deviceNo` lấy từ `Factory Device.device_name`; `deviceQc` là mã `QC1` hoặc `QC2` xuất hiện đầu tiên trong tên đó. `poNumbers` tra `SPL Purchase Order Item` theo mã hàng, thị trường của PO, màu và size; với mỗi số PO chỉ dùng revision mới nhất nếu trạng thái chứng từ và trạng thái PO hợp lệ. Filter `companyId` vẫn nhận UUID .NET: chỉ khi filter này được truyền, API dùng SQL Server để tìm mã công ty tương ứng rồi lọc sự kiện Frappe. Các filter khác và truy vấn Power Query hiện tại giữ nguyên.
 
-`InspectionAggregate` tiếp tục đọc `QCBrotherInspectionEvents`, `QCBrotherInspectionQuantityEvents`, `QCBrother`, master và PO từ SQL Server bằng `SELECT` có tham số. Dữ liệu legacy tính một đơn vị mỗi record; công ty chỉ được resolve theo chuyền. Total lịch sử tính theo QC + công ty + mã hàng, trong khi từng dòng ngày vẫn phân biệt serial và biến thể. `plannedQuantity` dùng revision PO mới nhất có trạng thái chứng từ `New` hoặc `Change`.
+`InspectionAggregate` đọc `UQQC Inspection Event` và master data trong Frappe; không kết nối SQL Server. Số lượng lỗi, PASS và REWORK được gộp theo ngày local, serial và biến thể. Total lịch sử tính từ toàn bộ sự kiện UQQC theo QC + công ty + mã hàng, bỏ qua ngày, thị trường, màu, size và serial. `plannedQuantity` đọc `SPL Purchase Order Item` theo mã hàng, thị trường, màu và size, chỉ dùng revision PO mới nhất có trạng thái chứng từ `New` hoặc `Change`. UUID `companyId` của .NET không có ánh xạ trong Frappe nên Aggregate trả HTTP 400 nếu filter này được truyền; dùng `companyCode` để lọc.
 
 Cấu hình riêng cho site bằng khóa `qcbrother_sqlserver` trong `site_config.json` (không commit tệp này). Dùng thông tin kết nối thực tế thay cho các placeholder sau:
 
@@ -199,11 +199,11 @@ Cấu hình riêng cho site bằng khóa `qcbrother_sqlserver` trong `site_confi
 }
 ```
 
-`time_zone` phải khớp timezone local của API .NET nguồn; mặc định dùng System Settings của site. Sự kiện UQQC lưu UTC, còn `QCBrother.OccurredOn` của Aggregate là thời gian local. `occurredOn` trả đầu ngày ISO 8601 kèm UTC offset ở cả hai API. Kết nối SQL luôn mã hóa; chỉ bật `trust_server_certificate` khi cấu hình nguồn dùng chứng chỉ nội bộ được tin cậy theo chính sách triển khai. Runtime cần dependency `mssql-python` và các thư viện Linux `libltdl7`, `libkrb5-3`, `libgssapi-krb5-2`; bộ cài native và Containerfile của app đã khai báo chúng.
+`time_zone` phải khớp timezone local của báo cáo; mặc định dùng System Settings của site. Sự kiện UQQC lưu UTC; `occurredOn` trả đầu ngày ISO 8601 kèm UTC offset ở cả hai API. Cấu hình SQL Server phía trên chỉ còn dùng khi Summary nhận filter `companyId`. Kết nối SQL luôn mã hóa; chỉ bật `trust_server_certificate` khi cấu hình nguồn dùng chứng chỉ nội bộ được tin cậy theo chính sách triển khai. Runtime cần dependency `mssql-python` và các thư viện Linux `libltdl7`, `libkrb5-3`, `libgssapi-krb5-2` cho filter Summary đó.
 
-Chạy migrate để seed hai endpoint còn thiếu vào API Documentation. Patch `refresh_uqqc_summary_contract` cập nhật ví dụ và mô tả lỗi nguồn của operation InspectionSummary hiện có nếu chúng chưa được chỉnh trong Desk; không thay đổi metadata DocType. Lỗi query/ngày trả HTTP 400, thiếu quyền trả 403, lỗi nguồn dữ liệu trả 503 mà không trả thông tin kết nối.
+Chạy migrate để seed hai endpoint còn thiếu vào API Documentation. Các patch `refresh_uqqc_summary_contract` và `refresh_uqqc_aggregate_contract` cập nhật ví dụ và mô tả lỗi nguồn của các operation hiện có nếu chúng chưa được chỉnh trong Desk; không thay đổi metadata DocType. Lỗi query/ngày trả HTTP 400, thiếu quyền trả 403, lỗi nguồn dữ liệu trả 503 mà không trả thông tin kết nối.
 
-Kiểm tra logic độc lập bằng `python -m unittest discover -s tests -p test_qcbrother_reports.py`. Sau khi nâng cấp site, đối chiếu Summary với UQQC Inspection Event và kiểm tra `QCBrother_Raw` có defect, PASS, REWORK; kiểm tra Aggregate theo dữ liệu SQL Server như trước.
+Kiểm tra logic độc lập bằng `python -m unittest discover -s tests -p test_qcbrother_reports.py` và `python -m unittest discover -s tests -p test_uqqc_summary_source.py`. Sau khi nâng cấp site, đối chiếu cả hai API với UQQC Inspection Event và kiểm tra `QCBrother_Raw` có defect, PASS, REWORK; Aggregate phải có số liệu theo ngày, total lịch sử và plannedQuantity từ SPL PO.
 
 Sau khi cài app, chạy `bench --site <site> migrate`. API `qc-inspection-summary` là Server Script; để tạo nó trên site mới, bật `server_script_enabled` và chạy `bench --site <site> execute factory_management.provision.ensure_qc_inspection_summary`.
 

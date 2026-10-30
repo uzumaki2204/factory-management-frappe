@@ -235,13 +235,28 @@ class EndpointTests(unittest.TestCase):
         with patch.object(module, "ZoneInfo", return_value=ZONE), \
                 patch.object(module, "SqlServer", return_value=source) as sql, \
                 patch.object(module, "UqqcRepository") as repository, \
-                patch.object(module, "UqqcSummaryService") as service:
+                patch.object(module, "UqqcReportService") as service:
             service.return_value.summary.return_value = []
             module.inspection_summary("2026-10-06", "2026-10-06",
                                       companyId=COMPANY)
         sql.assert_called_once()
         self.assertIn("dbo.Companies", reader.rows.call_args.args[0])
         repository.assert_called_once_with("KT2")
+
+    def test_aggregate_uses_frappe_without_sql_server(self):
+        module = self.load_endpoint()
+        with patch.object(module, "ZoneInfo", return_value=ZONE), \
+                patch.object(module, "SqlServer") as sql, \
+                patch.object(module, "UqqcRepository") as repository, \
+                patch.object(module, "UqqcReportService") as service:
+            service.return_value.aggregate.return_value = [{"pass": 1}]
+            self.assertEqual(module.inspection_aggregate("2026-10-06", "2026-10-06"), [{"pass": 1}])
+            with self.assertRaises(module.ReportValidationError) as invalid:
+                module.inspection_aggregate("2026-10-06", "2026-10-06", companyId=COMPANY)
+        sql.assert_not_called()
+        repository.assert_called_once_with()
+        self.assertEqual(invalid.exception.http_status_code, 400)
+        self.assertEqual(str(invalid.exception), "QCBROTHER_AGGREGATE_COMPANY_ID_UNSUPPORTED")
 
 
 if __name__ == "__main__":

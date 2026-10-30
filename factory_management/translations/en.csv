@@ -357,19 +357,21 @@ QCBROTHER_RANGE_INVALID,Enter a valid ISO report date range
 QCBROTHER_RANGE_MAX_7,Report date range cannot exceed 7 days including both endpoints
 QCBROTHER_RANGE_MAX_31,Report date range cannot exceed 31 days including both endpoints
 QCBROTHER_COMPANY_ID_INVALID,companyId must be a valid UUID
+QCBROTHER_AGGREGATE_COMPANY_ID_UNSUPPORTED,InspectionAggregate reads Frappe data and cannot filter by a .NET companyId UUID; use companyCode
 QCBROTHER_SQL_CONFIG_REQUIRED,QCBrother SQL Server configuration is missing or invalid
 QCBROTHER_SQL_UNAVAILABLE,The QCBrother reporting database is unavailable. Please try again later
 QCBROTHER_SQL_QUERY_INVALID,The QCBrother report query is not allowed
 QCBROTHER_UQQC_UNAVAILABLE,UQQC inspection data is unavailable. Please try again later
 QCBROTHER_TIME_ZONE_INVALID,The report time zone is missing or invalid
 QCBROTHER_SUMMARY_TITLE,UQQC inspection summary
-QCBROTHER_AGGREGATE_TITLE,QCBrother inspection aggregate
+QCBROTHER_AGGREGATE_TITLE,UQQC inspection aggregate
 QCBROTHER_REPORTS_TAG,QCBrother Reports
 QCBROTHER_SUMMARY_DESCRIPTION,"Returns the .NET QCBrotherClient InspectionSummary fields from UQQC Inspection Event records in Frappe. Defects have an empty eventNo; pass and rework have PASS and REWORK. Groups by local report day and report dimensions, summing quantity. deviceQc comes from the first QC1/QC2 marker in the device name. poNumbers matches SPL purchase order items by sample, market, color and size and includes eligible latest revisions. UQQC event timestamps are stored in UTC."
-QCBROTHER_AGGREGATE_DESCRIPTION,"Returns daily counts by date, full device serial, QC, company, sample, market, color and size. totalPass/totalRework/totalDefect cover all history by QC, company and sample, ignoring serial, date and variant. plannedQuantity uses the latest PO revision with external document status New or Change."
+QCBROTHER_AGGREGATE_DESCRIPTION,"Reads UQQC Inspection Event in Frappe and returns daily defect, PASS and REWORK counts by date, full device serial, QC, company, sample, market, color and size. totalPass/totalRework/totalDefect cover all UQQC history by QC, company and sample, ignoring serial, date and variant. plannedQuantity uses the latest SPL PO revision with external document status New or Change."
 QCBROTHER_DATE_RANGE_7,Local report date. Both dates are required; reversed dates are swapped. Maximum inclusive range is 7 days
 QCBROTHER_DATE_RANGE_31,Local report date. Both dates are required; reversed dates are swapped. Maximum inclusive range is 31 days
 QCBROTHER_FILTER_COMPANYID,SQL Server company UUID resolved to the Frappe company code when supplied. An empty UUID does not filter
+QCBROTHER_AGGREGATE_FILTER_COMPANYID,.NET company UUIDs are unsupported for Frappe UQQC data; use companyCode to filter company
 QCBROTHER_FILTER_COMPANYCODE,Company code. Applies after resolving legacy company from its line
 QCBROTHER_FILTER_QC,Case-insensitive substring of the full device name or legacy serial
 QCBROTHER_SUMMARY_FILTER_COMPANYCODE,Company code associated with the UQQC event line

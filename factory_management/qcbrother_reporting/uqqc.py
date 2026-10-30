@@ -1,4 +1,4 @@
-"""Read UQQC events and SPL purchase orders for the QCBrother summary contract."""
+"""Read Frappe UQQC events and SPL purchase orders for QCBrother reports."""
 
 import frappe
 
@@ -6,29 +6,32 @@ from .model import ReportSourceError
 from .service import ReportService
 
 
-class UqqcSummaryService(ReportService):
-    """Use the existing .NET-compatible summary projection without legacy rows."""
+class UqqcReportService(ReportService):
+    """Use the .NET-compatible report projections without legacy rows."""
 
     def _sources(self, query, mode):
         if not query.event_no:
-            yield from self.repository.events(query)
+            yield from self.repository.events(query, mode=mode)
         if query.event_no in ("", "PASS", "REWORK"):
-            yield from self.repository.events(query, quantity=True)
+            yield from self.repository.events(query, quantity=True, mode=mode)
 
 
 class UqqcRepository:
     def __init__(self, company_id_code=None):
         self.company_id_code = company_id_code
 
-    def events(self, query, quantity=False):
+    def events(self, query, quantity=False, mode="summary"):
         if query.company_id and not self.company_id_code:
             return []
         start, finish = query.bounds()
         conditions = [
-            "e.occurred_at >= %s", "e.occurred_at < %s", "line.company = device.company",
+            "line.company = device.company",
             "e.event_kind IN ('pass', 'rework')" if quantity else "e.event_kind = 'defect'",
         ]
-        values = [start, finish]
+        values = []
+        if start is not None:
+            conditions[:0] = ["e.occurred_at >= %s", "e.occurred_at < %s"]
+            values.extend((start, finish))
         if not quantity:
             conditions.append("defect.name IS NOT NULL")
         if query.company_id:
@@ -47,8 +50,7 @@ class UqqcRepository:
             conditions.append("e.event_kind = %s")
             values.append(query.event_no.lower())
 
-        statement = """
-            SELECT e.occurred_at AS `occurredAt`,
+        selection = """e.occurred_at AS `occurredAt`,
                    CASE e.event_kind WHEN 'pass' THEN 'PASS'
                        WHEN 'rework' THEN 'REWORK' ELSE '' END AS `eventNo`,
                    device.device_name AS `deviceNo`,
@@ -63,7 +65,16 @@ class UqqcRepository:
                    defect.code AS `defectCode`, defect.title AS `defectName`,
                    defect_position.code AS `positionCode`,
                    defect_position.title AS `positionName`,
-                   e.quantity AS `quantity`
+                   e.quantity AS `quantity`"""
+        if mode == "totals":
+            selection = """CASE e.event_kind WHEN 'pass' THEN 'PASS'
+                        WHEN 'rework' THEN 'REWORK' ELSE '' END AS `eventNo`,
+                   device.device_name AS `deviceNo`,
+                   company.company_code AS `companyCode`,
+                   company.company_name AS `companyName`,
+                   product.product_code AS `sampleCode`,
+                   SUM(e.quantity) AS `quantity`"""
+        statement = "SELECT " + selection + """
               FROM `tabUQQC Inspection Event` e
               JOIN `tabFactory Device` device ON device.name = e.device
               JOIN `tabProduction Line` line ON line.name = e.line
@@ -77,6 +88,10 @@ class UqqcRepository:
               LEFT JOIN `tabUQQC Defect Position` defect_position
                 ON defect_position.name = e.defect_position
              WHERE """ + " AND ".join(conditions)
+        if mode == "totals":
+            statement += """
+             GROUP BY e.event_kind, device.device_name, company.company_code,
+                      company.company_name, product.product_code"""
         return _rows(statement, values)
 
     def order_details(self, keys):

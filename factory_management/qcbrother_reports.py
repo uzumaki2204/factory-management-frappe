@@ -6,10 +6,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from factory_management.api_access import require_report_access
 from factory_management.qcbrother_reporting.model import ReportInputError, ReportQuery, ReportSourceError
-from factory_management.qcbrother_reporting.repository import ReportRepository
-from factory_management.qcbrother_reporting.service import ReportService
 from factory_management.qcbrother_reporting.sqlserver import SqlServer
-from factory_management.qcbrother_reporting.uqqc import UqqcRepository, UqqcSummaryService
+from factory_management.qcbrother_reporting.uqqc import UqqcRepository, UqqcReportService
 
 
 class ReportValidationError(frappe.ValidationError):
@@ -41,23 +39,22 @@ def _report(operation, max_days, begin, end, company_id, company_code, qc, sampl
     config = frappe.conf.get("qcbrother_sqlserver") or {}
     try:
         if not isinstance(config, dict):
-            raise ReportSourceError("QCBROTHER_SQL_CONFIG_REQUIRED")
+            config = {}
         zone_name = config.get("time_zone") or frappe.db.get_single_value("System Settings", "time_zone")
         if zone_name is not None and not isinstance(zone_name, str):
-            raise ReportSourceError("QCBROTHER_SQL_CONFIG_REQUIRED")
+            raise ReportSourceError("QCBROTHER_TIME_ZONE_INVALID")
         zone = ZoneInfo(zone_name or "Asia/Ho_Chi_Minh")
         query = ReportQuery.parse(begin, end, zone, max_days, company_id, company_code, qc, sample_code, event_no)
         if max_days == 7:
             company_id_code = _company_code_for_id(config, query.company_id) if query.company_id else None
-            return UqqcSummaryService(UqqcRepository(company_id_code)).summary(query)
-        with SqlServer(config).connect() as reader:
-            service = ReportService(ReportRepository(reader))
-            return service.aggregate(query)
+            return UqqcReportService(UqqcRepository(company_id_code)).summary(query)
+        if query.company_id:
+            raise ReportInputError("QCBROTHER_AGGREGATE_COMPANY_ID_UNSUPPORTED")
+        return UqqcReportService(UqqcRepository()).aggregate(query)
     except ReportInputError as error:
         frappe.throw(_(str(error)), ReportValidationError)
     except ZoneInfoNotFoundError:
-        key = "QCBROTHER_TIME_ZONE_INVALID" if max_days == 7 else "QCBROTHER_SQL_CONFIG_REQUIRED"
-        frappe.throw(_(key), ReportUnavailableError)
+        frappe.throw(_("QCBROTHER_TIME_ZONE_INVALID"), ReportUnavailableError)
     except ReportSourceError as error:
         frappe.throw(_(str(error)), ReportUnavailableError)
 

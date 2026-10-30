@@ -45,6 +45,8 @@ def report_contract(kind, max_days):
         description = "QCBROTHER_FILTER_" + name.upper()
         if kind == "summary" and name in ("companyCode", "qc"):
             description = "QCBROTHER_SUMMARY_FILTER_" + name.upper()
+        if kind == "aggregate" and name == "companyId":
+            description = "QCBROTHER_AGGREGATE_FILTER_COMPANYID"
         parameters.append({"name": name, "in": "query", "schema": schema,
                            "description": description})
     columns = ("occurredOn", "deviceQc") + DIMENSIONS
@@ -64,11 +66,11 @@ def report_contract(kind, max_days):
         "type": "array", "items": {"type": "object", "required": list(properties), "properties": properties},
     }
     responses = {"200": {"description": "QCBROTHER_REPORT_ROWS", "content": {"application/json": {
-        "schema": schema, "example": summary_example() if kind == "summary" else [],
+        "schema": schema, "example": summary_example() if kind == "summary" else aggregate_example(),
     }}}}
     for code, key in (("400", "QCBROTHER_REQUEST_INVALID"), ("401", "QCBROTHER_AUTH_REQUIRED"),
                       ("403", "QC_REPORT_FORBIDDEN"),
-                      ("503", "QCBROTHER_UQQC_UNAVAILABLE" if kind == "summary" else "QCBROTHER_SQL_UNAVAILABLE")):
+                      ("503", "QCBROTHER_UQQC_UNAVAILABLE")):
         responses[code] = {"description": key}
     return {"parameters": parameters, "responses": responses}
 
@@ -86,6 +88,45 @@ def summary_example():
     passed = dict(defect, eventNo="PASS", defectCode="", defectName="",
                   positionCode="", positionName="")
     return [defect, passed]
+
+
+def aggregate_example():
+    return [{
+        "occurredOn": "2026-10-30T00:00:00+07:00", "serialNo": "009QC2KT2",
+        "deviceQc": "QC2", "companyCode": "KT2", "companyName": "Kim Thành 2",
+        "sampleCode": "217H005B", "countryCode": "25", "countryName": "",
+        "colorCode": "10", "sizeCode": "XS", "sizeName": "XS",
+        "plannedQuantity": 100, "pass": 2, "rework": 1, "defect": 1,
+        "totalPass": 20, "totalRework": 5, "totalDefect": 3,
+    }]
+
+
+def refresh_aggregate_contract():
+    """Refresh stock aggregate metadata while preserving edited Desk contracts."""
+    doctype = "API Documentation Endpoint"
+    name = frappe.db.get_value(doctype, {"operation_id": "qcBrotherInspectionAggregate"}, "name")
+    if not name:
+        return
+    record = frappe.db.get_value(doctype, name, ["parameters_json", "responses_json"], as_dict=True)
+    parameters = json.loads(record.parameters_json or "[]")
+    responses = json.loads(record.responses_json or "{}")
+    changed = False
+    for parameter in parameters:
+        if parameter.get("name") == "companyId" and parameter.get("description") == "QCBROTHER_FILTER_COMPANYID":
+            parameter["description"] = "QCBROTHER_AGGREGATE_FILTER_COMPANYID"
+            changed = True
+    success = responses.get("200", {}).get("content", {}).get("application/json", {})
+    if success.get("example") == []:
+        success["example"] = aggregate_example()
+        changed = True
+    unavailable = responses.get("503", {})
+    if unavailable.get("description") == "QCBROTHER_SQL_UNAVAILABLE":
+        unavailable["description"] = "QCBROTHER_UQQC_UNAVAILABLE"
+        changed = True
+    if changed:
+        frappe.db.set_value(doctype, name, {
+            "parameters_json": _json(parameters), "responses_json": _json(responses),
+        }, update_modified=False)
 
 
 def refresh_summary_contract():

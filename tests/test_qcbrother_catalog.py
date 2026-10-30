@@ -94,6 +94,38 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(updated["200"]["content"]["application/json"]["example"][0]["eventNo"], "")
         self.assertEqual(updated["200"]["content"]["application/json"]["example"][1]["eventNo"], "PASS")
 
+    def test_aggregate_contract_refresh_updates_stock_values_only(self):
+        frappe = types.ModuleType("frappe")
+        frappe._ = lambda key: key
+        frappe.whitelist = lambda **kwargs: lambda function: function
+        with patch.dict(sys.modules, {"frappe": frappe}):
+            catalog = importlib.import_module("factory_management.qcbrother_reporting.catalog")
+        contract = catalog.report_contract("aggregate", 31)
+        parameters, responses = contract["parameters"], contract["responses"]
+        next(item for item in parameters if item["name"] == "companyId")["description"] = "QCBROTHER_FILTER_COMPANYID"
+        responses["200"]["content"]["application/json"]["example"] = []
+        responses["503"]["description"] = "QCBROTHER_SQL_UNAVAILABLE"
+        values = {"parameters_json": json.dumps(parameters), "responses_json": json.dumps(responses)}
+        writes = []
+
+        def get_value(_doctype, key, _fields, as_dict=False):
+            return types.SimpleNamespace(**values) if as_dict else "aggregate-endpoint"
+
+        def set_value(_doctype, _name, updates, update_modified=False):
+            writes.append(updates)
+            values.update(updates)
+
+        frappe.db = types.SimpleNamespace(get_value=get_value, set_value=set_value)
+        with patch.object(catalog, "frappe", frappe):
+            catalog.refresh_aggregate_contract()
+            catalog.refresh_aggregate_contract()
+        self.assertEqual(len(writes), 1)
+        updated = json.loads(values["responses_json"])
+        self.assertEqual(updated["503"]["description"], "QCBROTHER_UQQC_UNAVAILABLE")
+        self.assertEqual(updated["200"]["content"]["application/json"]["example"][0]["pass"], 2)
+        self.assertEqual(json.loads(values["parameters_json"])[2]["description"],
+                         "QCBROTHER_AGGREGATE_FILTER_COMPANYID")
+
     @classmethod
     def _message_keys(cls, value, keys):
         if isinstance(value, dict):

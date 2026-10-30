@@ -1,4 +1,4 @@
-"""UQQC source checks for the existing InspectionSummary contract."""
+"""UQQC source checks for both existing inspection report contracts."""
 
 import importlib.util
 import sys
@@ -67,7 +67,7 @@ class UqqcSummarySourceTests(unittest.TestCase):
         sql = Mock(side_effect=database)
         module = load_source(sql)
         query = ReportQuery.parse("2026-10-06", "2026-10-06", ZONE, 7)
-        rows = module.UqqcSummaryService(module.UqqcRepository()).summary(query)
+        rows = module.UqqcReportService(module.UqqcRepository()).summary(query)
         self.assertEqual([(row["eventNo"], row["quantity"]) for row in rows],
                          [("", 2), ("PASS", 1), ("REWORK", 1)])
         self.assertTrue(all(row["deviceQc"] == "QC2" and row["poNumbers"] == "PO-B" for row in rows))
@@ -89,6 +89,49 @@ class UqqcSummarySourceTests(unittest.TestCase):
         sql.side_effect = RuntimeError("database credentials")
         with self.assertRaisesRegex(ReportSourceError, "^QCBROTHER_UQQC_UNAVAILABLE$"):
             module.UqqcRepository().events(query, quantity=True)
+
+    def test_aggregate_uses_uqqc_history_and_latest_spl_po(self):
+        base = dict(DIMENSIONS, occurredAt=datetime(2026, 10, 5, 17),
+                    deviceNo="abcQC2def", quantity=2)
+        calls = []
+
+        def database(statement, values, as_dict):
+            self.assertTrue(as_dict)
+            calls.append((statement, values))
+            if "tabUQQC Inspection Event" in statement:
+                if "GROUP BY" in statement:
+                    self.assertNotIn("e.occurred_at >=", statement)
+                    self.assertEqual(values, [])
+                    count = 10 if "e.event_kind = 'defect'" in statement else 20
+                    return [dict(base, eventNo="" if count == 10 else "PASS", quantity=count)]
+                self.assertEqual(values[:2], [datetime(2026, 10, 5, 17),
+                                               datetime(2026, 10, 6, 17)])
+                if "e.event_kind = 'defect'" in statement:
+                    return [dict(base, eventNo="")]
+                return [dict(base, eventNo="PASS", quantity=3),
+                        dict(base, eventNo="REWORK", quantity=1)]
+            if "tabSPL Purchase Order Item" in statement:
+                return [dict(DIMENSIONS, purchaseOrderId="po-old", poNumber="PO-A", orderQty=10),
+                        dict(DIMENSIONS, purchaseOrderId="po-new", poNumber="PO-A", orderQty=50)]
+            if "tabSPL Purchase Order` po" in statement:
+                return [dict(id="po-old", poNumber="PO-A", revisionNo="1",
+                             status="Confirmed", documentStatus="New"),
+                        dict(id="po-new", poNumber="PO-A", revisionNo="2",
+                             status="Completed", documentStatus="Change")]
+            self.fail("Unexpected database source")
+
+        module = load_source(Mock(side_effect=database))
+        query = ReportQuery.parse("2026-10-06", "2026-10-06", ZONE, 31)
+        rows = module.UqqcReportService(module.UqqcRepository()).aggregate(query)
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(row["occurredOn"], "2026-10-06T00:00:00+07:00")
+        self.assertEqual(row["serialNo"], "abcQC2def")
+        self.assertEqual(row["deviceQc"], "QC2")
+        self.assertEqual((row["pass"], row["rework"], row["defect"]), (3, 1, 2))
+        self.assertEqual((row["totalPass"], row["totalRework"], row["totalDefect"]), (20, 0, 10))
+        self.assertEqual(row["plannedQuantity"], 50)
+        self.assertEqual(sum("tabUQQC Inspection Event" in sql for sql, _ in calls), 4)
 
 
 if __name__ == "__main__":
