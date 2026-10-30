@@ -57,11 +57,11 @@ def report_contract(kind, max_days):
     properties["occurredOn"]["format"] = "date-time"
     properties["occurredOn"]["description"] = "QCBROTHER_" + kind.upper() + "_DATE"
     properties.update({name: {"type": "integer", "format": "int32"} for name in numbers})
-    schema = {"type": "object", "required": ["message"], "properties": {"message": {
+    schema = {
         "type": "array", "items": {"type": "object", "required": list(properties), "properties": properties},
-    }}}
+    }
     responses = {"200": {"description": "QCBROTHER_REPORT_ROWS", "content": {"application/json": {
-        "schema": schema, "example": {"message": []},
+        "schema": schema, "example": [],
     }}}}
     for code, key in (("400", "QCBROTHER_REQUEST_INVALID"), ("401", "QCBROTHER_AUTH_REQUIRED"),
                       ("403", "QC_REPORT_FORBIDDEN"), ("503", "QCBROTHER_SQL_UNAVAILABLE")):

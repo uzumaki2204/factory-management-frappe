@@ -13,7 +13,7 @@
         const response = await fetch('/api/method/factory_management.api.data_epoch',
             { credentials: 'same-origin', cache: 'no-store' });
         if (!response.ok) throw new Error(t('apiFailed'));
-        const generation = String((await response.json()).message?.generation || '');
+        const generation = String(responseData(await response.json())?.generation || '');
         if (epochReloading) throw new Error(t('apiFailed'));
         if (!generation || generation === epochGeneration) return epochGeneration;
         epochReloading = true;
@@ -410,7 +410,7 @@
 
         let payload = null;
         try { payload = await response.json(); } catch { /* handled by the generic localized error below */ }
-        if (!response.ok || !payload || !Object.prototype.hasOwnProperty.call(payload, 'message')) {
+        if (!response.ok || !payload || typeof payload !== 'object') {
             let message = '';
             try {
                 const notices = JSON.parse(payload?._server_messages || '[]');
@@ -426,7 +426,11 @@
             error.retryable = response.status === 409 && payload?.exc_type === 'UQQCSyncRetryError';
             throw error;
         }
-        return payload.message;
+        return responseData(payload);
+    }
+
+    function responseData(payload) {
+        return payload && Object.prototype.hasOwnProperty.call(payload, 'message') ? payload.message : payload;
     }
 
     function setMessage(element, value, isError) {

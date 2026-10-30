@@ -100,7 +100,8 @@ Unable to save data on this device. Check storage capacity and permissions.,Khô
 UQQC tablet APIs. Contracts and allowed roles are managed in Frappe Desk.,API tablet UQQC. Hợp đồng và role được quản lý trong Frappe Desk.
 Tablets use X-UQQC-Token. Frappe users may read with a role listed in this endpoint Allowed Roles.,Tablet dùng X-UQQC-Token. User Frappe có thể đọc bằng role trong Allowed Roles của API.
 Requires X-UQQC-Token. Device approval and revocation use the shared QC registry.,Yêu cầu X-UQQC-Token. Việc duyệt và thu hồi thiết bị dùng chung registry QC.
-Response data is returned inside message.,Dữ liệu được trả trong message.
+Response data is returned inside message.,Dữ liệu được trả trực tiếp dưới dạng JSON.
+Response data is returned directly as JSON.,Dữ liệu được trả trực tiếp dưới dạng JSON.
 UQQC bootstrap data,Dữ liệu khởi tạo UQQC
 Pair a UQQC device,Ghép nối thiết bị UQQC
 Check a UQQC device,Kiểm tra thiết bị UQQC
@@ -373,6 +374,6 @@ QCBROTHER_FILTER_SAMPLECODE,Mã hàng chính xác
 QCBROTHER_FILTER_EVENTNO,Để trống để lấy mọi nguồn. PASS gồm legacy 0041; REWORK chỉ gồm sự kiện số lượng mới. Giá trị khác trả danh sách rỗng
 QCBROTHER_SUMMARY_DATE,Đầu ngày báo cáo local kèm UTC offset; tương ứng cách xuất DateTime local của summary .NET
 QCBROTHER_AGGREGATE_DATE,Đầu ngày báo cáo local kèm UTC offset đã cấu hình; tương ứng DateTimeOffset của aggregate .NET
-QCBROTHER_REPORT_ROWS,Các dòng báo cáo QCBrother trong envelope message của Frappe
+QCBROTHER_REPORT_ROWS,Các dòng báo cáo QCBrother được trả trực tiếp dưới dạng mảng JSON
 QCBROTHER_REQUEST_INVALID,Thiếu hoặc sai ngày báo cáo hay UUID công ty
 QCBROTHER_AUTH_REQUIRED,Cần xác thực bằng phiên Frappe hoặc API token

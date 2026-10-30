@@ -100,7 +100,8 @@ Unable to save data on this device. Check storage capacity and permissions.,Unab
 UQQC tablet APIs. Contracts and allowed roles are managed in Frappe Desk.,UQQC tablet APIs. Contracts and allowed roles are managed in Frappe Desk.
 Tablets use X-UQQC-Token. Frappe users may read with a role listed in this endpoint Allowed Roles.,Tablets use X-UQQC-Token. Frappe users may read with a role listed in this endpoint Allowed Roles.
 Requires X-UQQC-Token. Device approval and revocation use the shared QC registry.,Requires X-UQQC-Token. Device approval and revocation use the shared QC registry.
-Response data is returned inside message.,Response data is returned inside message.
+Response data is returned inside message.,Response data is returned directly as JSON.
+Response data is returned directly as JSON.,Response data is returned directly as JSON.
 UQQC bootstrap data,UQQC bootstrap data
 Pair a UQQC device,Pair a UQQC device
 Check a UQQC device,Check a UQQC device
@@ -373,6 +374,6 @@ QCBROTHER_FILTER_SAMPLECODE,Exact sample code
 QCBROTHER_FILTER_EVENTNO,Leave empty for all sources. PASS includes legacy 0041; REWORK includes only new quantity events. Other values return no rows
 QCBROTHER_SUMMARY_DATE,Start of the local report day with its UTC offset; matches serialization of the .NET local DateTime field
 QCBROTHER_AGGREGATE_DATE,Start of the local report day with the configured UTC offset; matches the .NET aggregate DateTimeOffset field
-QCBROTHER_REPORT_ROWS,QCBrother report rows in the Frappe message envelope
+QCBROTHER_REPORT_ROWS,QCBrother report rows returned directly as a JSON array
 QCBROTHER_REQUEST_INVALID,Missing or invalid report dates or company UUID
 QCBROTHER_AUTH_REQUIRED,Frappe session or API token authentication required

@@ -154,8 +154,7 @@ def _seed_summary_contract(service_name):
         "200": {
             "description": "Grouped inspection events",
             "content": {"application/json": {"schema": {
-                "type": "object", "required": ["message"],
-                "properties": {"message": {"type": "array", "items": {"type": "object", "properties": properties}}},
+                "type": "array", "items": {"type": "object", "properties": properties},
             }}},
         },
         "400": {"description": "Missing or invalid date range or quantity"},
@@ -196,8 +195,7 @@ def _seed_python_report_contract(service_name, operation_id, method_name, title,
         properties["quantity_delta"] = {"type": ["integer", "null"]}
     responses = {
         "200": {"description": "QC report rows", "content": {"application/json": {"schema": {
-            "type": "object", "required": ["message"],
-            "properties": {"message": {"type": "array", "items": {"type": "object", "properties": properties}}},
+            "type": "array", "items": {"type": "object", "properties": properties},
         }}}},
         "400": {"description": "Missing or invalid date range or quantity"},
         "403": {"description": "Role allowed for this QC report API required"},
@@ -246,8 +244,8 @@ def retire_inspection_event_contract_fields():
         parameters = json.loads(row.parameters_json or "[]")
         responses = json.loads(row.responses_json or "{}")
         updated_parameters = [item for item in parameters if item.get("name") not in parameters_to_remove]
-        items = (responses.get("200", {}).get("content", {}).get("application/json", {})
-                 .get("schema", {}).get("properties", {}).get("message", {}).get("items", {}))
+        schema = responses.get("200", {}).get("content", {}).get("application/json", {}).get("schema", {})
+        items = schema.get("properties", {}).get("message", schema).get("items", {})
         properties = items.get("properties", {})
         changed = updated_parameters != parameters
         for field in properties_to_remove:
@@ -269,7 +267,7 @@ def ensure_catalog():
             "doctype": SERVICE_TYPE,
             "service_key": "qc",
             "service_title": "QC API",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "description": "Quality Control APIs. Contracts are editable in Frappe Desk.",
             "is_active": 1,
         }).insert(ignore_permissions=True).name

@@ -42,7 +42,7 @@ class CatalogTests(unittest.TestCase):
             self.assertEqual(record["allowed_roles"], [{"role": "QC Report Reader"}])
             self.assertEqual(record["http_method"], "GET")
         aggregate = json.loads(records["qcBrotherInspectionAggregate"]["responses_json"])
-        fields = aggregate["200"]["content"]["application/json"]["schema"]["properties"]["message"]["items"]["properties"]
+        fields = aggregate["200"]["content"]["application/json"]["schema"]["items"]["properties"]
         self.assertIn("serialNo", fields)
         self.assertIn("totalPass", fields)
         self.assertNotIn("lineCode", fields)

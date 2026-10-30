@@ -75,12 +75,12 @@ class Element {
     querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
 }
 
-function response(data) { return { ok: true, status: 200, json: async () => ({ message: data }) }; }
+function response(data) { return { ok: true, status: 200, json: async () => data }; }
 function snapshot(scopes = []) { return { serverDateKey: dateKey, serverNowUtc: new Date().toISOString(), serverUtcOffsetMinutes: 0, scopes }; }
 function deferred() { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; }
 async function flushRequests() { for (let index = 0; index < 6; index++) await Promise.resolve(); }
 
-function createClient(fetch = async () => { throw new Error('offline'); }, localStorage = new Storage(), generation = '') {
+function createClient(fetch = async () => { throw new Error('offline'); }, localStorage = new Storage(), generation = '', legacyEpoch = false) {
     const nodes = new Map();
     const document = {
         documentElement: new Element(),
@@ -101,7 +101,7 @@ function createClient(fetch = async () => { throw new Error('offline'); }, local
     const context = { document, window, localStorage, sessionStorage: new Storage(),
         navigator: { onLine: true }, fetch: (url, options) =>
             url === '/api/method/factory_management.api.data_epoch'
-                ? Promise.resolve(response({ generation })) : fetch(url, options),
+                ? Promise.resolve(response(legacyEpoch ? { message: { generation } } : { generation })) : fetch(url, options),
         crypto: { randomUUID, getRandomValues: array => require('node:crypto').randomFillSync(array) }, URL, console };
     vm.runInNewContext(testSource, context);
     const { client } = context;
@@ -120,6 +120,21 @@ function createClient(fetch = async () => { throw new Error('offline'); }, local
 function cacheScope(client, values = { pass: 185, rework: 0, defectNo: 1, defects: { defect: 1 } }, selection = scope) {
     client.saveDetailSnapshot(selection, { ...values, serverDateKey: dateKey });
 }
+
+test('legacy enveloped API and data epoch remain readable during upgrades', async () => {
+    const storage = new Storage();
+    storage.setItem(prefix + 'data-epoch', 'current');
+    const client = createClient(async () => response({ message: { ready: true } }), storage, 'current', true);
+    assert.equal((await client.requestJson('/api/method/uqqc-bootstrap', { method: 'GET' })).ready, true);
+    assert.equal(client.reloads, 0);
+});
+
+test('a malformed success response cannot acknowledge the durable offline queue', async () => {
+    const client = createClient(async () => response(null));
+    client.state.queue = [{ localEventId: 'pending' }];
+    await assert.rejects(client.requestJson('/api/method/uqqc-inspections-sync', { method: 'POST', body: '{}' }));
+    assert.equal(client.state.queue.length, 1);
+});
 
 test('position star persists independently without choosing a position, closing popup or queuing an event', () => {
     const client = createClient();
@@ -405,7 +420,7 @@ test('sync started during restore waits and cannot double count pending events i
 });
 
 
-test('Frappe requests use the device record ID without a token and unwrap message', async () => {
+test('Frappe requests use the device record ID without a token and read direct JSON', async () => {
     const calls = [];
     const client = createClient(async (url, options) => { calls.push({ url, options }); return response({ ready: true }); });
     assert.equal((await client.requestJson('/api/method/uqqc-bootstrap', { method: 'GET' })).ready, true);

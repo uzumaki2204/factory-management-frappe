@@ -93,7 +93,7 @@ def ensure_catalog():
     if not service:
         service = frappe.get_doc({
             "doctype": "API Documentation Service", "service_key": "uqqc", "service_title": "UQQC API",
-            "version": "1.0.0", "description": text("docs.description", "en"), "is_active": 1,
+            "version": "2.0.0", "description": text("docs.description", "en"), "is_active": 1,
         }).insert(ignore_permissions=True).name
     string = {"type": "string"}
     device_id_schema = {"type": "string", "format": "uuid"}
@@ -145,7 +145,7 @@ def ensure_catalog():
             "parameters_json": json.dumps(parameters),
             "request_body_json": json.dumps(body), "security_json": json.dumps(security),
             "responses_json": json.dumps({"200": {"description": text("docs.success", "en"), "content": {"application/json": {"schema": {
-                "type": "object", "properties": {"message": {"type": "object"}}, "required": ["message"],
+                "type": "object",
             }}}}, "403": {"description": text("api.forbidden", "en")},
                 "409": {"description": text("api.retry_sync", "en")}, "417": {"description": text("api.input", "en")}}),
             "allowed_roles": [], "is_active": 1,

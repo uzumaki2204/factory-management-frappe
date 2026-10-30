@@ -95,7 +95,7 @@ Kiểm thử parser/gateway không cần site (cài thêm extra `.[test]` để 
 
 ## Generation dữ liệu sau khi làm mới QC
 
-`GET /api/method/factory_management.api.data_epoch` trả `{generation, resetAtUtc}` trong `message`. Trước lần làm mới, `generation` rỗng. Sau lần làm mới, các lệnh ghi/đăng ký/kiểm tra thiết bị QC và UQQC cần header `X-Factory-Data-Epoch` bằng generation hiện tại; request cũ bị từ chối. Client QC/UQQC đọc generation trước khi đồng bộ và xóa queue, cache cũ khi generation đổi. DocType `Factory Data Epoch` chỉ lưu generation của site. Luồng làm mới do MigrationFrappe chạy cục bộ bằng Bench trong Docker; không có API HTTP để xóa dữ liệu.
+`GET /api/method/factory_management.api.data_epoch` trả trực tiếp `{generation, resetAtUtc}`. Trước lần làm mới, `generation` rỗng. Sau lần làm mới, các lệnh ghi/đăng ký/kiểm tra thiết bị QC và UQQC cần header `X-Factory-Data-Epoch` bằng generation hiện tại; request cũ bị từ chối. Client QC/UQQC đọc generation trước khi đồng bộ và xóa queue, cache cũ khi generation đổi. DocType `Factory Data Epoch` chỉ lưu generation của site. Luồng làm mới do MigrationFrappe chạy cục bộ bằng Bench trong Docker; không có API HTTP để xóa dữ liệu.
 
 Lần làm mới lấy master, thiết bị và `QCInspections` từ SQL Server .NET, dựng lại danh mục lỗi UQQC từ QC và để trống sự kiện UQQC. Cần backup và kiểm tra xung đột Link với app khác trước khi chạy. Không thay đổi dữ liệu QCBrother trong SQL Server.
 
@@ -124,7 +124,7 @@ Chạy `bench --site <site> migrate` khi cài/nâng cấp app; patch `separate_u
 | POST | `/api/method/uqqc-inspections-snapshot` | Tổng hợp một lựa chọn trong ngày |
 | POST | `/api/method/uqqc-inspections-detail-snapshot` | Toàn bộ lựa chọn của thiết bị trong ngày |
 
-Các POST nhận JSON có `id`; snapshot cần thêm `lineId`, `productId`, `colorId`, `sizeId`, `marketId`. Phản hồi dùng envelope Frappe `message`. `defectId` và `defectPositionId` trong API đồng bộ phải thuộc danh mục UQQC đang hoạt động. Giai đoạn tương thích còn nhận `deviceId` và `device_id`; phản hồi có alias `device_id`. Server Scripts gọi các dịch vụ kiểm tra dữ liệu trong package UQQC.
+Các POST nhận JSON có `id`; snapshot cần thêm `lineId`, `productId`, `colorId`, `sizeId`, `marketId`. Phản hồi thành công trả trực tiếp đối tượng JSON. `defectId` và `defectPositionId` trong API đồng bộ phải thuộc danh mục UQQC đang hoạt động. Giai đoạn tương thích còn nhận `deviceId` và `device_id`; phản hồi có alias `device_id`. Server Scripts gọi các dịch vụ kiểm tra dữ liệu trong package UQQC.
 
 Tablet gửi `id` của Factory Device, không gửi token. Thiết bị phải được duyệt, đang hoạt động và gán công ty. Người biết ID của một thiết bị đủ điều kiện có thể gọi API tablet QC/UQQC tương ứng; ID không phải bí mật.
 
@@ -172,7 +172,7 @@ Từ màn hình `/desk`, chọn **QC** để mở trang QC trong tab mới hoặ
 
 ### Báo cáo QCBrother từ SQL Server
 
-Từ bản `0.1.53`, service **QC API** có hai GET method, trả danh sách dưới `message` của Frappe:
+Từ bản `0.1.53`, service **QC API** có hai GET method. Từ `0.1.56`, các API QC/UQQC trả dữ liệu thành công trực tiếp: báo cáo trả mảng `[...]`, API tablet trả đối tượng `{...}`, không bọc trong `message`. Lỗi giữ cấu trúc và HTTP status của Frappe. Client QC/UQQC đọc được cả hai cấu trúc trong thời gian nâng cấp; các client bên ngoài cần bỏ truy cập `.message`. RPC quản trị tài liệu và API hệ thống Frappe giữ hợp đồng riêng. Patch `unwrap_qc_api_responses` cập nhật schema/example của các operation hiện có và nâng service mặc định lên `2.0.0`, giữ các chỉnh sửa khác trong Desk. Tải lại trang tablet sau khi nâng cấp để nhận client mới; phiên bản asset và service worker cũng được tăng.
 
 - `/api/method/factory_management.qcbrother_reports.inspection_summary`: query bắt buộc `occurredOnFrom`, `occurredOnTo`, tối đa 7 ngày tính cả hai đầu; filter tùy chọn `companyId`, `companyCode`, `qc`, `sampleCode`, `eventNo`.
 - `/api/method/factory_management.qcbrother_reports.inspection_aggregate`: cùng query ngày và filter công ty/QC/mã hàng, tối đa 31 ngày; không nhận filter `eventNo`.

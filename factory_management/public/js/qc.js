@@ -328,7 +328,10 @@
       error.status = response.status;
       throw error;
     }
-    return result.message;
+    return responseData(result);
+  }
+  function responseData(payload) {
+    return payload && Object.prototype.hasOwnProperty.call(payload, 'message') ? payload.message : payload;
   }
   async function ensureDataEpoch() {
     if (epochReloading) throw new Error(t('error.network'));
@@ -337,7 +340,7 @@
     try { response = await fetch(epochUrl, {cache: 'no-store', credentials: 'omit'}); }
     catch (_) { throw new Error(t('error.network')); }
     if (!response.ok) throw new Error(t('error.network'));
-    const generation = String((await response.json()).message?.generation || '');
+    const generation = String(responseData(await response.json())?.generation || '');
     if (epochReloading) throw new Error(t('error.network'));
     if (!generation || generation === epochGeneration) return epochGeneration;
     epochReloading = true;
