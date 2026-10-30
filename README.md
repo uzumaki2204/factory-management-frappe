@@ -101,6 +101,8 @@ Lần làm mới lấy master, thiết bị và `QCInspections` từ SQL Server 
 
 ## UQQC
 
+Từ bản `0.1.54`, các trường Link trong **UQQC Inspection Event** hiển thị **Defect Position** và **Defect** theo `code`, **Device** theo `device_name`. Metadata `title_field` và `show_title_field_in_link` áp dụng nhãn này cho form, danh sách và ô chọn Link. Patch `set_uqqc_link_titles` cập nhật site đã cài và xóa cache metadata khi migrate; khóa bản ghi và các liên kết dữ liệu được giữ nguyên.
+
 ### ID Factory Device
 
 Factory Device dùng khóa chính Frappe `name` với giá trị UUID. Hook `before_naming` cấp UUID cho thiết bị mới và giữ ID UUID đã được cung cấp; DocType dùng quy tắc `prompt` để giữ kiểu cột khóa chính hiện có khi nâng cấp site có dữ liệu. Khi nâng cấp, migration kiểm tra mọi `device_id` cũ bằng `name`, giữ nguyên ID hiện có và Link từ QC/UQQC, rồi xóa `device_id`, `device_uid` và DocType `Factory Device Client`. Thiết bị không còn token; API tablet dùng tham số `id`, vẫn nhận tạm `device_id`/`deviceId` và trả alias `device_id` cho client cũ. Trước khi chạy migration trên site có dữ liệu, sao lưu database cùng public/private files bằng `bench --site <site> backup --with-files`, sau đó chạy `bench --site <site> migrate` và kiểm tra lại các liên kết thiết bị. Nếu hai ID cũ không khớp, migration dừng trước khi xóa cột.

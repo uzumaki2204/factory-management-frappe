@@ -150,6 +150,9 @@ MASTER_TYPE_MODULES = {
 # Keep shared master naming behavior in app metadata so it is identical on
 # every site, even when the DocType already existed before an app upgrade.
 DOCTYPE_SETTINGS = {
+    "Factory Device": {"title_field": "device_name", "show_title_field_in_link": 1},
+    "UQQC Defect": {"title_field": "code", "show_title_field_in_link": 1},
+    "UQQC Defect Position": {"title_field": "code", "show_title_field_in_link": 1},
     "Customer": {"autoname": "hash", "allow_rename": 1},
     "Factory": {
         "naming_rule": "By fieldname",
