@@ -3,6 +3,6 @@
 import frappe
 
 
-def message(code, **context):
-    translated = frappe._(code)
+def message(message_key, **context):
+    translated = frappe._(message_key)
     return translated.format(**context)

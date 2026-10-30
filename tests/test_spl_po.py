@@ -21,6 +21,16 @@ def load(name, filename):
 parser = load("spl_parser", "parser.py")
 
 
+class MessageTests(unittest.TestCase):
+    def test_master_warning_accepts_code_placeholder(self):
+        frappe_stub = types.ModuleType("frappe")
+        frappe_stub._ = lambda key: {"SPL_MASTER_WILL_CREATE": "Will create {doctype} code {code}"}[key]
+        with patch.dict(sys.modules, {"frappe": frappe_stub}):
+            messages = load("spl_messages", "messages.py")
+            rendered = messages.message("SPL_MASTER_WILL_CREATE", doctype="Product", code="P01")
+        self.assertEqual(rendered, "Will create Product code P01")
+
+
 def fixture_xlsx(rows):
     import openpyxl
     book = openpyxl.Workbook()
