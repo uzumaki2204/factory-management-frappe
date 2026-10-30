@@ -67,7 +67,7 @@ def _upload_content(file_url):
 
 
 def _snapshot_path(token):
-    folder = Path(frappe.get_site_path("private", "files", "spl_po"))
+    folder = Path(frappe.get_site_path("private", "files", "spl_po")).resolve()
     folder.mkdir(mode=0o700, parents=True, exist_ok=True)
     folder.chmod(0o700)
     return folder / f"{token}.json.gz"
@@ -91,7 +91,11 @@ def _load_snapshot(run, token):
     if not expiry or get_datetime(expiry) < now_datetime():
         raise WorkbookError("SPL_PREVIEW_EXPIRED")
     path = _snapshot_path(token)
-    if str(path) != run.snapshot_path or not path.is_file():
+    try:
+        saved_path = Path(run.snapshot_path).resolve()
+    except (OSError, RuntimeError, TypeError):
+        raise WorkbookError("SPL_PREVIEW_INVALID") from None
+    if saved_path != path.resolve() or not path.is_file():
         raise WorkbookError("SPL_PREVIEW_INVALID")
     with gzip.open(path, "rt", encoding="utf-8") as source:
         return json.load(source)
