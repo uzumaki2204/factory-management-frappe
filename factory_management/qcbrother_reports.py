@@ -1,4 +1,4 @@
-"""Authenticated Frappe endpoints for the original QCBrother report contracts."""
+"""Authenticated Frappe endpoints for the QCBrother report contracts."""
 
 import frappe
 from frappe import _
@@ -9,6 +9,7 @@ from factory_management.qcbrother_reporting.model import ReportInputError, Repor
 from factory_management.qcbrother_reporting.repository import ReportRepository
 from factory_management.qcbrother_reporting.service import ReportService
 from factory_management.qcbrother_reporting.sqlserver import SqlServer
+from factory_management.qcbrother_reporting.uqqc import UqqcRepository, UqqcSummaryService
 
 
 class ReportValidationError(frappe.ValidationError):
@@ -46,12 +47,27 @@ def _report(operation, max_days, begin, end, company_id, company_code, qc, sampl
             raise ReportSourceError("QCBROTHER_SQL_CONFIG_REQUIRED")
         zone = ZoneInfo(zone_name or "Asia/Ho_Chi_Minh")
         query = ReportQuery.parse(begin, end, zone, max_days, company_id, company_code, qc, sample_code, event_no)
+        if max_days == 7:
+            company_id_code = _company_code_for_id(config, query.company_id) if query.company_id else None
+            return UqqcSummaryService(UqqcRepository(company_id_code)).summary(query)
         with SqlServer(config).connect() as reader:
             service = ReportService(ReportRepository(reader))
-            return service.summary(query) if max_days == 7 else service.aggregate(query)
+            return service.aggregate(query)
     except ReportInputError as error:
         frappe.throw(_(str(error)), ReportValidationError)
     except ZoneInfoNotFoundError:
-        frappe.throw(_("QCBROTHER_SQL_CONFIG_REQUIRED"), ReportUnavailableError)
+        key = "QCBROTHER_TIME_ZONE_INVALID" if max_days == 7 else "QCBROTHER_SQL_CONFIG_REQUIRED"
+        frappe.throw(_(key), ReportUnavailableError)
     except ReportSourceError as error:
         frappe.throw(_(str(error)), ReportUnavailableError)
+
+
+def _company_code_for_id(config, company_id):
+    """Bridge the existing .NET company UUID filter to Frappe's company code."""
+    with SqlServer(config).connect() as reader:
+        rows = reader.rows(
+            "SELECT Code AS companyCode FROM dbo.Companies WHERE Id = ? AND IsDeleted = 0",
+            [company_id],
+        )
+        first = next(iter(rows), None)
+        return first["companyCode"] if first else None

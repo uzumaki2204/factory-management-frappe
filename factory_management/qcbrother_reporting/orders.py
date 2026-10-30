@@ -49,8 +49,12 @@ def _compare_revision(left, right):
         return (ai > bi) - (ai < bi)
     if a.upper() != b.upper():
         return (a.upper() > b.upper()) - (a.upper() < b.upper())
-    return (UUID(str(left["id"])).int > UUID(str(right["id"])).int) - (
-        UUID(str(left["id"])).int < UUID(str(right["id"])).int)
+    try:
+        left_id, right_id = UUID(str(left["id"])).int, UUID(str(right["id"])).int
+    except (TypeError, ValueError):
+        # Frappe document names are not UUIDs; keep revision ties deterministic.
+        left_id, right_id = clean(left["id"]).upper(), clean(right["id"]).upper()
+    return (left_id > right_id) - (left_id < right_id)
 
 
 def _int64(value):

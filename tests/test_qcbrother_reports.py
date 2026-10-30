@@ -207,9 +207,9 @@ class EndpointTests(unittest.TestCase):
             spec.loader.exec_module(module)
         return module
 
-    def test_permission_denial_precedes_sql_connection(self):
+    def test_permission_denial_precedes_uqqc_query(self):
         module = self.load_endpoint(denied=True)
-        with patch.object(module, "SqlServer") as source, self.assertRaises(PermissionError):
+        with patch.object(module, "UqqcRepository") as source, self.assertRaises(PermissionError):
             module.inspection_summary("2026-10-06", "2026-10-06")
         source.assert_not_called()
 
@@ -219,11 +219,29 @@ class EndpointTests(unittest.TestCase):
             with self.assertRaises(module.ReportValidationError) as invalid:
                 module.inspection_summary()
             self.assertEqual(invalid.exception.http_status_code, 400)
-            with patch.object(module, "SqlServer", side_effect=ReportSourceError("QCBROTHER_SQL_UNAVAILABLE")):
+            with patch.object(module, "UqqcRepository", side_effect=ReportSourceError("QCBROTHER_UQQC_UNAVAILABLE")):
                 with self.assertRaises(module.ReportUnavailableError) as unavailable:
                     module.inspection_summary("2026-10-06", "2026-10-06")
             self.assertEqual(unavailable.exception.http_status_code, 503)
-            self.assertEqual(str(unavailable.exception), "QCBROTHER_SQL_UNAVAILABLE")
+            self.assertEqual(str(unavailable.exception), "QCBROTHER_UQQC_UNAVAILABLE")
+
+    def test_company_uuid_uses_sql_only_to_resolve_company_code(self):
+        module = self.load_endpoint()
+        reader = Mock()
+        reader.rows.return_value = [{"companyCode": "KT2"}]
+        source = Mock()
+        source.connect.return_value.__enter__ = Mock(return_value=reader)
+        source.connect.return_value.__exit__ = Mock(return_value=False)
+        with patch.object(module, "ZoneInfo", return_value=ZONE), \
+                patch.object(module, "SqlServer", return_value=source) as sql, \
+                patch.object(module, "UqqcRepository") as repository, \
+                patch.object(module, "UqqcSummaryService") as service:
+            service.return_value.summary.return_value = []
+            module.inspection_summary("2026-10-06", "2026-10-06",
+                                      companyId=COMPANY)
+        sql.assert_called_once()
+        self.assertIn("dbo.Companies", reader.rows.call_args.args[0])
+        repository.assert_called_once_with("KT2")
 
 
 if __name__ == "__main__":

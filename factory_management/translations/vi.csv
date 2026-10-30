@@ -360,18 +360,22 @@ QCBROTHER_COMPANY_ID_INVALID,companyId phải là UUID hợp lệ
 QCBROTHER_SQL_CONFIG_REQUIRED,Thiếu hoặc sai cấu hình SQL Server cho báo cáo QCBrother
 QCBROTHER_SQL_UNAVAILABLE,Không thể kết nối cơ sở dữ liệu báo cáo QCBrother. Vui lòng thử lại sau
 QCBROTHER_SQL_QUERY_INVALID,Truy vấn báo cáo QCBrother không được phép
-QCBROTHER_SUMMARY_TITLE,Báo cáo tổng hợp kiểm tra QCBrother
+QCBROTHER_UQQC_UNAVAILABLE,Không thể đọc dữ liệu kiểm tra UQQC. Vui lòng thử lại sau
+QCBROTHER_TIME_ZONE_INVALID,Thiếu hoặc sai múi giờ báo cáo
+QCBROTHER_SUMMARY_TITLE,Báo cáo tổng hợp kiểm tra UQQC
 QCBROTHER_AGGREGATE_TITLE,Báo cáo thống kê kiểm tra QCBrother
 QCBROTHER_REPORTS_TAG,Báo cáo QCBrother
-QCBROTHER_SUMMARY_DESCRIPTION,"Trả các trường summary của .NET QCBrotherClient từ sự kiện lỗi, sự kiện PASS/REWORK và record QCBrother legacy trong SQL Server. Mỗi record legacy tính một đơn vị; 0041 chuyển thành PASS. Công ty được resolve theo mã và tên chuyền. Bao gồm factoryCode và số PO có revision mới nhất hợp lệ. Sự kiện mới dùng thời gian UTC; legacy dùng múi giờ local đã cấu hình."
+QCBROTHER_SUMMARY_DESCRIPTION,"Trả các trường InspectionSummary của .NET QCBrotherClient từ UQQC Inspection Event trong Frappe. Lỗi có eventNo rỗng; pass và rework có PASS và REWORK. Gộp theo ngày báo cáo local và các chiều dữ liệu rồi cộng quantity. deviceQc lấy mã QC1/QC2 xuất hiện đầu tiên trong tên thiết bị. poNumbers tra chi tiết SPL PO theo mã hàng, thị trường, màu, size và chọn revision mới nhất hợp lệ. Thời gian sự kiện UQQC được lưu theo UTC."
 QCBROTHER_AGGREGATE_DESCRIPTION,"Trả số lượng theo ngày, mã thiết bị đầy đủ, QC, công ty, mã hàng, thị trường, màu và size. totalPass/totalRework/totalDefect tính toàn bộ lịch sử theo QC, công ty và mã hàng; bỏ qua thiết bị đầy đủ, ngày và biến thể. plannedQuantity lấy revision PO mới nhất có trạng thái chứng từ ngoài là New hoặc Change."
 QCBROTHER_DATE_RANGE_7,Ngày báo cáo local. Bắt buộc nhập cả hai ngày; tự đảo nếu nhập ngược. Khoảng ngày tối đa 7 ngày tính cả hai đầu
 QCBROTHER_DATE_RANGE_31,Ngày báo cáo local. Bắt buộc nhập cả hai ngày; tự đảo nếu nhập ngược. Khoảng ngày tối đa 31 ngày tính cả hai đầu
-QCBROTHER_FILTER_COMPANYID,UUID công ty trong SQL Server. UUID rỗng không áp dụng bộ lọc
+QCBROTHER_FILTER_COMPANYID,UUID công ty trong SQL Server được đổi sang mã công ty Frappe khi truyền vào. UUID rỗng không áp dụng bộ lọc
 QCBROTHER_FILTER_COMPANYCODE,Mã công ty. Áp dụng sau khi resolve công ty legacy từ chuyền
 QCBROTHER_FILTER_QC,Chuỗi con không phân biệt hoa thường trong tên thiết bị đầy đủ hoặc serial legacy
+QCBROTHER_SUMMARY_FILTER_COMPANYCODE,Mã công ty liên kết với chuyền của sự kiện UQQC
+QCBROTHER_SUMMARY_FILTER_QC,Chuỗi con không phân biệt hoa thường trong tên thiết bị UQQC
 QCBROTHER_FILTER_SAMPLECODE,Mã hàng chính xác
-QCBROTHER_FILTER_EVENTNO,Để trống để lấy mọi nguồn. PASS gồm legacy 0041; REWORK chỉ gồm sự kiện số lượng mới. Giá trị khác trả danh sách rỗng
+QCBROTHER_FILTER_EVENTNO,Để trống để lấy lỗi và sự kiện PASS/REWORK; PASS hoặc REWORK chỉ lấy loại tương ứng. Giá trị khác trả danh sách rỗng
 QCBROTHER_SUMMARY_DATE,Đầu ngày báo cáo local kèm UTC offset; tương ứng cách xuất DateTime local của summary .NET
 QCBROTHER_AGGREGATE_DATE,Đầu ngày báo cáo local kèm UTC offset đã cấu hình; tương ứng DateTimeOffset của aggregate .NET
 QCBROTHER_REPORT_ROWS,Các dòng báo cáo QCBrother được trả trực tiếp dưới dạng mảng JSON

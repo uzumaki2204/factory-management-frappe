@@ -58,6 +58,42 @@ class CatalogTests(unittest.TestCase):
                 translations = {row[0]: row[1] for row in csv.reader(stream) if len(row) >= 2}
             self.assertFalse(keys - translations.keys(), language)
 
+    def test_summary_contract_refresh_updates_stock_values_only(self):
+        frappe = types.ModuleType("frappe")
+        frappe._ = lambda key: key
+        frappe.whitelist = lambda **kwargs: lambda function: function
+        with patch.dict(sys.modules, {"frappe": frappe}):
+            catalog = importlib.import_module("factory_management.qcbrother_reporting.catalog")
+
+        contract = catalog.report_contract("summary", 7)
+        parameters = contract["parameters"]
+        responses = contract["responses"]
+        for parameter in parameters:
+            if parameter["name"] in ("companyCode", "qc"):
+                parameter["description"] = "QCBROTHER_FILTER_" + parameter["name"].upper()
+        media = responses["200"]["content"]["application/json"]
+        media["example"] = []
+        responses["503"]["description"] = "QCBROTHER_SQL_UNAVAILABLE"
+        values = {"parameters_json": json.dumps(parameters), "responses_json": json.dumps(responses)}
+        writes = []
+
+        def get_value(_doctype, key, _fields, as_dict=False):
+            return types.SimpleNamespace(**values) if as_dict else "summary-endpoint"
+
+        def set_value(_doctype, _name, updates, update_modified=False):
+            writes.append(updates)
+            values.update(updates)
+
+        frappe.db = types.SimpleNamespace(get_value=get_value, set_value=set_value)
+        with patch.object(catalog, "frappe", frappe):
+            catalog.refresh_summary_contract()
+            catalog.refresh_summary_contract()
+        self.assertEqual(len(writes), 1)
+        updated = json.loads(values["responses_json"])
+        self.assertEqual(updated["503"]["description"], "QCBROTHER_UQQC_UNAVAILABLE")
+        self.assertEqual(updated["200"]["content"]["application/json"]["example"][0]["eventNo"], "")
+        self.assertEqual(updated["200"]["content"]["application/json"]["example"][1]["eventNo"], "PASS")
+
     @classmethod
     def _message_keys(cls, value, keys):
         if isinstance(value, dict):
