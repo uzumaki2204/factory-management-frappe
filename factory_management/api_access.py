@@ -11,6 +11,8 @@ REPORT_ROUTES = {
     "qcInspectionSummary": "/api/method/qc-inspection-summary",
     "qcReportSummary": "/api/method/factory_management.api.report_summary",
     "qcReportDetail": "/api/method/factory_management.api.report_detail",
+    "qcBrotherInspectionSummary": "/api/method/factory_management.qcbrother_reports.inspection_summary",
+    "qcBrotherInspectionAggregate": "/api/method/factory_management.qcbrother_reports.inspection_aggregate",
 }
 
 

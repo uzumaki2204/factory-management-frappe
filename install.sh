@@ -103,7 +103,7 @@ msg apt_dependencies
 apt-get update
 apt-get install -y --no-install-recommends \
     ca-certificates curl git build-essential pkg-config \
-    libmariadb-dev libmariadb-dev-compat mariadb-client \
+    libmariadb-dev libmariadb-dev-compat mariadb-client libltdl7 libkrb5-3 libgssapi-krb5-2 \
     redis-server supervisor nginx cron xvfb libfontconfig1 \
     python3 python3-venv python3-dev libffi-dev libssl-dev \
     iproute2 sudo gnupg

@@ -2,6 +2,9 @@ ARG BASE_IMAGE=local/frappe:v16.53.0
 FROM ${BASE_IMAGE}
 
 USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libltdl7 libkrb5-3 libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
 COPY --chown=frappe:0 factory_management /home/frappe/frappe-bench/apps/factory_management/factory_management
 COPY --chown=frappe:0 pyproject.toml /home/frappe/frappe-bench/apps/factory_management/pyproject.toml
 

@@ -1,4 +1,4 @@
-﻿QC_REPORT_FORBIDDEN,Người dùng không có vai trò được phép truy cập API báo cáo QC này
+QC_REPORT_FORBIDDEN,Người dùng không có vai trò được phép truy cập API báo cáo QC này
 QC_REPORT_SCRIPT_MIGRATION_REQUIRED,Cần cập nhật thủ công phần kiểm tra quyền của Server Script QC Inspection Summary vì nội dung đã được tùy chỉnh
 QC_REPORT_DATES_REQUIRED,Cần nhập đủ ngày bắt đầu và ngày kết thúc
 QC_REPORT_INVALID_DATE,Ngày báo cáo không hợp lệ
@@ -351,3 +351,28 @@ FR Updating,Đang cập nhật FR
 Status Filters,Bộ lọc trạng thái
 Connection and Schedule,Kết nối và lịch chạy
 Import Parameters,Tham số import
+QCBROTHER_RANGE_REQUIRED,Bắt buộc nhập cả occurredOnFrom và occurredOnTo
+QCBROTHER_RANGE_INVALID,Vui lòng nhập khoảng ngày báo cáo ISO hợp lệ
+QCBROTHER_RANGE_MAX_7,Khoảng ngày báo cáo không được vượt quá 7 ngày tính cả hai đầu
+QCBROTHER_RANGE_MAX_31,Khoảng ngày báo cáo không được vượt quá 31 ngày tính cả hai đầu
+QCBROTHER_COMPANY_ID_INVALID,companyId phải là UUID hợp lệ
+QCBROTHER_SQL_CONFIG_REQUIRED,Thiếu hoặc sai cấu hình SQL Server cho báo cáo QCBrother
+QCBROTHER_SQL_UNAVAILABLE,Không thể kết nối cơ sở dữ liệu báo cáo QCBrother. Vui lòng thử lại sau
+QCBROTHER_SQL_QUERY_INVALID,Truy vấn báo cáo QCBrother không được phép
+QCBROTHER_SUMMARY_TITLE,Báo cáo tổng hợp kiểm tra QCBrother
+QCBROTHER_AGGREGATE_TITLE,Báo cáo thống kê kiểm tra QCBrother
+QCBROTHER_REPORTS_TAG,Báo cáo QCBrother
+QCBROTHER_SUMMARY_DESCRIPTION,"Trả các trường summary của .NET QCBrotherClient từ sự kiện lỗi, sự kiện PASS/REWORK và record QCBrother legacy trong SQL Server. Mỗi record legacy tính một đơn vị; 0041 chuyển thành PASS. Công ty được resolve theo mã và tên chuyền. Bao gồm factoryCode và số PO có revision mới nhất hợp lệ. Sự kiện mới dùng thời gian UTC; legacy dùng múi giờ local đã cấu hình."
+QCBROTHER_AGGREGATE_DESCRIPTION,"Trả số lượng theo ngày, mã thiết bị đầy đủ, QC, công ty, mã hàng, thị trường, màu và size. totalPass/totalRework/totalDefect tính toàn bộ lịch sử theo QC, công ty và mã hàng; bỏ qua thiết bị đầy đủ, ngày và biến thể. plannedQuantity lấy revision PO mới nhất có trạng thái chứng từ ngoài là New hoặc Change."
+QCBROTHER_DATE_RANGE_7,Ngày báo cáo local. Bắt buộc nhập cả hai ngày; tự đảo nếu nhập ngược. Khoảng ngày tối đa 7 ngày tính cả hai đầu
+QCBROTHER_DATE_RANGE_31,Ngày báo cáo local. Bắt buộc nhập cả hai ngày; tự đảo nếu nhập ngược. Khoảng ngày tối đa 31 ngày tính cả hai đầu
+QCBROTHER_FILTER_COMPANYID,UUID công ty trong SQL Server. UUID rỗng không áp dụng bộ lọc
+QCBROTHER_FILTER_COMPANYCODE,Mã công ty. Áp dụng sau khi resolve công ty legacy từ chuyền
+QCBROTHER_FILTER_QC,Chuỗi con không phân biệt hoa thường trong tên thiết bị đầy đủ hoặc serial legacy
+QCBROTHER_FILTER_SAMPLECODE,Mã hàng chính xác
+QCBROTHER_FILTER_EVENTNO,Để trống để lấy mọi nguồn. PASS gồm legacy 0041; REWORK chỉ gồm sự kiện số lượng mới. Giá trị khác trả danh sách rỗng
+QCBROTHER_SUMMARY_DATE,Đầu ngày báo cáo local kèm UTC offset; tương ứng cách xuất DateTime local của summary .NET
+QCBROTHER_AGGREGATE_DATE,Đầu ngày báo cáo local kèm UTC offset đã cấu hình; tương ứng DateTimeOffset của aggregate .NET
+QCBROTHER_REPORT_ROWS,Các dòng báo cáo QCBrother trong envelope message của Frappe
+QCBROTHER_REQUEST_INVALID,Thiếu hoặc sai ngày báo cáo hay UUID công ty
+QCBROTHER_AUTH_REQUIRED,Cần xác thực bằng phiên Frappe hoặc API token

@@ -166,7 +166,40 @@ Từ màn hình `/desk`, chọn **QC** để mở trang QC trong tab mới hoặ
 - Catalog QC mô tả `/api/method/qc-inspection-summary`, `/api/method/factory_management.api.report_summary` và `/api/method/factory_management.api.report_detail`. Swagger UI cho phép xem schema, role được phép, gọi thử API và tải tệp OpenAPI JSON.
 - Trang tài liệu và API xuất hợp đồng chỉ dành cho vai trò **System Manager**. Chỉnh sửa hợp đồng cập nhật tài liệu; mã xử lý của API được sửa tại Server Script hoặc mã app tương ứng.
 
-Để cấp quyền đọc báo cáo, mở **User → Roles** và gán `QC Report Reader` cho User cần gọi API. Sau đó mở **API Management → API Documentation Endpoint → Allowed Roles** để chọn role được phép ở từng API. Ba API báo cáo nhận `QC Report Reader` khi nâng cấp lần đầu; thay đổi trong Desk được giữ lại sau các lần nâng cấp tiếp theo. Một User có nhiều role chỉ cần khớp một role được phép; System Manager và Administrator cũng phải có role khớp. API key và API secret dùng quyền của User sở hữu chúng. Các API tablet dùng `id` của Factory Device.
+Để cấp quyền đọc báo cáo, mở **User → Roles** và gán `QC Report Reader` cho User cần gọi API. Sau đó mở **API Management → API Documentation Endpoint → Allowed Roles** để chọn role được phép ở từng API. Các API báo cáo nhận `QC Report Reader` khi được tạo lần đầu; thay đổi trong Desk được giữ lại sau các lần nâng cấp tiếp theo. Một User có nhiều role chỉ cần khớp một role được phép; System Manager và Administrator cũng phải có role khớp. API key và API secret dùng quyền của User sở hữu chúng. Các API tablet dùng `id` của Factory Device.
+
+### Báo cáo QCBrother từ SQL Server
+
+Từ bản `0.1.53`, service **QC API** có hai GET method, trả danh sách dưới `message` của Frappe:
+
+- `/api/method/factory_management.qcbrother_reports.inspection_summary`: query bắt buộc `occurredOnFrom`, `occurredOnTo`, tối đa 7 ngày tính cả hai đầu; filter tùy chọn `companyId`, `companyCode`, `qc`, `sampleCode`, `eventNo`.
+- `/api/method/factory_management.qcbrother_reports.inspection_aggregate`: cùng query ngày và filter công ty/QC/mã hàng, tối đa 31 ngày; không nhận filter `eventNo`.
+
+Hai method chỉ chạy `SELECT` có tham số trên SQL Server gốc, không dùng dữ liệu `QC Inspection Event` trong MariaDB. Chúng đọc `QCBrotherInspectionEvents`, `QCBrotherInspectionQuantityEvents`, `QCBrother`, master và PO của cùng database. Dữ liệu legacy tính một đơn vị mỗi record; công ty chỉ được resolve theo chuyền. Aggregate giữ total toàn bộ lịch sử theo QC + công ty + mã hàng, trong khi từng dòng ngày vẫn phân biệt serial và biến thể. `plannedQuantity` dùng revision PO mới nhất có trạng thái chứng từ `New` hoặc `Change`.
+
+Cấu hình riêng cho site bằng khóa `qcbrother_sqlserver` trong `site_config.json` (không commit tệp này). Dùng thông tin kết nối thực tế thay cho các placeholder sau:
+
+```json
+{
+  "qcbrother_sqlserver": {
+    "host": "<sql-server-host>",
+    "port": 1433,
+    "database": "<database>",
+    "user": "<sql-login>",
+    "password": "<sql-password>",
+    "time_zone": "Asia/Ho_Chi_Minh",
+    "connect_timeout": 10,
+    "query_timeout": 60,
+    "trust_server_certificate": false
+  }
+}
+```
+
+`time_zone` phải khớp timezone local của API .NET nguồn; mặc định dùng System Settings của site. Sự kiện mới lưu UTC, còn `QCBrother.OccurredOn` là thời gian local. `occurredOn` trả đầu ngày ISO 8601 kèm UTC offset ở cả hai API. Kết nối luôn mã hóa; chỉ bật `trust_server_certificate` khi cấu hình nguồn dùng chứng chỉ nội bộ được tin cậy theo chính sách triển khai. Runtime cần dependency `mssql-python` và các thư viện Linux `libltdl7`, `libkrb5-3`, `libgssapi-krb5-2`; bộ cài native và Containerfile của app đã khai báo chúng.
+
+Chạy migrate để seed hai endpoint còn thiếu vào API Documentation. Patch `add_qcbrother_reports` bảo đảm Pilot nhận ra bản cập nhật cần migrate; không thay đổi metadata DocType. Catalog giữ nguyên endpoint, role và mô tả đã chỉnh trong Desk. Lỗi query/ngày trả HTTP 400, thiếu quyền trả 403, lỗi cấu hình hoặc nguồn SQL trả 503 mà không trả connection string hay thông tin driver.
+
+Kiểm tra logic độc lập bằng `python -m unittest discover -s tests -p test_qcbrother_reports.py`. Khi nâng cấp site, kiểm tra thêm hai URL bằng cùng khoảng ngày và filter trên API .NET nguồn.
 
 Sau khi cài app, chạy `bench --site <site> migrate`. API `qc-inspection-summary` là Server Script; để tạo nó trên site mới, bật `server_script_enabled` và chạy `bench --site <site> execute factory_management.provision.ensure_qc_inspection_summary`.
 

@@ -21,3 +21,4 @@ factory_management.patches.add_spl_po_import
 factory_management.patches.spl_status_filter_selector
 factory_management.patches.sync_spl_status_filter_rendering
 factory_management.patches.spl_import_settings_two_column_layout
+factory_management.patches.add_qcbrother_reports

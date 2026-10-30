@@ -275,6 +275,8 @@ def ensure_catalog():
         }).insert(ignore_permissions=True).name
     _seed_summary_contract(service_name)
     _seed_python_reports(service_name)
+    from factory_management.qcbrother_reporting.catalog import seed_contracts
+    seed_contracts(service_name)
     if frappe.db.exists("Page", "qc-api-docs"):
         page = frappe.get_doc("Page", "qc-api-docs")
         changed = False
