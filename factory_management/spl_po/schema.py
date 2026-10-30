@@ -90,11 +90,12 @@ SETTINGS = [
     f("schedule_timezone", "Schedule Time Zone", default="Asia/Ho_Chi_Minh"),
     f("request_timeout_seconds", "Request Timeout Seconds", "Int", default="120"),
     f("mode", "Mode", default="01"),
-    f("answer_status_id", "Answer Status ID", default="0003"),
+    f("answer_status_id", "Answer Status ID", default="0003", hidden=1),
     f("item_brand_id", "Item Brand ID", default="010"),
     f("year_season_ids", "Year Season IDs", default="20252,20261,20262,20271"),
     f("management_factory_id", "Management Factory ID", default="015J"),
-    f("document_status_ids", "Document Status IDs", default="0001,0002,0003,0004"),
+    f("document_status_ids", "Document Status IDs", default="0001,0002,0003,0004", hidden=1),
+    f("status_filter_selector", "", "HTML"),
     f("report_offset", "Report Offset", "Int", default="0"),
 ]
 

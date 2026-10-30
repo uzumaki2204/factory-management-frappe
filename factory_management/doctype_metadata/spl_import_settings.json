@@ -80,6 +80,7 @@
         "fieldname": "answer_status_id",
         "label": "Answer Status ID",
         "fieldtype": "Data",
+        "hidden": 1,
         "default": "0003"
       },
       {
@@ -104,7 +105,13 @@
         "fieldname": "document_status_ids",
         "label": "Document Status IDs",
         "fieldtype": "Data",
+        "hidden": 1,
         "default": "0001,0002,0003,0004"
+      },
+      {
+        "fieldname": "status_filter_selector",
+        "label": "",
+        "fieldtype": "HTML"
       },
       {
         "fieldname": "report_offset",

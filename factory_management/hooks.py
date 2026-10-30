@@ -33,4 +33,10 @@ app_include_js = [
     "/assets/factory_management/js/dock_url_fix_v1.js",
     "/assets/factory_management/js/desktop_shortcuts.js",
 ]
-app_include_css = ["/assets/factory_management/css/desktop_shortcuts.css"]
+app_include_css = [
+    "/assets/factory_management/css/desktop_shortcuts.css",
+    "/assets/factory_management/css/spl_import_settings.css",
+]
+doctype_js = {
+    "SPL Import Settings": "public/js/spl_import_settings.js",
+}

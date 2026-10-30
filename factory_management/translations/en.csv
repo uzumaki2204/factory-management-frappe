@@ -333,3 +333,18 @@ In Progress,In Progress
 Completed,Completed
 Cancelled,Cancelled
 Draft,Draft
+Answer Status,Answer Status
+Document Status,Document Status
+Select all,Select all
+Clear selection,Clear selection
+Unknown status,Unknown status
+Accepted,Accepted
+Rejected,Rejected
+Not Answered,Not Answered
+Not Answered (FR Updating),Not Answered (FR Updating)
+Not Required,Not Required
+New,New
+Change,Change
+Cancel,Cancel
+Finalized,Finalized
+FR Updating,FR Updating
