@@ -205,6 +205,9 @@ Scheduled,Scheduled
 Upload,Upload
 Connection Test,Connection Test
 SPL_JOB_QUEUED,Job queued
+SPL_IMPORT_RUNNING,Importing SPL POs...
+SPL_IMPORT_CHECKING_STATUS,Checking import status again...
+SPL_IMPORT_STATUS_UNAVAILABLE,Could not confirm the import result; check SPL Import Runs
 SPL_PREVIEW_SUMMARY,{0} rows · {1} POs · {2} errors · {3} masters to create
 SPL_FORBIDDEN,Only System Manager can import SPL POs
 SPL_CUSTOMER_REQUIRED,Select a valid Customer in SPL settings
@@ -244,6 +247,7 @@ SPL_MASTER_WILL_CREATE,Will create {doctype} code {code}
 Missing Masters,Masters to create
 SPL_ALREADY_RUNNING,Another SPL import is running
 SPL_IMPORT_COMPLETE,SPL PO import completed
+SPL_IMPORT_RESULT_SUMMARY,{0} POs imported · {1} items imported · {2} POs failed
 SPL_IMPORT_PARTIAL,Some POs failed; see import run details
 SPL_IMPORT_FAILED,SPL PO import failed; check settings and data
 SPL_SCHEDULE_INVALID,Schedule times must use HH:MM and cannot be empty when enabled

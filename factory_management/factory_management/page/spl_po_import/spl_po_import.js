@@ -1,10 +1,11 @@
 frappe.pages['spl-po-import'].on_page_load = function (wrapper) {
   const page = frappe.ui.make_app_page({parent: wrapper, title: __('SPL PO Import'), single_column: true});
   const api = 'factory_management.spl_po.api.';
-  const state = {previewRun: null, token: null, page: 1, pageSize: 100, excluded: new Set(), timer: null};
+  const state = {previewRun: null, token: null, page: 1, pageSize: 100, excluded: new Set(), timer: null,
+    importing: false, pollFailures: 0};
   const escape = frappe.utils.escape_html;
   const root = document.createElement('div');
-  root.style.cssText = 'max-width:1100px;padding:24px 8px;display:grid;gap:18px;';
+  root.style.cssText = 'width:100%;min-width:0;box-sizing:border-box;padding:24px 8px;display:grid;gap:18px;';
   page.body.append(root);
 
   const actions = document.createElement('div');
@@ -60,11 +61,21 @@ frappe.pages['spl-po-import'].on_page_load = function (wrapper) {
   const summary = document.createElement('div');
   root.append(summary);
   const tableWrap = document.createElement('div');
-  tableWrap.style.cssText = 'overflow-x:auto;';
+  tableWrap.style.cssText = 'width:100%;min-width:0;overflow-x:auto;';
   root.append(tableWrap);
   const footer = document.createElement('div');
   footer.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;';
   root.append(footer);
+  const importFeedback = document.createElement('div');
+  importFeedback.hidden = true;
+  importFeedback.setAttribute('role', 'status');
+  importFeedback.setAttribute('aria-live', 'polite');
+  root.append(importFeedback);
+  const setImportFeedback = (text, tone = 'info') => {
+    importFeedback.hidden = !text;
+    importFeedback.className = `alert alert-${tone}`;
+    importFeedback.textContent = text;
+  };
 
   async function call(method, args = {}) {
     const result = await frappe.call({method: api + method, args});
@@ -75,20 +86,46 @@ frappe.pages['spl-po-import'].on_page_load = function (wrapper) {
       state.excluded.clear();
       state.previewRun = null;
       state.token = null;
+      state.importing = false;
+      state.pollFailures = 0;
       tableWrap.replaceChildren();
       footer.replaceChildren();
+      summary.replaceChildren();
+      setImportFeedback('');
       setStatus('SPL_JOB_QUEUED');
       const result = await call(method, args);
       poll(result.run_name);
     } catch (error) { setStatus('SPL_IMPORT_FAILED'); }
   }
-  async function poll(runName) {
+  async function poll(runName, purpose = 'preview') {
     clearTimeout(state.timer);
     try {
       const run = await call('get_run', {run_name: runName});
+      state.pollFailures = 0;
       status.textContent = run.message || __(run.status);
       if (run.status === 'Queued' || run.status === 'Running') {
-        state.timer = setTimeout(() => poll(runName), 1500);
+        if (purpose === 'import') {
+          setImportFeedback(run.message || __(run.status === 'Queued' ? 'SPL_JOB_QUEUED' : 'SPL_IMPORT_RUNNING'));
+        }
+        state.timer = setTimeout(() => poll(runName, purpose), 1500);
+      } else if (purpose === 'import') {
+        state.importing = false;
+        const counts = __('SPL_IMPORT_RESULT_SUMMARY', [run.imported_orders || 0,
+          run.imported_items || 0, run.failed_orders || 0]);
+        const notice = `${run.message || __(run.status)} · ${counts}`;
+        const tone = run.status === 'Success' ? 'success' : run.status === 'Partial Success' ? 'warning' : 'danger';
+        const indicator = run.status === 'Success' ? 'green' : run.status === 'Partial Success' ? 'orange' : 'red';
+        status.textContent = notice;
+        setImportFeedback(notice, tone);
+        summary.textContent = counts;
+        if (run.error_detail) {
+          const lines = document.createElement('pre');
+          lines.textContent = run.error_detail;
+          summary.append(lines);
+        }
+        tableWrap.replaceChildren();
+        footer.replaceChildren();
+        frappe.show_alert({message: escape(notice), indicator}, 10);
       } else if (run.status === 'Preview Ready') {
         state.previewRun = runName;
         state.token = run.snapshot_token;
@@ -99,7 +136,19 @@ frappe.pages['spl-po-import'].on_page_load = function (wrapper) {
         lines.textContent = run.error_detail;
         summary.replaceChildren(lines);
       }
-    } catch (error) { setStatus('SPL_IMPORT_FAILED'); }
+    } catch (error) {
+      if (purpose === 'import') {
+        state.pollFailures++;
+        if (state.pollFailures < 3) {
+          setImportFeedback(__('SPL_IMPORT_CHECKING_STATUS'), 'warning');
+          state.timer = setTimeout(() => poll(runName, purpose), 3000);
+        } else {
+          state.importing = false;
+          setImportFeedback(__('SPL_IMPORT_STATUS_UNAVAILABLE'), 'warning');
+          setStatus('SPL_IMPORT_STATUS_UNAVAILABLE');
+        }
+      } else setStatus('SPL_IMPORT_FAILED');
+    }
   }
   async function loadPage() {
     try {
@@ -109,6 +158,7 @@ frappe.pages['spl-po-import'].on_page_load = function (wrapper) {
       summary.textContent = __('SPL_PREVIEW_SUMMARY', [data.total_rows, data.total_orders, data.errors, data.missing_masters]);
       const table = document.createElement('table');
       table.className = 'table table-bordered';
+      table.style.cssText = 'width:100%;min-width:1100px;';
       const header = document.createElement('thead');
       header.innerHTML = '<tr>' + ['Select PO', 'Row', 'PO Number', 'Revision No', 'Sample Code', 'Market',
         'Product Color', 'Size', 'Order Qty', 'Status'].map(key => `<th>${escape(__(key))}</th>`).join('') + '</tr>';
@@ -149,22 +199,33 @@ frappe.pages['spl-po-import'].on_page_load = function (wrapper) {
         element.textContent = __(label);
         element.addEventListener('click', handler);
         footer.append(element);
+        return element;
       };
       button('Previous', () => { if (state.page > 1) { state.page--; loadPage(); } });
       const pageLabel = document.createElement('span');
       pageLabel.textContent = __('Page {0} of {1}', [data.page, Math.max(1, Math.ceil(data.total_rows / data.page_size))]);
       footer.append(pageLabel);
       button('Next', () => { if (state.page * data.page_size < data.total_rows) { state.page++; loadPage(); } });
-      button('Import Selected Rows', async () => {
+      const importButton = button('Import Selected Rows', async () => {
+        if (state.importing) return;
+        state.importing = true;
+        importButton.disabled = true;
+        setImportFeedback(__('SPL_JOB_QUEUED'));
         try {
           const result = await call('start_import', {
             run_name: state.previewRun, token: state.token, selected_rows: 'all',
             excluded_rows: JSON.stringify([...state.excluded]),
           });
           setStatus('SPL_JOB_QUEUED');
-          poll(result.run_name);
-        } catch (error) { frappe.msgprint(__('SPL_SELECTION_INCOMPLETE')); }
+          poll(result.run_name, 'import');
+        } catch (error) {
+          state.importing = false;
+          importButton.disabled = false;
+          setImportFeedback(__('SPL_IMPORT_FAILED'), 'danger');
+          frappe.msgprint(error.message || __('SPL_IMPORT_FAILED'));
+        }
       });
+      importButton.disabled = state.importing;
     } catch (error) { setStatus('SPL_PREVIEW_EXPIRED'); }
   }
 };
