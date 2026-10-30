@@ -79,24 +79,29 @@ ITEM = [
 ]
 
 SETTINGS = [
+    f("connection_schedule_section", "Connection and Schedule", "Section Break"),
     f("base_url", "SPL Base URL", default="https://spl.fastretailing.com", reqd=1),
     f("spl_user_id", "SPL User ID", reqd=1),
     f("spl_password", "SPL Password", "Password"),
     f("client_certificate", "Client Certificate", "Link", "File"),
     f("certificate_password", "Certificate Password", "Password"),
     f("customer", "Customer", "Link", "Customer", reqd=1),
+    f("connection_schedule_column", "", "Column Break"),
     f("auto_enabled", "Automatic Import Enabled", "Check", default="0"),
     f("schedule_times", "Schedule Times", default=""),
     f("schedule_timezone", "Schedule Time Zone", default="Asia/Ho_Chi_Minh"),
     f("request_timeout_seconds", "Request Timeout Seconds", "Int", default="120"),
+    f("import_parameters_section", "Import Parameters", "Section Break"),
     f("mode", "Mode", default="01"),
-    f("answer_status_id", "Answer Status ID", default="0003", hidden=1),
     f("item_brand_id", "Item Brand ID", default="010"),
     f("year_season_ids", "Year Season IDs", default="20252,20261,20262,20271"),
+    f("import_parameters_column", "", "Column Break"),
     f("management_factory_id", "Management Factory ID", default="015J"),
-    f("document_status_ids", "Document Status IDs", default="0001,0002,0003,0004", hidden=1),
-    f("status_filter_selector", "Status Filters", "HTML"),
     f("report_offset", "Report Offset", "Int", default="0"),
+    f("answer_status_id", "Answer Status ID", default="0003", hidden=1),
+    f("document_status_ids", "Document Status IDs", default="0001,0002,0003,0004", hidden=1),
+    f("status_filters_section", "Status Filters", "Section Break"),
+    f("status_filter_selector", "Status Filters", "HTML"),
 ]
 
 RUN = [

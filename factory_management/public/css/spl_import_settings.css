@@ -2,6 +2,30 @@
 	display: none;
 }
 
+body[data-route="Form/SPL Import Settings/SPL Import Settings"] .form-layout,
+body[data-route="Form/SPL Import Settings/SPL Import Settings"] .form-page {
+	width: 100%;
+}
+
+body[data-route="Form/SPL Import Settings/SPL Import Settings"] .form-column {
+	min-width: 0;
+}
+
+body[data-route="Form/SPL Import Settings/SPL Import Settings"] .frappe-control.input-max-width {
+	width: 100%;
+	max-width: 100%;
+}
+
+body[data-route="Form/SPL Import Settings/SPL Import Settings"] .frappe-control[data-fieldname="status_filter_selector"] {
+	width: 100%;
+	max-width: none;
+}
+
+body[data-route="Form/SPL Import Settings/SPL Import Settings"] .frappe-control .form-control,
+body[data-route="Form/SPL Import Settings/SPL Import Settings"] .frappe-control .like-disabled-input {
+	max-width: 100%;
+}
+
 .spl-status-filter-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(260px, 1fr));

@@ -11,6 +11,11 @@
     "allow_import": 0,
     "fields": [
       {
+        "fieldname": "connection_schedule_section",
+        "label": "Connection and Schedule",
+        "fieldtype": "Section Break"
+      },
+      {
         "fieldname": "base_url",
         "label": "SPL Base URL",
         "fieldtype": "Data",
@@ -47,6 +52,11 @@
         "reqd": 1
       },
       {
+        "fieldname": "connection_schedule_column",
+        "label": "",
+        "fieldtype": "Column Break"
+      },
+      {
         "fieldname": "auto_enabled",
         "label": "Automatic Import Enabled",
         "fieldtype": "Check",
@@ -71,17 +81,15 @@
         "default": "120"
       },
       {
+        "fieldname": "import_parameters_section",
+        "label": "Import Parameters",
+        "fieldtype": "Section Break"
+      },
+      {
         "fieldname": "mode",
         "label": "Mode",
         "fieldtype": "Data",
         "default": "01"
-      },
-      {
-        "fieldname": "answer_status_id",
-        "label": "Answer Status ID",
-        "fieldtype": "Data",
-        "hidden": 1,
-        "default": "0003"
       },
       {
         "fieldname": "item_brand_id",
@@ -96,10 +104,28 @@
         "default": "20252,20261,20262,20271"
       },
       {
+        "fieldname": "import_parameters_column",
+        "label": "",
+        "fieldtype": "Column Break"
+      },
+      {
         "fieldname": "management_factory_id",
         "label": "Management Factory ID",
         "fieldtype": "Data",
         "default": "015J"
+      },
+      {
+        "fieldname": "report_offset",
+        "label": "Report Offset",
+        "fieldtype": "Int",
+        "default": "0"
+      },
+      {
+        "fieldname": "answer_status_id",
+        "label": "Answer Status ID",
+        "fieldtype": "Data",
+        "hidden": 1,
+        "default": "0003"
       },
       {
         "fieldname": "document_status_ids",
@@ -109,15 +135,14 @@
         "default": "0001,0002,0003,0004"
       },
       {
+        "fieldname": "status_filters_section",
+        "label": "Status Filters",
+        "fieldtype": "Section Break"
+      },
+      {
         "fieldname": "status_filter_selector",
         "label": "Status Filters",
         "fieldtype": "HTML"
-      },
-      {
-        "fieldname": "report_offset",
-        "label": "Report Offset",
-        "fieldtype": "Int",
-        "default": "0"
       }
     ],
     "permissions": [
