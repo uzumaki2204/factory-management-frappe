@@ -122,6 +122,9 @@ def ensure_catalog():
         security = []
         description = text("docs." + operation + "_catalog", "en") if operation in ("bootstrap", "sync") else text("docs.device", "en")
         parameters = [{"name": "id", "in": "query", "required": True, "schema": device_id_schema}] if method == "GET" else []
+        if operation == "bootstrap":
+            parameters.append({"name": "catalogVersion", "in": "query", "required": False,
+                               "schema": {"type": "string"}, "description": text("docs.bootstrap_version", "en")})
         if existing:
             current = frappe.db.get_value("API Documentation Endpoint", existing,
                                           ["security_json", "parameters_json", "request_body_json"], as_dict=True)

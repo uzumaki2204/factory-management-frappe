@@ -118,6 +118,8 @@ def bootstrap(data, endpoint):
         if row.position_group in positions
     ]
     version = hashlib.sha256(json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+    if data.get("catalogVersion") == version:
+        return {"catalogVersion": version, "unchanged": True, **clock()}
     return {**catalog, "catalogVersion": version, **clock()}
 
 

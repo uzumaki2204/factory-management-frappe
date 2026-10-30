@@ -26,3 +26,4 @@ factory_management.patches.set_uqqc_link_titles
 factory_management.patches.unwrap_qc_api_responses
 factory_management.patches.refresh_uqqc_summary_contract
 factory_management.patches.refresh_uqqc_aggregate_contract
+factory_management.patches.refresh_uqqc_bootstrap_contract

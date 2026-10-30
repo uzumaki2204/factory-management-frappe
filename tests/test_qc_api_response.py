@@ -1,6 +1,7 @@
 """QC success payloads are direct JSON; errors and other RPCs stay native."""
 
 import copy
+import gzip
 import importlib.util
 import json
 import sys
@@ -34,6 +35,9 @@ class Response:
 
     def set_data(self, value):
         self.data = value
+
+    def get_data(self):
+        return self.data.encode("utf-8") if isinstance(self.data, str) else self.data
 
 
 class QcResponseTests(unittest.TestCase):
@@ -88,6 +92,28 @@ class QcResponseTests(unittest.TestCase):
         for path in ("/api/v1/method/factory_management.api.bootstrap", "/api/method", "/"):
             self.frappe.form_dict["cmd"] = "factory_management.api.bootstrap"
             self.assertEqual(self.apply(Response({"message": {"ready": True}}), path), {"ready": True})
+
+    def test_large_uqqc_bootstrap_uses_gzip_only_when_requested(self):
+        payload = {"catalogVersion": "version-1", "defectPositions": [
+            {"id": str(index), "name": "Vị trí lỗi " + str(index)} for index in range(100)]}
+        response = Response({"message": payload})
+        request = types.SimpleNamespace(path="/api/method/uqqc-bootstrap",
+                                        accept_encodings=types.SimpleNamespace(quality=lambda name: 1))
+        self.module.direct_qc_response(response, request)
+        self.assertEqual(response.headers["Content-Encoding"], "gzip")
+        self.assertEqual(response.headers["Vary"], "Accept-Encoding")
+        self.assertEqual(json.loads(gzip.decompress(response.data)), payload)
+        self.assertLess(len(response.data), len(json.dumps(payload).encode("utf-8")))
+
+        compact = Response({"message": {"catalogVersion": "version-1", "unchanged": True}})
+        self.module.direct_qc_response(compact, request)
+        self.assertNotIn("Content-Encoding", compact.headers)
+        self.assertEqual(json.loads(compact.data)["unchanged"], True)
+
+        not_accepted = Response({"message": payload})
+        request.accept_encodings.quality = lambda name: 0
+        self.module.direct_qc_response(not_accepted, request)
+        self.assertNotIn("Content-Encoding", not_accepted.headers)
 
 
 class ContractMigrationTests(unittest.TestCase):

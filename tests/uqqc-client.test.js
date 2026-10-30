@@ -14,7 +14,8 @@ const scope = { lineId: 'line', productId: 'product', colorId: 'color', sizeId: 
 const testSource = clientSource.replace('    await window.UQQCI18nReady;', '').replace('    void start();', `
     globalThis.client = { state, elements, keys, detailScopeKey, hydrateDetailSnapshots, detailRows,
         renderDetail, openDetailPanel, openDefectPositionPicker, renderDefectPositionPicker,
-        clearClientCache, syncQueue, saveDetailSnapshot, requestJson, queuePass, queueDefect, activateDevice, syncServerDay };`);
+        clearClientCache, syncQueue, saveDetailSnapshot, requestJson, loadCatalog,
+        queuePass, queueDefect, activateDevice, syncServerDay };`);
 assert.notEqual(testSource, clientSource);
 
 class Storage {
@@ -428,6 +429,35 @@ test('Frappe requests use the device record ID without a token and read direct J
     assert.equal(calls[0].options.headers['X-UQQC-Token'], undefined);
     assert.equal(calls[1].options.headers['X-UQQC-Token'], undefined);
     assert.equal(calls[0].url, '/api/method/uqqc-bootstrap?id=device');
+});
+
+test('unchanged bootstrap keeps the complete catalog and sends its version on refresh', async () => {
+    const calls = [];
+    const client = createClient(async url => {
+        calls.push(url);
+        return response({ catalogVersion: 'version-1', unchanged: true,
+            serverDateKey: dateKey, serverNowUtc: new Date().toISOString(), serverUtcOffsetMinutes: 0 });
+    });
+    client.state.catalog.catalogVersion = 'version-1';
+    const originalProducts = client.state.catalog.products;
+    await client.loadCatalog(true);
+    assert.deepEqual(calls, ['/api/method/uqqc-bootstrap?catalogVersion=version-1&id=device']);
+    assert.equal(client.state.catalog.products, originalProducts);
+    assert.equal(client.state.catalog.catalogVersion, 'version-1');
+    assert.equal(JSON.parse(client.localStorage.getItem(client.keys.catalog)).products.length, 1);
+});
+
+test('unchanged bootstrap advances the server day without discarding catalog options', async () => {
+    const tomorrow = new Date(Date.now() + 86400000);
+    tomorrow.setUTCHours(12, 0, 0, 0);
+    const nextDateKey = tomorrow.toISOString().slice(0, 10);
+    const client = createClient(async () => response({ catalogVersion: 'version-1', unchanged: true,
+        serverDateKey: nextDateKey, serverNowUtc: tomorrow.toISOString(), serverUtcOffsetMinutes: 0 }));
+    client.state.catalog.catalogVersion = 'version-1';
+    await client.loadCatalog(true);
+    assert.equal(client.state.catalog.serverDateKey, nextDateKey);
+    assert.equal(client.state.catalog.products.length, 1);
+    assert.equal(client.state.detailSnapshots.serverDateKey, nextDateKey);
 });
 
 test('new data generation clears stale UQQC queue and migrates the saved ID', async () => {

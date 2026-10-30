@@ -117,12 +117,14 @@ Chạy `bench --site <site> migrate` khi cài/nâng cấp app; patch `separate_u
 
 | Phương thức | API Method | Chức năng |
 | --- | --- | --- |
-| GET | `/api/method/uqqc-bootstrap` | Master data dùng chung, danh mục lỗi UQQC và đồng hồ site; nhận `id` trong query |
+| GET | `/api/method/uqqc-bootstrap` | Master data dùng chung, danh mục lỗi UQQC và đồng hồ site; nhận `id` và tùy chọn `catalogVersion` trong query |
 | POST | `/api/method/uqqc-device-register` | Kiểm tra ID thiết bị đã có |
 | POST | `/api/method/uqqc-device-check` | Kiểm tra trạng thái thiết bị |
 | POST | `/api/method/uqqc-inspections-sync` | Gửi `events`, `passEvents`, `reworkEvents`; tối đa 500 sự kiện |
 | POST | `/api/method/uqqc-inspections-snapshot` | Tổng hợp một lựa chọn trong ngày |
 | POST | `/api/method/uqqc-inspections-detail-snapshot` | Toàn bộ lựa chọn của thiết bị trong ngày |
+
+Lần gọi bootstrap đầu trả toàn bộ danh mục và `catalogVersion`. Client gửi lại phiên bản này khi làm mới định kỳ; nếu danh mục không đổi, API chỉ trả `catalogVersion`, `unchanged: true` và thời gian máy chủ. Client giữ danh mục cũ và vẫn cập nhật ngày báo cáo khi qua ngày mới. Nếu danh mục thay đổi, API trả toàn bộ dữ liệu như trước. Với request hỗ trợ `Accept-Encoding: gzip`, phản hồi bootstrap đầy đủ được nén gzip ở HTTP boundary; phản hồi nhỏ giữ dạng JSON thông thường. Patch `refresh_uqqc_bootstrap_contract` cập nhật tham số tài liệu của operation hiện có khi migrate.
 
 Các POST nhận JSON có `id`; snapshot cần thêm `lineId`, `productId`, `colorId`, `sizeId`, `marketId`. Phản hồi thành công trả trực tiếp đối tượng JSON. `defectId` và `defectPositionId` trong API đồng bộ phải thuộc danh mục UQQC đang hoạt động. Giai đoạn tương thích còn nhận `deviceId` và `device_id`; phản hồi có alias `device_id`. Server Scripts gọi các dịch vụ kiểm tra dữ liệu trong package UQQC.
 

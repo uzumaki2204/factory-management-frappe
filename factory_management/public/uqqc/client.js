@@ -389,7 +389,7 @@
         if (identityConflict) throw new Error(t('deviceIdentityConflict'));
         const requestEpoch = await ensureDataEpoch();
         if (epochReloading) throw new Error(t('apiFailed'));
-        if (options?.method === 'GET') url += '?id=' + encodeURIComponent(storedDeviceId());
+        if (options?.method === 'GET') url += (url.includes('?') ? '&' : '?') + 'id=' + encodeURIComponent(storedDeviceId());
         let response;
         try {
             response = await fetch(url, {
@@ -748,10 +748,30 @@
         catalogLoadInFlight = true;
         if (!silent) elements.scopeHint.textContent = t('loading');
         try {
-            const catalog = await requestJson('/api/method/uqqc-bootstrap', { method: 'GET' });
+            const version = state.catalog?.catalogVersion;
+            const path = '/api/method/uqqc-bootstrap';
+            let catalog = await requestJson(version ? `${path}?catalogVersion=${encodeURIComponent(version)}` : path,
+                { method: 'GET' });
+            if (catalog.unchanged && (!state.catalog || state.catalog.catalogVersion !== catalog.catalogVersion)) {
+                catalog = await requestJson(path, { method: 'GET' });
+            }
             if (state.clearingCache) return;
             updateServerClock(catalog.serverNowUtc);
             const serverDateKey = currentServerDateKey(catalog) || catalog.serverDateKey;
+            if (catalog.unchanged) {
+                const dateChanged = state.catalog.serverDateKey !== serverDateKey;
+                state.catalog.serverNowUtc = catalog.serverNowUtc;
+                state.catalog.serverUtcOffsetMinutes = catalog.serverUtcOffsetMinutes;
+                state.catalog.serverDateKey = serverDateKey;
+                writeJson(keys.catalog, state.catalog);
+                if (dateChanged) {
+                    pruneDetailSnapshots();
+                    restoreScope();
+                    restoreActivePiece();
+                    renderScopeControls();
+                }
+                return;
+            }
             const hasSameCatalog = Boolean(state.catalog?.catalogVersion &&
                 state.catalog.catalogVersion === catalog.catalogVersion &&
                 state.catalog.serverDateKey === serverDateKey);
