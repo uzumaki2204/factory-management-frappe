@@ -260,10 +260,14 @@ body.qc-page-locked #qc-app {
 }
 
 #defect-grid article[data-id] > button {
+  display: flex;
   flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
   min-height: 0;
   overflow: hidden;
   line-height: 1.2;
+  text-align: center;
 }
 
 @media (min-width: 768px) {

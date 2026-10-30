@@ -901,7 +901,7 @@
       top.append(code, actions);
       const name = document.createElement('button');
       name.type = 'button';
-      name.className = 'btn p-0 w-100 text-left';
+      name.className = 'btn p-0 w-100 text-center';
       name.setAttribute('aria-label', t(state.arrange ? 'ui.arrange_pick' : 'ui.defect_add') + ': ' + (item.name || item.code));
       const strong = document.createElement('strong');
       strong.textContent = (item.name || item.code || t('ui.no_data'))
