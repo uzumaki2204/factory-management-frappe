@@ -173,6 +173,12 @@ class UqqcImportProviderTests(unittest.TestCase):
         self.assertIn("Rows: 2, 4 (2 rows).", future["message"])
         self.assertIn("multiple", messages)
         self.assertIn("different companies", messages)
+        missing_defect = module.UqqcInspectionEventImportProvider().validate(
+            import_file(source(defect="UNKNOWN_DEFECT"))
+        )
+        missing_defect_messages = "\n".join(item["message"] for item in missing_defect)
+        self.assertIn("UNKNOWN_DEFECT", missing_defect_messages)
+        self.assertNotIn("requires Defect", missing_defect_messages)
 
     def test_preview_warnings_include_complete_compact_row_ranges_and_counts(self):
         module, _frappe, _db, _masters = load_provider()

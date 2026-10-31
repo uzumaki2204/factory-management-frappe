@@ -176,7 +176,7 @@ def _prepare(raw, maps, row, now, issues):
     kind = _token(raw.get("event_kind")).lower()
     if kind not in ("defect", "pass", "rework"):
         _issue(issues, "event_kind", row)
-    if kind == "defect" and not event.get("defect"):
+    if kind == "defect" and not _token(raw.get("defect")):
         _issue(issues, "defect_required", row)
     if kind in ("pass", "rework") and (event.get("defect") or event.get("defect_position")):
         _issue(issues, "quantity_detail", row)
