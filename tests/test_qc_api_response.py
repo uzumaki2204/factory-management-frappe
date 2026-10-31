@@ -58,6 +58,7 @@ class QcResponseTests(unittest.TestCase):
 
         methods = ["qc-inspection-summary", "factory_management.api.data_epoch",
                    "factory_management.api.sync_events", "factory_management.api.report_detail",
+                   "factory_management.qc_reports.inspection_summary",
                    "factory_management.qcbrother_reports.inspection_summary",
                    "factory_management.qcbrother_reports.inspection_aggregate",
                    "factory_management.uqqc.api.dispatch"]

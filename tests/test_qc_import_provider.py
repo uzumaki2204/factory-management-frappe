@@ -182,6 +182,21 @@ def import_file(*records, import_type="Insert New Records"):
 
 
 class QCImportProviderTests(unittest.TestCase):
+    def test_preview_without_column_mapping_skips_provider_analysis(self):
+        module, frappe, database, _masters = load_provider()
+        file = types.SimpleNamespace(
+            import_type="Insert New Records",
+            get_payloads_for_import=lambda: [
+                Row(doc=None, rows=[Row(row_number=2)])
+            ],
+        )
+
+        warnings = module.QCInspectionEventImportProvider().validate(file)
+
+        self.assertEqual(warnings, [])
+        self.assertEqual(frappe.calls, [])
+        self.assertEqual(database.single_value_reads, 0)
+
     def test_codes_and_ids_resolve_and_timezone_is_converted_to_utc(self):
         module, _frappe, _database, _masters = load_provider()
         prepared, warnings, _existing = module._analyze(

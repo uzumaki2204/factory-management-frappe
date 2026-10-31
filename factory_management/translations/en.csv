@@ -4,6 +4,12 @@ QC_REPORT_DATES_REQUIRED,Both start and end dates are required
 QC_REPORT_INVALID_DATE,Invalid report date
 QC_REPORT_RANGE_TOO_LONG,Report date range cannot exceed 7 days
 QC_REPORT_INVALID_QUANTITY,Invalid summary quantity
+QC_NATIVE_SUMMARY_TITLE,QC inspection summary compatible with .NET
+QC_NATIVE_SUMMARY_DESCRIPTION,"Groups QC Inspection Event records by date and report dimensions, returning .NET DTO fields directly from Frappe. Dates use UTC; maximum range is 7 days."
+QC_NATIVE_SUMMARY_RESPONSE,QC summary rows returned as a direct JSON array
+QC_NATIVE_SUMMARY_BAD_REQUEST,Invalid date or summary quantity
+QC_NATIVE_SUMMARY_FORBIDDEN,QC Report Reader role is required to access this report API
+QC_NATIVE_SUMMARY_DATE_PARAM_DESC,UTC date of occurred_at in YYYY-MM-DD format
 QC_WEB_PAGE_NAME_CONFLICT,The QC page name is already used by another Web Page
 API Documentation,API Documentation
 API Management,API Management

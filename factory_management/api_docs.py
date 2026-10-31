@@ -177,6 +177,86 @@ def _seed_summary_contract(service_name):
     }).insert(ignore_permissions=True)
 
 
+def _seed_native_qc_summary_contract(service_name):
+    """Add the .NET-compatible Frappe QC summary contract without overwriting Desk edits."""
+    operation_id = "qcInspectionSummaryNative"
+    if frappe.db.exists(ENDPOINT_TYPE, {"operation_id": operation_id}):
+        return
+
+    parameters = [
+        {"name": name, "in": "query", "required": True,
+         "schema": {"type": "string", "format": "date"},
+         "description": "QC_NATIVE_SUMMARY_DATE_PARAM_DESC"}
+        for name in ("OccurredDateFrom", "OccurredDateTo")
+    ]
+    string_parameters = [
+        "EventType", "EntityType", "DeviceName", "DeviceNo", "DeviceQc", "DeviceCompany",
+        "CompaniesCode", "CompaniesName", "FactoriesCode", "FactoriesName",
+        "ProductionLinesCode", "ProductionLinesName", "CustomersCode", "CustomersName",
+        "ProductsCode", "ProductsName", "ColorsCode", "ColorsName", "SizesCode", "SizesName",
+        "QCDefectGroupsCode", "QCDefectGroupsName", "QCDefectsCode", "QCDefectsName",
+    ]
+    parameters.extend({"name": name, "in": "query", "required": False,
+                       "schema": {"type": "string"}}
+                      for name in string_parameters)
+    parameters.append({"name": "QuantitySummary", "in": "query", "required": False,
+                       "schema": {"type": "integer"}})
+
+    string_fields = [
+        "eventType", "deviceName", "deviceNo", "deviceQc", "deviceCompany",
+        "companiesCode", "companiesName", "factoriesCode", "factoriesName",
+        "productionLinesCode", "productionLinesName", "lineGroupsCode", "lineGroupsName",
+        "customersCode", "customersName", "productsCode", "productsName", "colorsCode",
+        "colorsName", "sizesCode", "sizesName", "qcDefectGroupsCode", "qcDefectGroupsName",
+        "qcDefectsCode", "qcDefectsName",
+    ]
+    properties = {name: {"type": ["string", "null"]} for name in string_fields}
+    properties["entityType"] = {"type": "string", "const": "QCInspection"}
+    properties["occurredDate"] = {"type": "string", "format": "date-time"}
+    properties["quantitySummary"] = {"type": ["integer", "null"]}
+    example = [{
+        "eventType": "DEFECT", "entityType": "QCInspection",
+        "occurredDate": "2026-05-03T00:00:00", "deviceName": "001QC1KT2",
+        "deviceNo": "001", "deviceQc": "QC1", "deviceCompany": "KT2",
+        "companiesCode": "KT2", "companiesName": "Kim Thành 2",
+        "factoriesCode": "F01", "factoriesName": "Nhà máy 1",
+        "productionLinesCode": "L01", "productionLinesName": "Chuyền 1",
+        "lineGroupsCode": "LG01", "lineGroupsName": "Nhóm chuyền 1",
+        "customersCode": "CUS01", "customersName": "Khách hàng 1",
+        "productsCode": "TSHIRT001", "productsName": "T-Shirt Basic",
+        "colorsCode": "BLK", "colorsName": "Đen", "sizesCode": "L", "sizesName": "L",
+        "qcDefectGroupsCode": "SEW", "qcDefectGroupsName": "Lỗi may",
+        "qcDefectsCode": "SEAM01", "qcDefectsName": "Lỗi đường may",
+        "quantitySummary": 12,
+    }]
+    responses = {
+        "200": {
+            "description": "QC_NATIVE_SUMMARY_RESPONSE",
+            "content": {"application/json": {
+                "schema": {"type": "array", "items": {"type": "object", "properties": properties}},
+                "example": example,
+            }},
+        },
+        "400": {"description": "QC_NATIVE_SUMMARY_BAD_REQUEST"},
+        "403": {"description": "QC_NATIVE_SUMMARY_FORBIDDEN"},
+    }
+    frappe.get_doc({
+        "doctype": ENDPOINT_TYPE,
+        "service": service_name,
+        "operation_id": operation_id,
+        "path": "/api/method/factory_management.qc_reports.inspection_summary",
+        "http_method": "GET",
+        "summary": "QC_NATIVE_SUMMARY_TITLE",
+        "description": "QC_NATIVE_SUMMARY_DESCRIPTION",
+        "tags_json": json.dumps(["QC Reports"]),
+        "parameters_json": json.dumps(parameters, ensure_ascii=False),
+        "responses_json": json.dumps(responses, ensure_ascii=False),
+        "security_json": json.dumps([{"FrappeSession": []}, {"ApiToken": []}]),
+        "allowed_roles": [{"role": READER_ROLE}],
+        "is_active": 1,
+    }).insert(ignore_permissions=True)
+
+
 def _seed_python_report_contract(service_name, operation_id, method_name, title, description, columns):
     if frappe.db.exists(ENDPOINT_TYPE, {"operation_id": operation_id}):
         return
@@ -272,6 +352,7 @@ def ensure_catalog():
             "is_active": 1,
         }).insert(ignore_permissions=True).name
     _seed_summary_contract(service_name)
+    _seed_native_qc_summary_contract(service_name)
     _seed_python_reports(service_name)
     from factory_management.qcbrother_reporting.catalog import seed_contracts
     seed_contracts(service_name)

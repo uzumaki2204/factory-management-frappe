@@ -7,6 +7,7 @@ import frappe
 
 MODULES = (
     "factory_management.api.",
+    "factory_management.qc_reports.",
     "factory_management.qcbrother_reports.",
     "factory_management.uqqc.api.",
 )

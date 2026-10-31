@@ -9,6 +9,7 @@ ENDPOINT_ROLE_TYPE = "API Documentation Endpoint Role"
 READER_ROLE = "QC Report Reader"
 REPORT_ROUTES = {
     "qcInspectionSummary": "/api/method/qc-inspection-summary",
+    "qcInspectionSummaryNative": "/api/method/factory_management.qc_reports.inspection_summary",
     "qcReportSummary": "/api/method/factory_management.api.report_summary",
     "qcReportDetail": "/api/method/factory_management.api.report_detail",
     "qcBrotherInspectionSummary": "/api/method/factory_management.qcbrother_reports.inspection_summary",

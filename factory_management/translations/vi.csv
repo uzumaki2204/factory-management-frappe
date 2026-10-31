@@ -4,6 +4,12 @@ QC_REPORT_DATES_REQUIRED,Cần nhập đủ ngày bắt đầu và ngày kết t
 QC_REPORT_INVALID_DATE,Ngày báo cáo không hợp lệ
 QC_REPORT_RANGE_TOO_LONG,Khoảng ngày báo cáo tối đa 7 ngày
 QC_REPORT_INVALID_QUANTITY,Số lượng tổng hợp không hợp lệ
+QC_NATIVE_SUMMARY_TITLE,Báo cáo tổng hợp QC tương thích .NET
+QC_NATIVE_SUMMARY_DESCRIPTION,"Gom nhóm QC Inspection Event theo ngày và các chiều dữ liệu, trả các trường DTO của .NET trực tiếp từ Frappe. Ngày được tính theo UTC; khoảng ngày tối đa 7 ngày."
+QC_NATIVE_SUMMARY_RESPONSE,Danh sách dòng tổng hợp QC dạng JSON array trực tiếp
+QC_NATIVE_SUMMARY_BAD_REQUEST,Ngày hoặc số lượng tổng hợp không hợp lệ
+QC_NATIVE_SUMMARY_FORBIDDEN,Cần vai trò QC Report Reader để truy cập API báo cáo này
+QC_NATIVE_SUMMARY_DATE_PARAM_DESC,Ngày UTC của occurred_at theo định dạng YYYY-MM-DD
 QC_WEB_PAGE_NAME_CONFLICT,Tên trang QC đã được dùng cho một Web Page khác
 API Documentation,Tài liệu API
 API Management,Quản lý API

@@ -67,6 +67,12 @@ def _raw_signature(doc):
     return tuple(_token(doc.get(field)) for field in SOURCE_FIELDS)
 
 
+def _payload_doc(payload):
+    """Return a mapped import document, or None while columns are unmapped."""
+    document = getattr(payload, "doc", None)
+    return document if callable(getattr(document, "get", None)) else None
+
+
 def _db_datetime(value):
     return value.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
 
@@ -169,8 +175,11 @@ def _lookup_field(field, tokens):
 def _lookup_maps(payloads):
     tokens = {field: set() for field in LINKS}
     for payload in payloads:
+        document = _payload_doc(payload)
+        if document is None:
+            continue
         for field in LINKS:
-            value = _token(payload.doc.get(field))
+            value = _token(document.get(field))
             if value:
                 tokens[field].add(value)
 
@@ -345,8 +354,19 @@ def _event_identity(event):
 
 
 def _analyze(import_file):
-    payloads = import_file.get_payloads_for_import()
-    maps = _lookup_maps(payloads)
+    payloads = [
+        (payload, document)
+        for payload in import_file.get_payloads_for_import()
+        if (document := _payload_doc(payload)) is not None
+    ]
+    if not payloads:
+        # Frappe calls provider validation before column mapping in the preview
+        # step. At that point each payload has doc=None and core warnings guide
+        # the user to map the columns.
+        return [], [], {}
+
+    mapped_payloads = [payload for payload, _document in payloads]
+    maps = _lookup_maps(mapped_payloads)
     issues = []
     prepared = []
     occurrences = Counter()
@@ -354,9 +374,9 @@ def _analyze(import_file):
     now = datetime.now(timezone.utc)
     server_zone = _server_zone()
 
-    for payload in payloads:
+    for payload, document in payloads:
         row = payload.rows[0].row_number
-        event = _prepare(payload.doc, maps, row, now, server_zone, issues)
+        event = _prepare(document, maps, row, now, server_zone, issues)
         if event is None:
             continue
         if not event["local_event_id"]:
@@ -369,7 +389,7 @@ def _analyze(import_file):
             _issue(issues, "IMPORT_QC_DUPLICATE_LOCAL_EVENT_ID", row)
         identities[uid].append((row, identity))
         event["event_uid"] = uid
-        prepared.append((row, _raw_signature(payload.doc), event, uid))
+        prepared.append((row, _raw_signature(document), event, uid))
 
     existing = {}
     uids = list(identities)
