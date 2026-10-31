@@ -170,6 +170,7 @@ class UqqcImportProviderTests(unittest.TestCase):
         self.assertIn("UNKNOWN", messages)
         self.assertIn("future", messages)
         future = next(item for item in warnings if "future" in item["message"])
+        self.assertIsNone(future["row"])
         self.assertIn("Rows: 2, 4 (2 rows).", future["message"])
         self.assertIn("multiple", messages)
         self.assertIn("different companies", messages)
@@ -180,16 +181,22 @@ class UqqcImportProviderTests(unittest.TestCase):
         self.assertIn("UNKNOWN_DEFECT", missing_defect_messages)
         self.assertNotIn("requires Defect", missing_defect_messages)
 
-    def test_preview_warnings_include_complete_compact_row_ranges_and_counts(self):
+    def test_reference_warnings_are_skippable_and_bulk_date_warning_stays_compact(self):
         module, _frappe, _db, _masters = load_provider()
         self.assertEqual(module._format_rows([3, 4, 5, 7, 9, 10]), "3–5, 7, 9–10")
-        warnings = module._warnings([("future_synced_at", row, {}) for row in range(3, 14026)])
-        self.assertEqual(len(warnings), 1)
-        self.assertIsNone(warnings[0]["row"])
-        self.assertIn("Rows: 3–14025 (14023 rows).", warnings[0]["message"])
-        single = module._warnings([("future_synced_at", 2, {})])
-        self.assertIsNone(single[0]["row"])
-        self.assertIn("Rows: 2 (1 row).", single[0]["message"])
+        warnings = module._warnings([
+            ("missing_link", 3, {"field": "Product", "value": "UNKNOWN"}),
+            ("missing_link", 4, {"field": "Product", "value": "UNKNOWN"}),
+            ("future_synced_at", 3, {}),
+            ("future_synced_at", 4, {}),
+        ])
+        row_warnings = [warning for warning in warnings if warning["row"] is not None]
+        self.assertEqual([warning["row"] for warning in row_warnings], [3, 4])
+        self.assertIn("Rows: 3 (1 row).", row_warnings[0]["message"])
+        self.assertIn("Rows: 4 (1 row).", row_warnings[1]["message"])
+        global_warnings = [warning for warning in warnings if warning["row"] is None]
+        self.assertEqual(len(global_warnings), 1)
+        self.assertIn("Rows: 3–4 (2 rows).", global_warnings[0]["message"])
 
     def test_full_file_analysis_is_cached_for_preflight_and_import(self):
         module, _frappe, database, _masters = load_provider()
@@ -204,15 +211,32 @@ class UqqcImportProviderTests(unittest.TestCase):
         self.assertEqual(analyze.call_count, 1)
         self.assertEqual(len(database.records), 2)
 
-    def test_grouped_blocker_cannot_be_bypassed_by_skipping_representative_row(self):
-        module, frappe, _database, _masters = load_provider()
-        file = import_file(source(product="UNKNOWN"), source())
+    def test_skipping_invalid_rows_allows_valid_rows_to_import(self):
+        module, _frappe, database, _masters = load_provider()
+        file = import_file(source(product="UNKNOWN"), source(), source(defect="UNKNOWN_DEFECT"))
         provider = module.UqqcInspectionEventImportProvider()
         importer = types.SimpleNamespace(import_type="Insert New Records", import_file=file,
-                                         data_import=Row(name="import-1", skipped_rows=[Row(row_number=2)]))
+                                         data_import=Row(name="import-1", skipped_rows=[
+                                             Row(row_number=2), Row(row_number=4)
+                                         ]))
         with patch.object(module, "_analyze", wraps=module._analyze) as analyze:
             warnings = provider.validate(file)
-            self.assertIsNone(warnings[0]["row"])
+            self.assertEqual({warning["row"] for warning in warnings}, {2, 4})
+            payload = file.get_payloads_for_import()[1]
+            _created, action = provider.import_row(importer, payload.doc)
+        self.assertEqual(analyze.call_count, 1)
+        self.assertEqual(action, "Insert")
+        self.assertEqual(len(database.records), 1)
+
+    def test_unskipped_invalid_row_still_blocks_without_reanalysis(self):
+        module, frappe, _database, _masters = load_provider()
+        file = import_file(source(product="UNKNOWN"), source())
+        importer = types.SimpleNamespace(import_type="Insert New Records", import_file=file,
+                                         data_import=Row(name="import-1", skipped_rows=[]))
+        provider = module.UqqcInspectionEventImportProvider()
+        with patch.object(module, "_analyze", wraps=module._analyze) as analyze:
+            warnings = provider.validate(file)
+            self.assertEqual([warning["row"] for warning in warnings], [2])
             for _ in range(2):
                 with self.assertRaises(frappe.ValidationError):
                     provider.import_row(importer, file.get_payloads_for_import()[0].doc)

@@ -34,6 +34,10 @@ SOURCE_FIELDS = (
     "defect", "defect_position", "defect_piece_id", "schema_version", "quantity", "occurred_at", "synced_at",
 )
 CANONICAL_FIELDS = tuple(field for field in EVENT_IDENTITY_FIELDS if field != "local_event_id")
+# A future timestamp can affect nearly every row in a historical workbook. Keep it as
+# one file-level blocker so the Fix Issues panel does not have to render thousands of
+# duplicate warnings; reference and row validation errors remain individually skippable.
+FILE_LEVEL_ISSUES = frozenset(("future_synced_at",))
 
 
 def _token(value):
@@ -95,11 +99,27 @@ def _format_rows(rows):
 
 
 def _warnings(issues):
-    grouped = defaultdict(list)
+    grouped_rows = defaultdict(set)
+    grouped_file = defaultdict(list)
     for key, row, values in issues:
-        grouped[(key, tuple(sorted(values.items())))].append(row)
+        issue = (key, tuple(sorted(values.items())))
+        if key in FILE_LEVEL_ISSUES:
+            grouped_file[issue].append(row)
+        else:
+            grouped_rows[row].add(issue)
     result = []
-    for (key, values), rows in grouped.items():
+    for row in sorted(grouped_rows):
+        for key, values in sorted(grouped_rows[row]):
+            arguments = {name: escape(str(value)) for name, value in values}
+            arguments.update(
+                rows=str(row),
+                count=1,
+                row_count=text("import.row_count_one").format(count=1),
+            )
+            # Keep each warning attached to the exact source row so Frappe's Fix Issues
+            # controls can skip just that row without hiding identical issues elsewhere.
+            result.append({"row": row, "message": text("import." + key).format(**arguments)})
+    for (key, values), rows in sorted(grouped_file.items()):
         arguments = {name: escape(str(value)) for name, value in values}
         count_key = "import.row_count_one" if len(rows) == 1 else "import.row_count_many"
         arguments.update(
@@ -107,9 +127,6 @@ def _warnings(issues):
             count=len(rows),
             row_count=text(count_key).format(count=len(rows)),
         )
-        # Each message summarizes several rows. Giving it a single representative row lets
-        # Data Import hide the whole warning when that one row is skipped, while the other
-        # rows still fail during import. Keep these as file-level blockers instead.
         result.append({"row": None, "message": text("import." + key).format(**arguments)})
     return result
 
@@ -302,8 +319,14 @@ class UqqcInspectionEventImportProvider(ImportProvider):
         self._runtime_checked = True
         try:
             prepared, warnings = _cached_analysis(importer.import_file)
-            if warnings:
-                self._runtime_error = warnings[0]["message"]
+            skipped = {int(row.row_number) for row in (importer.data_import.get("skipped_rows") or [])}
+            blocking_warnings = [
+                warning
+                for warning in warnings
+                if warning.get("row") is None or int(warning["row"]) not in skipped
+            ]
+            if blocking_warnings:
+                self._runtime_error = blocking_warnings[0]["message"]
             else:
                 successful = set()
                 if importer.data_import.name:
@@ -312,7 +335,6 @@ class UqqcInspectionEventImportProvider(ImportProvider):
                         filters={"data_import": importer.data_import.name, "success": 1}, limit_page_length=0,
                     ):
                         successful.update(json.loads(log.row_indexes or "[]"))
-                skipped = {int(row.row_number) for row in (importer.data_import.get("skipped_rows") or [])}
                 pending = defaultdict(deque)
                 for row, signature, event, uid in prepared:
                     if row not in successful and row not in skipped:
