@@ -50,16 +50,18 @@ def _matching_device_names(pattern):
     return names
 
 
-def _replacement(pattern):
+def _replacement(pattern, operator):
     if not isinstance(pattern, str) or not pattern:
         return None
 
     names = _matching_device_names(pattern)
+    is_negative = str(operator).lower() == "not like"
     if names:
-        return "in", names
+        return ("not in" if is_negative else "in"), names
 
     # Factory Device records use UUID names, so this value cannot match a real Link.
-    return "=", NO_MATCHING_DEVICE
+    # Keep SQL's NOT LIKE behavior for NULL links: NULL does not satisfy the filter.
+    return ("!=" if is_negative else "="), NO_MATCHING_DEVICE
 
 
 def _rewrite_condition(condition):
@@ -77,10 +79,11 @@ def _rewrite_condition(condition):
 
     if condition[field_index] != "device":
         return None
-    if str(condition[operator_index]).lower() != "like":
+    operator = str(condition[operator_index]).lower()
+    if operator not in {"like", "not like"}:
         return None
 
-    replacement = _replacement(condition[value_index])
+    replacement = _replacement(condition[value_index], operator)
     if replacement is None:
         return None
 
@@ -95,9 +98,9 @@ def _rewrite_filter_collection(filters):
         if (
             isinstance(clause, (list, tuple))
             and len(clause) == 2
-            and str(clause[0]).lower() == "like"
+            and str(clause[0]).lower() in {"like", "not like"}
         ):
-            replacement = _replacement(clause[1])
+            replacement = _replacement(clause[1], clause[0])
             if replacement:
                 rewritten = dict(filters)
                 rewritten["device"] = list(replacement)
