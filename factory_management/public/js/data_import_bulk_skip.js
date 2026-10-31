@@ -172,7 +172,7 @@
 
 		const wrapped = function (...args) {
 			const previewData = currentPreviewData(frm, args);
-			if (frm.doc.reference_doctype === "UQQC Inspection Event" && previewData?.warnings) {
+			if (["UQQC Inspection Event", "QC Inspection Event"].includes(frm.doc.reference_doctype) && previewData?.warnings) {
 				// Recompute from the current preview; persisted warnings may use the old
 				// one-row summary format and would duplicate the grouped messages.
 				frm.doc.template_warnings = "";

@@ -10,6 +10,7 @@ after_migrate = "factory_management.install.ensure_schema"
 after_request = ["factory_management.api_response.direct_qc_response"]
 data_import_providers = {
     "UQQC Inspection Event": "factory_management.uqqc.import_provider.UqqcInspectionEventImportProvider",
+    "QC Inspection Event": "factory_management.quality_control.import_provider.QCInspectionEventImportProvider",
 }
 doctype_js = {"Data Import": "public/js/data_import_bulk_skip.js"}
 scheduler_events = {
