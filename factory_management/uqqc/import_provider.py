@@ -80,17 +80,32 @@ def _issue(issues, key, row, **values):
     issues.append((key, row, values))
 
 
+def _format_rows(rows):
+    ordered = sorted(set(rows))
+    ranges = []
+    start = previous = ordered[0]
+    for row in ordered[1:]:
+        if row == previous + 1:
+            previous = row
+            continue
+        ranges.append(str(start) if start == previous else f"{start}–{previous}")
+        start = previous = row
+    ranges.append(str(start) if start == previous else f"{start}–{previous}")
+    return ", ".join(ranges)
+
+
 def _warnings(issues):
     grouped = defaultdict(list)
     for key, row, values in issues:
         grouped[(key, tuple(sorted(values.items())))].append(row)
     result = []
     for (key, values), rows in grouped.items():
-        shown = ", ".join(str(row) for row in rows[:8])
-        if len(rows) > 8:
-            shown += ", …, " + str(rows[-1])
         arguments = {name: escape(str(value)) for name, value in values}
-        arguments.update(rows=shown, count=len(rows))
+        arguments.update(
+            rows=_format_rows(rows),
+            count=len(rows),
+            row_count=text("import.row_count").format(count=len(rows)),
+        )
         result.append({"row": rows[0], "message": text("import." + key).format(**arguments)})
     return result
 

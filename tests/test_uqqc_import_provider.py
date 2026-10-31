@@ -172,6 +172,13 @@ class UqqcImportProviderTests(unittest.TestCase):
         self.assertIn("multiple", messages)
         self.assertIn("different companies", messages)
 
+    def test_preview_warnings_include_complete_compact_row_ranges_and_counts(self):
+        module, _frappe, _db, _masters = load_provider()
+        self.assertEqual(module._format_rows([3, 4, 5, 7, 9, 10]), "3–5, 7, 9–10")
+        warnings = module._warnings([("future_synced_at", row, {}) for row in range(3, 14026)])
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("Rows: 3–14025 (14023 rows).", warnings[0]["message"])
+
     def test_insert_and_reimport_are_idempotent(self):
         module, _frappe, database, _masters = load_provider()
         file = import_file(source(), source())
