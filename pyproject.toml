@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factory_management"
-version = "0.1.65"
+version = "0.1.66"
 description = "Shared factory devices and QC tablet APIs for Frappe"
 requires-python = ">=3.14"
 dependencies = ["requests>=2.31", "cryptography>=42", "openpyxl>=3.1", "xlrd>=2.0", "mssql-python>=1.16,<2"]

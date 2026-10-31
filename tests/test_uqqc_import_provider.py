@@ -185,9 +185,38 @@ class UqqcImportProviderTests(unittest.TestCase):
         self.assertEqual(module._format_rows([3, 4, 5, 7, 9, 10]), "3–5, 7, 9–10")
         warnings = module._warnings([("future_synced_at", row, {}) for row in range(3, 14026)])
         self.assertEqual(len(warnings), 1)
+        self.assertIsNone(warnings[0]["row"])
         self.assertIn("Rows: 3–14025 (14023 rows).", warnings[0]["message"])
         single = module._warnings([("future_synced_at", 2, {})])
+        self.assertIsNone(single[0]["row"])
         self.assertIn("Rows: 2 (1 row).", single[0]["message"])
+
+    def test_full_file_analysis_is_cached_for_preflight_and_import(self):
+        module, _frappe, database, _masters = load_provider()
+        file = import_file(source(), source())
+        importer = types.SimpleNamespace(import_type="Insert New Records", import_file=file,
+                                         data_import=Row(name=None, skipped_rows=[]))
+        provider = module.UqqcInspectionEventImportProvider()
+        with patch.object(module, "_analyze", wraps=module._analyze) as analyze:
+            self.assertEqual(provider.validate(file), [])
+            for payload in file.get_payloads_for_import():
+                provider.import_row(importer, payload.doc)
+        self.assertEqual(analyze.call_count, 1)
+        self.assertEqual(len(database.records), 2)
+
+    def test_grouped_blocker_cannot_be_bypassed_by_skipping_representative_row(self):
+        module, frappe, _database, _masters = load_provider()
+        file = import_file(source(product="UNKNOWN"), source())
+        provider = module.UqqcInspectionEventImportProvider()
+        importer = types.SimpleNamespace(import_type="Insert New Records", import_file=file,
+                                         data_import=Row(name="import-1", skipped_rows=[Row(row_number=2)]))
+        with patch.object(module, "_analyze", wraps=module._analyze) as analyze:
+            warnings = provider.validate(file)
+            self.assertIsNone(warnings[0]["row"])
+            for _ in range(2):
+                with self.assertRaises(frappe.ValidationError):
+                    provider.import_row(importer, file.get_payloads_for_import()[0].doc)
+        self.assertEqual(analyze.call_count, 1)
 
     def test_insert_and_reimport_are_idempotent(self):
         module, _frappe, database, _masters = load_provider()

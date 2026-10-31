@@ -107,7 +107,10 @@ def _warnings(issues):
             count=len(rows),
             row_count=text(count_key).format(count=len(rows)),
         )
-        result.append({"row": rows[0], "message": text("import." + key).format(**arguments)})
+        # Each message summarizes several rows. Giving it a single representative row lets
+        # Data Import hide the whole warning when that one row is skipped, while the other
+        # rows still fail during import. Keep these as file-level blockers instead.
+        result.append({"row": None, "message": text("import." + key).format(**arguments)})
     return result
 
 
@@ -258,6 +261,14 @@ def _analyze(import_file):
     return prepared, _warnings(issues)
 
 
+def _cached_analysis(import_file):
+    """Share one full-file analysis between Frappe's preflight and row importer."""
+    cache_key = "_uqqc_import_analysis"
+    if cache_key not in import_file.__dict__:
+        import_file.__dict__[cache_key] = _analyze(import_file)
+    return import_file.__dict__[cache_key]
+
+
 class UqqcInspectionEventImportProvider(ImportProvider):
     """Resolve catalog codes while retaining Frappe's Data Import permissions and logs."""
 
@@ -278,28 +289,41 @@ class UqqcInspectionEventImportProvider(ImportProvider):
     def validate(self, import_file):
         if import_file.import_type != INSERT:
             return [{"message": text("import.insert_only")}]
-        _prepared, warnings = _analyze(import_file)
+        _prepared, warnings = _cached_analysis(import_file)
         return warnings
 
     def _runtime(self, importer):
-        if hasattr(self, "_pending"):
+        if getattr(self, "_runtime_checked", False):
+            if failure := getattr(self, "_runtime_failure", None):
+                raise failure
+            if error := getattr(self, "_runtime_error", None):
+                frappe.throw(error, frappe.ValidationError)
             return
-        prepared, warnings = _analyze(importer.import_file)
-        if warnings:
-            frappe.throw(warnings[0]["message"], frappe.ValidationError)
-        successful = set()
-        if importer.data_import.name:
-            for log in frappe.get_all(
-                "Data Import Log", fields=["row_indexes"],
-                filters={"data_import": importer.data_import.name, "success": 1}, limit_page_length=0,
-            ):
-                successful.update(json.loads(log.row_indexes or "[]"))
-        skipped = {int(row.row_number) for row in (importer.data_import.get("skipped_rows") or [])}
-        pending = defaultdict(deque)
-        for row, signature, event, uid in prepared:
-            if row not in successful and row not in skipped:
-                pending[signature].append((row, event, uid))
-        self._pending = pending
+        self._runtime_checked = True
+        try:
+            prepared, warnings = _cached_analysis(importer.import_file)
+            if warnings:
+                self._runtime_error = warnings[0]["message"]
+            else:
+                successful = set()
+                if importer.data_import.name:
+                    for log in frappe.get_all(
+                        "Data Import Log", fields=["row_indexes"],
+                        filters={"data_import": importer.data_import.name, "success": 1}, limit_page_length=0,
+                    ):
+                        successful.update(json.loads(log.row_indexes or "[]"))
+                skipped = {int(row.row_number) for row in (importer.data_import.get("skipped_rows") or [])}
+                pending = defaultdict(deque)
+                for row, signature, event, uid in prepared:
+                    if row not in successful and row not in skipped:
+                        pending[signature].append((row, event, uid))
+                self._pending = pending
+        except Exception as error:
+            self._runtime_failure = error
+            raise
+
+        if error := getattr(self, "_runtime_error", None):
+            frappe.throw(error, frappe.ValidationError)
 
     def import_row(self, importer, doc):
         if importer.import_type != INSERT:
