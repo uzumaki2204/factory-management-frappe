@@ -106,19 +106,22 @@ def _warnings(issues):
         if key in FILE_LEVEL_ISSUES:
             grouped_file[issue].append(row)
         else:
-            grouped_rows[row].add(issue)
+            grouped_rows[issue].add(row)
     result = []
-    for row in sorted(grouped_rows):
-        for key, values in sorted(grouped_rows[row]):
-            arguments = {name: escape(str(value)) for name, value in values}
-            arguments.update(
-                rows=str(row),
-                count=1,
-                row_count=text("import.row_count_one").format(count=1),
-            )
-            # Keep each warning attached to the exact source row so Frappe's Fix Issues
-            # controls can skip just that row without hiding identical issues elsewhere.
-            result.append({"row": row, "message": text("import." + key).format(**arguments)})
+    for (key, values), rows in sorted(grouped_rows.items()):
+        rows = sorted(rows)
+        arguments = {name: escape(str(value)) for name, value in values}
+        count_key = "import.row_count_one" if len(rows) == 1 else "import.row_count_many"
+        arguments.update(
+            rows=_format_rows(rows),
+            count=len(rows),
+            row_count=text(count_key).format(count=len(rows)),
+        )
+        message = text("import." + key).format(**arguments)
+        # Emit one row-aware warning for every affected row. Frappe can then skip
+        # any subset, while identical messages let the Desk extension group them.
+        for row in rows:
+            result.append({"row": row, "message": message})
     for (key, values), rows in sorted(grouped_file.items()):
         arguments = {name: escape(str(value)) for name, value in values}
         count_key = "import.row_count_one" if len(rows) == 1 else "import.row_count_many"

@@ -383,3 +383,8 @@ QCBROTHER_AGGREGATE_DATE,Đầu ngày báo cáo local kèm UTC offset đã cấu
 QCBROTHER_REPORT_ROWS,Các dòng báo cáo QCBrother được trả trực tiếp dưới dạng mảng JSON
 QCBROTHER_REQUEST_INVALID,Thiếu hoặc sai ngày báo cáo hay UUID công ty
 QCBROTHER_AUTH_REQUIRED,Cần xác thực bằng phiên Frappe hoặc API token
+Skip all rows with issues ({0}),Bỏ qua tất cả dòng có lỗi ({0})
+Undo skip for all rows ({0}),Khôi phục tất cả dòng đã bỏ qua ({0})
+Rows with the same issue ({0}),Các dòng có cùng lỗi ({0})
+Skip these rows ({0}),Bỏ qua các dòng này ({0})
+Undo skip for these rows ({0}),Khôi phục các dòng này ({0})

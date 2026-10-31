@@ -11,6 +11,7 @@ after_request = ["factory_management.api_response.direct_qc_response"]
 data_import_providers = {
     "UQQC Inspection Event": "factory_management.uqqc.import_provider.UqqcInspectionEventImportProvider",
 }
+doctype_js = {"Data Import": "public/js/data_import_bulk_skip.js"}
 scheduler_events = {
     "cron": {"* * * * *": ["factory_management.spl_po.schedule.tick"]},
     "daily": ["factory_management.spl_po.service.cleanup_snapshots"],

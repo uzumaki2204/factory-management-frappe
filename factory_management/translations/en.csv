@@ -383,3 +383,8 @@ QCBROTHER_AGGREGATE_DATE,Start of the local report day with the configured UTC o
 QCBROTHER_REPORT_ROWS,QCBrother report rows returned directly as a JSON array
 QCBROTHER_REQUEST_INVALID,Missing or invalid report dates or company UUID
 QCBROTHER_AUTH_REQUIRED,Frappe session or API token authentication required
+Skip all rows with issues ({0}),Skip all rows with issues ({0})
+Undo skip for all rows ({0}),Undo skip for all rows ({0})
+Rows with the same issue ({0}),Rows with the same issue ({0})
+Skip these rows ({0}),Skip these rows ({0})
+Undo skip for these rows ({0}),Undo skip for these rows ({0})

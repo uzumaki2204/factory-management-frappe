@@ -192,8 +192,8 @@ class UqqcImportProviderTests(unittest.TestCase):
         ])
         row_warnings = [warning for warning in warnings if warning["row"] is not None]
         self.assertEqual([warning["row"] for warning in row_warnings], [3, 4])
-        self.assertIn("Rows: 3 (1 row).", row_warnings[0]["message"])
-        self.assertIn("Rows: 4 (1 row).", row_warnings[1]["message"])
+        self.assertEqual(row_warnings[0]["message"], row_warnings[1]["message"])
+        self.assertIn("Rows: 3–4 (2 rows).", row_warnings[0]["message"])
         global_warnings = [warning for warning in warnings if warning["row"] is None]
         self.assertEqual(len(global_warnings), 1)
         self.assertIn("Rows: 3–4 (2 rows).", global_warnings[0]["message"])
