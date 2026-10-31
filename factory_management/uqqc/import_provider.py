@@ -101,10 +101,11 @@ def _warnings(issues):
     result = []
     for (key, values), rows in grouped.items():
         arguments = {name: escape(str(value)) for name, value in values}
+        count_key = "import.row_count_one" if len(rows) == 1 else "import.row_count_many"
         arguments.update(
             rows=_format_rows(rows),
             count=len(rows),
-            row_count=text("import.row_count").format(count=len(rows)),
+            row_count=text(count_key).format(count=len(rows)),
         )
         result.append({"row": rows[0], "message": text("import." + key).format(**arguments)})
     return result
@@ -143,24 +144,30 @@ def _prepare(raw, maps, row, now, issues):
         _issue(issues, "id_must_be_blank", row)
     event = {}
     related = {}
+    invalid_required_link = False
     for field in LINKS:
         value = _token(raw.get(field))
         if not value:
             if field in REQUIRED_LINKS:
                 _issue(issues, "required", row, field=text("field." + field))
+                invalid_required_link = True
             event[field] = None
             continue
         candidates = maps[field].get(value.casefold(), {})
         if not candidates:
             _issue(issues, "missing_link", row, field=text("field." + field), value=value)
+            event[field] = None
+            if field in REQUIRED_LINKS:
+                invalid_required_link = True
             continue
         if len(candidates) != 1:
             _issue(issues, "ambiguous_link", row, field=text("field." + field), value=value)
+            event[field] = None
+            if field in REQUIRED_LINKS:
+                invalid_required_link = True
             continue
         related[field] = next(iter(candidates.values()))
         event[field] = related[field]["name"]
-    if any(field not in event for field in LINKS) or any(not event.get(field) for field in REQUIRED_LINKS):
-        return None
     if "device" in related and "line" in related and related["device"]["company"] != related["line"]["company"]:
         _issue(issues, "line_company", row)
     for field, expected in (("defect", "Defect"), ("defect_position", "Position")):
@@ -169,9 +176,9 @@ def _prepare(raw, maps, row, now, issues):
     kind = _token(raw.get("event_kind")).lower()
     if kind not in ("defect", "pass", "rework"):
         _issue(issues, "event_kind", row)
-    if kind == "defect" and not event["defect"]:
+    if kind == "defect" and not event.get("defect"):
         _issue(issues, "defect_required", row)
-    if kind in ("pass", "rework") and (event["defect"] or event["defect_position"]):
+    if kind in ("pass", "rework") and (event.get("defect") or event.get("defect_position")):
         _issue(issues, "quantity_detail", row)
     event["event_kind"] = kind
     event["defect_piece_id"] = _token(raw.get("defect_piece_id")) or None
@@ -204,7 +211,7 @@ def _prepare(raw, maps, row, now, issues):
     if len(local_id) > 100:
         _issue(issues, "local_event_id_length", row)
     event["local_event_id"] = local_id
-    return event if all(field in event for field in CANONICAL_FIELDS) else None
+    return event if not invalid_required_link and all(field in event for field in CANONICAL_FIELDS) else None
 
 
 def _canonical(event):

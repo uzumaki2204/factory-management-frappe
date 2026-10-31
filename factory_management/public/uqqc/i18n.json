@@ -235,7 +235,8 @@
     "import.duplicate_local_event_id": "Device và Local Event ID bị trùng trong file. Dòng: {rows} ({row_count}).",
     "import.existing_conflict": "ID sự kiện đã tồn tại với dữ liệu khác. Dòng: {rows} ({row_count}).",
     "import.row_unavailable": "Không tìm thấy dòng sự kiện cần nhập; hãy tải lại file và chạy lại.",
-    "import.row_count": "{count} dòng"
+    "import.row_count_one": "{count} dòng",
+    "import.row_count_many": "{count} dòng"
   },
   "en": {
     "reorderActions": "Reorder the visible list",
@@ -473,6 +474,7 @@
     "import.duplicate_local_event_id": "Device and Local Event ID are duplicated in this file. Rows: {rows} ({row_count}).",
     "import.existing_conflict": "The event ID already exists with different data. Rows: {rows} ({row_count}).",
     "import.row_unavailable": "The event row is no longer available for import; reload the file and try again.",
-    "import.row_count": "{count} rows"
+    "import.row_count_one": "{count} row",
+    "import.row_count_many": "{count} rows"
   }
 }

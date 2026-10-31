@@ -163,12 +163,14 @@ class UqqcImportProviderTests(unittest.TestCase):
         module, _frappe, _db, masters = load_provider()
         masters["Product"].append(Row(name="product-2", product_code="317H035A"))
         masters["Production Line"][0]["company"] = "company-2"
-        file = import_file(source(product="UNKNOWN"), source(),
+        file = import_file(source(product="UNKNOWN", synced_at=datetime(2065, 1, 1)), source(),
                            source(product="product-1", synced_at=datetime(2065, 1, 1)))
         warnings = module.UqqcInspectionEventImportProvider().validate(file)
         messages = "\n".join(item["message"] for item in warnings)
         self.assertIn("UNKNOWN", messages)
         self.assertIn("future", messages)
+        future = next(item for item in warnings if "future" in item["message"])
+        self.assertIn("Rows: 2, 4 (2 rows).", future["message"])
         self.assertIn("multiple", messages)
         self.assertIn("different companies", messages)
 
@@ -178,6 +180,8 @@ class UqqcImportProviderTests(unittest.TestCase):
         warnings = module._warnings([("future_synced_at", row, {}) for row in range(3, 14026)])
         self.assertEqual(len(warnings), 1)
         self.assertIn("Rows: 3–14025 (14023 rows).", warnings[0]["message"])
+        single = module._warnings([("future_synced_at", 2, {})])
+        self.assertIn("Rows: 2 (1 row).", single[0]["message"])
 
     def test_insert_and_reimport_are_idempotent(self):
         module, _frappe, database, _masters = load_provider()
