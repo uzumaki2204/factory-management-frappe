@@ -1,4 +1,4 @@
-"""Resolve QC event Device Link filters against the displayed device name."""
+"""Resolve Factory Device Link filters against device IDs and displayed names."""
 
 import json
 
@@ -6,10 +6,11 @@ import frappe
 from frappe.desk import reportview
 
 
-EVENT_DOCTYPES = {"QC Inspection Event", "UQQC Inspection Event"}
+DEVICE_LINK_DOCTYPES = {"QC Favorite", "QC Inspection Event", "UQQC Inspection Event"}
 DEVICE_DOCTYPE = "Factory Device"
 NO_MATCHING_DEVICE = "__no_matching_factory_device__"
 DEVICE_QUERY_PAGE_SIZE = 500
+DEVICE_FILTER_OPERATORS = {"in", "not in", "like", "not like"}
 
 
 def _parse_filters(raw_filters):
@@ -21,21 +22,21 @@ def _parse_filters(raw_filters):
     return raw_filters
 
 
-def _matching_device_names(pattern):
-    cache = getattr(frappe.local, "factory_device_name_filter_cache", None)
+def _device_filter_cache():
+    cache = getattr(frappe.local, "factory_device_link_filter_cache", None)
     if cache is None:
         cache = {}
-        frappe.local.factory_device_name_filter_cache = cache
+        frappe.local.factory_device_link_filter_cache = cache
+    return cache
 
-    if pattern in cache:
-        return cache[pattern]
 
+def _paged_device_names(filters):
     names = []
     start = 0
     while True:
         page = frappe.get_list(
             DEVICE_DOCTYPE,
-            filters={"device_name": ["like", pattern]},
+            filters=filters,
             fields=["name"],
             order_by="name asc",
             start=start,
@@ -45,22 +46,77 @@ def _matching_device_names(pattern):
         if len(page) < DEVICE_QUERY_PAGE_SIZE:
             break
         start += DEVICE_QUERY_PAGE_SIZE
-
-    cache[pattern] = names
     return names
 
 
-def _replacement(pattern, operator):
-    if not isinstance(pattern, str) or not pattern:
+def _matching_device_names(pattern):
+    cache = _device_filter_cache()
+    cache_key = ("like", pattern)
+    if cache_key not in cache:
+        cache[cache_key] = _paged_device_names({"device_name": ["like", pattern]})
+    return cache[cache_key]
+
+
+def _filter_values(value):
+    """Normalize Frappe's list value and tolerate a comma-separated filter value."""
+    if isinstance(value, str):
+        try:
+            decoded = json.loads(value)
+        except json.JSONDecodeError:
+            decoded = None
+        if isinstance(decoded, (list, tuple)):
+            value = decoded
+        else:
+            value = value.split(",")
+    elif not isinstance(value, (list, tuple, set)):
+        value = [value]
+
+    return list(dict.fromkeys(
+        str(item).strip()
+        for item in value
+        if item is not None and not isinstance(item, (dict, list, tuple, set)) and str(item).strip()
+    ))
+
+
+def _matching_device_names_in(values):
+    values = _filter_values(values)
+    cache = _device_filter_cache()
+    cache_key = ("in", tuple(sorted(values)))
+    if cache_key in cache:
+        return cache[cache_key]
+
+    names = set()
+    for start in range(0, len(values), DEVICE_QUERY_PAGE_SIZE):
+        batch = values[start:start + DEVICE_QUERY_PAGE_SIZE]
+        # A filter can contain the Frappe document ID or the visible device_name.
+        names.update(_paged_device_names({"name": ["in", batch]}))
+        names.update(_paged_device_names({"device_name": ["in", batch]}))
+
+    cache[cache_key] = sorted(names)
+    return cache[cache_key]
+
+
+def _replacement(value, operator):
+    operator = " ".join(str(operator).lower().split())
+    is_negative = operator in {"not in", "not like"}
+
+    if operator in {"like", "not like"}:
+        if not isinstance(value, str) or not value:
+            return None
+        names = _matching_device_names(value)
+    elif operator in {"in", "not in"}:
+        names = _matching_device_names_in(value)
+        if not names:
+            # Device Link fields are mandatory. This sentinel keeps empty IN/NOT IN
+            # filters valid on MariaDB while matching no possible Factory Device ID.
+            return ("!=" if is_negative else "="), NO_MATCHING_DEVICE
+    else:
         return None
 
-    names = _matching_device_names(pattern)
-    is_negative = str(operator).lower() == "not like"
     if names:
         return ("not in" if is_negative else "in"), names
 
-    # Factory Device records use UUID names, so this value cannot match a real Link.
-    # Keep SQL's NOT LIKE behavior for NULL links: NULL does not satisfy the filter.
+    # SQL NOT LIKE excludes NULL links. This comparison preserves that behavior.
     return ("!=" if is_negative else "="), NO_MATCHING_DEVICE
 
 
@@ -71,7 +127,7 @@ def _rewrite_condition(condition):
     if len(condition) == 3:
         field_index, operator_index, value_index = 0, 1, 2
     elif len(condition) == 4:
-        if condition[0] not in EVENT_DOCTYPES:
+        if condition[0] not in DEVICE_LINK_DOCTYPES:
             return None
         field_index, operator_index, value_index = 1, 2, 3
     else:
@@ -79,8 +135,8 @@ def _rewrite_condition(condition):
 
     if condition[field_index] != "device":
         return None
-    operator = str(condition[operator_index]).lower()
-    if operator not in {"like", "not like"}:
+    operator = " ".join(str(condition[operator_index]).lower().split())
+    if operator not in DEVICE_FILTER_OPERATORS:
         return None
 
     replacement = _replacement(condition[value_index], operator)
@@ -98,7 +154,7 @@ def _rewrite_filter_collection(filters):
         if (
             isinstance(clause, (list, tuple))
             and len(clause) == 2
-            and str(clause[0]).lower() in {"like", "not like"}
+            and " ".join(str(clause[0]).lower().split()) in DEVICE_FILTER_OPERATORS
         ):
             replacement = _replacement(clause[1], clause[0])
             if replacement:
@@ -128,7 +184,7 @@ def _rewrite_filter_collection(filters):
 
 def _rewrite_device_filters():
     form = frappe.local.form_dict
-    if form.get("doctype") not in EVENT_DOCTYPES:
+    if form.get("doctype") not in DEVICE_LINK_DOCTYPES:
         return
 
     for key in ("filters", "or_filters"):
