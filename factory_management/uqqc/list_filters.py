@@ -1,4 +1,4 @@
-"""Resolve UQQC Device Link filters against the displayed device name."""
+"""Resolve QC event Device Link filters against the displayed device name."""
 
 import json
 
@@ -6,7 +6,7 @@ import frappe
 from frappe.desk import reportview
 
 
-EVENT_DOCTYPE = "UQQC Inspection Event"
+EVENT_DOCTYPES = {"QC Inspection Event", "UQQC Inspection Event"}
 DEVICE_DOCTYPE = "Factory Device"
 NO_MATCHING_DEVICE = "__no_matching_factory_device__"
 DEVICE_QUERY_PAGE_SIZE = 500
@@ -22,10 +22,10 @@ def _parse_filters(raw_filters):
 
 
 def _matching_device_names(pattern):
-    cache = getattr(frappe.local, "uqqc_device_filter_cache", None)
+    cache = getattr(frappe.local, "factory_device_name_filter_cache", None)
     if cache is None:
         cache = {}
-        frappe.local.uqqc_device_filter_cache = cache
+        frappe.local.factory_device_name_filter_cache = cache
 
     if pattern in cache:
         return cache[pattern]
@@ -69,7 +69,7 @@ def _rewrite_condition(condition):
     if len(condition) == 3:
         field_index, operator_index, value_index = 0, 1, 2
     elif len(condition) == 4:
-        if condition[0] != EVENT_DOCTYPE:
+        if condition[0] not in EVENT_DOCTYPES:
             return None
         field_index, operator_index, value_index = 1, 2, 3
     else:
@@ -125,7 +125,7 @@ def _rewrite_filter_collection(filters):
 
 def _rewrite_device_filters():
     form = frappe.local.form_dict
-    if form.get("doctype") != EVENT_DOCTYPE:
+    if form.get("doctype") not in EVENT_DOCTYPES:
         return
 
     for key in ("filters", "or_filters"):
