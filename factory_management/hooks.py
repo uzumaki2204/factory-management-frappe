@@ -8,6 +8,9 @@ app_license = "Proprietary"
 after_install = "factory_management.install.after_install"
 after_migrate = "factory_management.install.ensure_schema"
 after_request = ["factory_management.api_response.direct_qc_response"]
+data_import_providers = {
+    "UQQC Inspection Event": "factory_management.uqqc.import_provider.UqqcInspectionEventImportProvider",
+}
 scheduler_events = {
     "cron": {"* * * * *": ["factory_management.spl_po.schedule.tick"]},
     "daily": ["factory_management.spl_po.service.cleanup_snapshots"],
