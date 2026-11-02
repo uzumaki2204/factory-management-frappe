@@ -30,6 +30,8 @@
         },
     ];
 
+    let currentGrid = null;
+
     function addShortcuts() {
         const grid = document.querySelector(".desktop-container .icons-container .icons");
         if (!grid || !window.frappe || typeof frappe.render_template !== "function") return;
@@ -37,9 +39,16 @@
 
         const isSystemManager = frappe.session?.user === "Administrator" ||
             frappe.user?.has_role?.("System Manager") === true;
+        const visibleShortcuts = shortcuts.filter(
+            (shortcut) => !shortcut.systemManagerOnly || isSystemManager
+        );
 
-        for (const shortcut of shortcuts) {
-            if (shortcut.systemManagerOnly && !isSystemManager) continue;
+        if (grid === currentGrid && visibleShortcuts.every(
+            (shortcut) => grid.querySelector(`[data-factory-shortcut="${shortcut.id}"]`)
+        )) return;
+        currentGrid = grid;
+
+        for (const shortcut of visibleShortcuts) {
             if (grid.querySelector(`[data-factory-shortcut="${shortcut.id}"]`)) continue;
 
             const markup = frappe.render_template("desktop_icon", {
@@ -62,12 +71,18 @@
         }
     }
 
-    if (window.jQuery) {
-        window.jQuery(document).on("desktop_screen.factory_management_shortcuts", addShortcuts);
-    }
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", addShortcuts, { once: true });
-    } else {
+    function watchDesk() {
+        const root = document.body || document.documentElement;
+        if (!root) return;
+
         addShortcuts();
+        const observer = new MutationObserver(addShortcuts);
+        observer.observe(root, { childList: true, subtree: true });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", watchDesk, { once: true });
+    } else {
+        watchDesk();
     }
 })();
