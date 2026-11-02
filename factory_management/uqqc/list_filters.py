@@ -30,23 +30,27 @@ def _device_filter_cache():
     return cache
 
 
-def _paged_device_names(filters):
-    names = []
+def _paged_device_rows(filters, fields):
+    rows = []
     start = 0
     while True:
         page = frappe.get_list(
             DEVICE_DOCTYPE,
             filters=filters,
-            fields=["name"],
+            fields=fields,
             order_by="name asc",
             start=start,
             page_length=DEVICE_QUERY_PAGE_SIZE,
         )
-        names.extend(row["name"] for row in page)
+        rows.extend(page)
         if len(page) < DEVICE_QUERY_PAGE_SIZE:
             break
         start += DEVICE_QUERY_PAGE_SIZE
-    return names
+    return rows
+
+
+def _paged_device_names(filters):
+    return [row["name"] for row in _paged_device_rows(filters, ["name"])]
 
 
 def _matching_device_names(pattern):
@@ -89,8 +93,20 @@ def _matching_device_names_in(values):
     for start in range(0, len(values), DEVICE_QUERY_PAGE_SIZE):
         batch = values[start:start + DEVICE_QUERY_PAGE_SIZE]
         # A filter can contain the Frappe document ID or the visible device_name.
-        names.update(_paged_device_names({"name": ["in", batch]}))
-        names.update(_paged_device_names({"device_name": ["in", batch]}))
+        resolved_values = set()
+        for row in _paged_device_rows({"name": ["in", batch]}, ["name", "device_name"]):
+            names.add(row["name"])
+            resolved_values.add(row["name"].casefold())
+        for row in _paged_device_rows({"device_name": ["in", batch]}, ["name", "device_name"]):
+            names.add(row["name"])
+            resolved_values.add(str(row.get("device_name") or "").casefold())
+
+        # The List View's In editor accepts comma-separated values. Users often
+        # enter a short device fragment (for example "QC"), so resolve unmatched
+        # values by a contains search on the displayed device name.
+        for value in batch:
+            if value.casefold() not in resolved_values:
+                names.update(_matching_device_names(f"%{value}%"))
 
     cache[cache_key] = sorted(names)
     return cache[cache_key]

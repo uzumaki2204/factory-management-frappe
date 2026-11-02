@@ -67,7 +67,7 @@ class DeviceListFilterTests(unittest.TestCase):
             else:
                 raise AssertionError(f"Unexpected lookup operator: {operator}")
             if matched:
-                rows.append({"name": row["name"]})
+                rows.append({field_name: row[field_name] for field_name in fields})
         return rows[start:start + page_length]
 
     def rewrite(self, doctype, filters, key="filters"):
@@ -86,6 +86,17 @@ class DeviceListFilterTests(unittest.TestCase):
     def test_includes_duplicate_display_names(self):
         rewritten = self.rewrite("QC Inspection Event", ["device", "in", ["QC Duplicate"]])
         self.assertEqual(rewritten, ["device", "in", ["uuid-4", "uuid-5"]])
+
+    def test_in_resolves_partial_display_name_when_no_exact_value_exists(self):
+        rewritten = self.rewrite("QC Inspection Event", ["device", "in", ["QC"]])
+        self.assertEqual(rewritten, ["device", "in", ["uuid-1", "uuid-2", "uuid-4", "uuid-5"]])
+
+    def test_not_in_excludes_the_same_partial_display_name_matches(self):
+        rewritten = self.rewrite("UQQC Inspection Event", ["device", "not in", ["QC"]])
+        self.assertEqual(
+            rewritten,
+            ["device", "not in", ["uuid-1", "uuid-2", "uuid-4", "uuid-5"]],
+        )
 
     def test_like_and_not_like_keep_display_name_matching(self):
         included = self.rewrite("UQQC Inspection Event", [["device", "like", "%QC%"]])
