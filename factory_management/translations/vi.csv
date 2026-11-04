@@ -394,3 +394,11 @@ Undo skip for all rows ({0}),Khôi phục tất cả dòng đã bỏ qua ({0})
 Rows with the same issue ({0}),Các dòng có cùng lỗi ({0})
 Skip these rows ({0}),Bỏ qua các dòng này ({0})
 Undo skip for these rows ({0}),Khôi phục các dòng này ({0})
+Variant Combinations,Tổ hợp biến thể
+Total variants: {0},Tổng số tổ hợp: {0}
+No variants found for this product.,Mã hàng này chưa có tổ hợp biến thể.
+Save the product to view its variant combinations.,Lưu mã hàng để xem các tổ hợp biến thể.
+Loading variant combinations...,Đang tải các tổ hợp biến thể...
+Unable to load variant combinations.,Không thể tải các tổ hợp biến thể.
+Inactive,Ngừng hoạt động
+Not set,Chưa thiết lập

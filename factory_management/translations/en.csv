@@ -394,3 +394,11 @@ Undo skip for all rows ({0}),Undo skip for all rows ({0})
 Rows with the same issue ({0}),Rows with the same issue ({0})
 Skip these rows ({0}),Skip these rows ({0})
 Undo skip for these rows ({0}),Undo skip for these rows ({0})
+Variant Combinations,Variant Combinations
+Total variants: {0},Total variants: {0}
+No variants found for this product.,No variants found for this product.
+Save the product to view its variant combinations.,Save the product to view its variant combinations.
+Loading variant combinations...,Loading variant combinations...
+Unable to load variant combinations.,Unable to load variant combinations.
+Inactive,Inactive
+Not set,Not set

@@ -93,6 +93,16 @@
       "sort_options": 0,
       "translatable": 0,
       "unique": 0
+    },
+    {
+      "doctype": "Custom Field",
+      "dt": "Product",
+      "fieldname": "variant_combinations",
+      "fieldtype": "HTML",
+      "hidden": 0,
+      "insert_after": "production_season",
+      "label": "Variant Combinations",
+      "name": "Product-variant_combinations"
     }
   ],
   "doctype": {

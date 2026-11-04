@@ -17,7 +17,10 @@ override_whitelisted_methods = {
     "frappe.desk.reportview.get_list": "factory_management.uqqc.list_filters.get_list",
     "frappe.desk.reportview.get_count": "factory_management.uqqc.list_filters.get_count",
 }
-doctype_js = {"Data Import": "public/js/data_import_bulk_skip.js"}
+doctype_js = {
+    "Data Import": "public/js/data_import_bulk_skip.js",
+    "Product": "public/js/product_variant_combinations.js",
+}
 scheduler_events = {
     "cron": {"* * * * *": ["factory_management.spl_po.schedule.tick"]},
     "daily": ["factory_management.spl_po.service.cleanup_snapshots"],
