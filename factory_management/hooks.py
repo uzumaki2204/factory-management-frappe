@@ -19,7 +19,6 @@ override_whitelisted_methods = {
 }
 doctype_js = {
     "Data Import": "public/js/data_import_bulk_skip.js",
-    "Product": "public/js/product_variant_combinations.js",
 }
 scheduler_events = {
     "cron": {"* * * * *": ["factory_management.spl_po.schedule.tick"]},
