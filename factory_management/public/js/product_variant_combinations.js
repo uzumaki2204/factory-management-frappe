@@ -61,7 +61,8 @@
 			});
 
 			if (frm.__variant_combinations_request === requestId) {
-				render(frm, renderGroups(response.message || {}));
+				const payload = response && response.message ? response.message : response;
+				render(frm, renderGroups(payload || {}));
 			}
 		} catch (_error) {
 			if (frm.__variant_combinations_request === requestId) {
