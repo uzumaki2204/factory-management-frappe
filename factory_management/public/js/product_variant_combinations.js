@@ -41,10 +41,9 @@
 		if (payload.has_unset_color) colors.push({ id: "", label: __("Not Applicable") });
 		if (payload.has_unset_size) sizes.push({ id: "", label: __("Not Applicable") });
 
-		return `<p class="text-muted">${escape(__("Total variants: {0}", [payload.total_variants || 0]))}</p>
+		return `${renderGroup(__("Markets selected: {0}", [markets.length]), markets)}
 			${renderGroup(__("Colors selected: {0}", [colors.length]), colors)}
-			${renderGroup(__("Sizes selected: {0}", [sizes.length]), sizes)}
-			${renderGroup(__("Markets selected: {0}", [markets.length]), markets)}`;
+			${renderGroup(__("Sizes selected: {0}", [sizes.length]), sizes)}`;
 	}
 
 	async function loadVariants(frm, requestId) {
