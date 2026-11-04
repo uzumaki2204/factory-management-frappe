@@ -33,11 +33,11 @@ def _fail(key, error=frappe.ValidationError):
     frappe.throw(message(key), error)
 
 
-@frappe.whitelist(methods=["GET"])
+@frappe.whitelist(methods=["POST"])
 def product_variant_groups(product=None):
     """Return distinct Market, Product Color, and ProductSize labels for a readable Product.
 
-    Contract: GET with ``product`` set to a Product document name. Returns
+    Contract: POST with ``product`` set to a Product document name. Returns
     ``{total_variants, groups: {markets, colors, sizes}}`` with each group an
     array of ``{id, label}`` values. This method is authenticated and scopes
     linked master labels to variants of the requested Product.
