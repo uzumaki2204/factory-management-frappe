@@ -3,7 +3,6 @@
 	window.__factoryProductVariantCombinationsRegistered = true;
 
 	const FIELDNAME = "variant_combinations";
-	const PAGE_SIZE = 5000;
 
 	function escape(value) {
 		return frappe.utils.escape_html(String(value || ""));
@@ -18,44 +17,34 @@
 		return `<p class="${kind}">${escape(text)}</p>`;
 	}
 
-	function renderTable(rows) {
-		if (!rows.length) return renderMessage(__("No variants found for this product."));
+	function renderGroup(title, values) {
+		const chips = values.length
+			? values.map((item) => `<span class="badge rounded-pill bg-light text-dark border">${escape(item.label)}</span>`).join("")
+			: "";
+		return `<section class="mb-3">
+			<p class="text-muted mb-2">${escape(title)}</p>
+			<div class="d-flex flex-wrap gap-2">${chips}</div>
+		</section>`;
+	}
 
+	function renderGroups(payload) {
+		if (!payload.total_variants) return renderMessage(__("No variants found for this product."));
+
+		const groups = payload.groups || {};
+		const colors = [...(groups.colors || [])];
+		const sizes = [...(groups.sizes || [])];
+		const markets = [...(groups.markets || [])];
 		const compare = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" }).compare;
-		const sortedRows = [...rows].sort((left, right) => {
-			const marketOrder = compare(left.market || "", right.market || "");
-			if (marketOrder) return marketOrder;
-			const colorOrder = compare(left.product_color || "", right.product_color || "");
-			if (colorOrder) return colorOrder;
-			return compare(left.size || "", right.size || "");
-		});
-		const body = sortedRows
-			.map((row) => {
-				const market = row.market || __("Not set");
-				const color = row.product_color || __("Not set");
-				const size = row.size || __("Not set");
-				const status = row.is_active ? __("Active") : __("Inactive");
-				return `<tr>
-					<td>${escape(market)}</td>
-					<td>${escape(color)}</td>
-					<td>${escape(size)}</td>
-					<td>${escape(status)}</td>
-				</tr>`;
-			})
-			.join("");
+		for (const values of [colors, sizes, markets]) {
+			values.sort((left, right) => compare(left.label || "", right.label || ""));
+		}
+		if (payload.has_unset_color) colors.push({ id: "", label: __("Not Applicable") });
+		if (payload.has_unset_size) sizes.push({ id: "", label: __("Not Applicable") });
 
-		return `<p class="text-muted">${escape(__("Total variants: {0}", [rows.length]))}</p>
-			<div class="table-responsive">
-				<table class="table table-bordered" aria-label="${escape(__("Variant Combinations"))}">
-					<thead><tr>
-						<th scope="col">${escape(__("Market"))}</th>
-						<th scope="col">${escape(__("Color"))}</th>
-						<th scope="col">${escape(__("Size"))}</th>
-						<th scope="col">${escape(__("Status"))}</th>
-					</tr></thead>
-					<tbody>${body}</tbody>
-				</table>
-			</div>`;
+		return `<p class="text-muted">${escape(__("Total variants: {0}", [payload.total_variants || 0]))}</p>
+			${renderGroup(__("Colors selected: {0}", [colors.length]), colors)}
+			${renderGroup(__("Sizes selected: {0}", [sizes.length]), sizes)}
+			${renderGroup(__("Markets selected: {0}", [markets.length]), markets)}`;
 	}
 
 	async function loadVariants(frm, requestId) {
@@ -66,15 +55,13 @@
 
 		render(frm, renderMessage(__("Loading variant combinations...")));
 		try {
-			const rows = await frappe.db.get_list("Product Variant", {
-				filters: { product: frm.doc.name },
-				fields: ["name", "market", "product_color", "size", "is_active"],
-				order_by: "market asc, product_color asc, size asc",
-				limit_page_length: PAGE_SIZE,
+			const response = await frappe.call({
+				method: "factory_management.api.product_variant_groups",
+				args: { product: frm.doc.name },
 			});
 
 			if (frm.__variant_combinations_request === requestId) {
-				render(frm, renderTable(rows));
+				render(frm, renderGroups(response.message || {}));
 			}
 		} catch (_error) {
 			if (frm.__variant_combinations_request === requestId) {

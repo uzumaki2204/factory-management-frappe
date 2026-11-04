@@ -402,4 +402,12 @@ Loading variant combinations...,Đang tải các tổ hợp biến thể...
 Unable to load variant combinations.,Không thể tải các tổ hợp biến thể.
 Inactive,Ngừng hoạt động
 Not set,Chưa thiết lập
+Not Applicable,Không áp dụng
+Colors selected: {0},Màu đã chọn: {0}
+Sizes selected: {0},Size đã chọn: {0}
+Markets selected: {0},Thị trường đã chọn: {0}
+Select a product to view its variant combinations.,Chọn mã hàng để xem tổ hợp biến thể.
+Product not found.,Không tìm thấy mã hàng.
+You do not have permission to view this product.,Bạn không có quyền xem mã hàng này.
+You do not have permission to view this product's variant combinations.,Bạn không có quyền xem tổ hợp biến thể của mã hàng.
 The Product variant combinations field has an unexpected type.,Trường tổ hợp biến thể của mã hàng có kiểu dữ liệu không mong đợi.

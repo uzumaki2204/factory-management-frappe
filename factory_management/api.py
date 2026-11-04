@@ -33,6 +33,74 @@ def _fail(key, error=frappe.ValidationError):
     frappe.throw(message(key), error)
 
 
+@frappe.whitelist(methods=["GET"])
+def product_variant_groups(product=None):
+    """Return distinct Market, Product Color, and ProductSize labels for a readable Product.
+
+    Contract: GET with ``product`` set to a Product document name. Returns
+    ``{total_variants, groups: {markets, colors, sizes}}`` with each group an
+    array of ``{id, label}`` values. This method is authenticated and scopes
+    linked master labels to variants of the requested Product.
+    """
+    product_name = str(product or "").strip()
+    if not product_name:
+        frappe.throw(frappe._("Select a product to view its variant combinations."), frappe.ValidationError)
+    if not frappe.db.exists("Product", product_name):
+        frappe.throw(frappe._("Product not found."), frappe.DoesNotExistError)
+
+    product_doc = frappe.get_doc("Product", product_name)
+    if not frappe.has_permission("Product", ptype="read", doc=product_doc):
+        frappe.throw(frappe._("You do not have permission to view this product."), frappe.PermissionError)
+    if not frappe.has_permission("Product Variant", ptype="read"):
+        frappe.throw(
+            frappe._("You do not have permission to view this product's variant combinations."),
+            frappe.PermissionError,
+        )
+
+    rows = frappe.get_list(
+        "Product Variant",
+        filters={"product": product_name},
+        fields=["market", "product_color", "size"],
+        order_by="name asc",
+        limit_page_length=10000,
+    )
+    linked = {
+        "markets": {row.market for row in rows if row.market},
+        "colors": {row.product_color for row in rows if row.product_color},
+        "sizes": {row.size for row in rows if row.size},
+    }
+
+    def options(doctype, ids, code_field, label_field):
+        if not ids:
+            return []
+        records = frappe.get_all(
+            doctype,
+            filters={"name": ["in", sorted(ids)]},
+            fields=["name", code_field, label_field],
+            limit_page_length=len(ids),
+        )
+        by_name = {record.name: record for record in records}
+        result = []
+        for name in ids:
+            record = by_name.get(name)
+            code = str(record.get(code_field) or "").strip() if record else ""
+            label = str(record.get(label_field) or "").strip() if record else ""
+            display = f"{code} - {label}" if code and label and code.casefold() != label.casefold() else code or label or name
+            result.append({"id": name, "label": display})
+        return result
+
+    return {
+        "total_variants": len(rows),
+        "groups": {
+            "markets": options("Market", linked["markets"], "code", "name_en"),
+            "colors": options("Product Color", linked["colors"], "color_code", "color_name"),
+            "sizes": options("ProductSize", linked["sizes"], "size_code", "size_label"),
+        },
+        "has_unset_color": any(not row.product_color for row in rows),
+        "has_unset_size": any(not row.size for row in rows),
+    }
+
+
 def _digest(value):
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 

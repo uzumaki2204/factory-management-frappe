@@ -402,4 +402,12 @@ Loading variant combinations...,Loading variant combinations...
 Unable to load variant combinations.,Unable to load variant combinations.
 Inactive,Inactive
 Not set,Not set
+Not Applicable,Not Applicable
+Colors selected: {0},Colors selected: {0}
+Sizes selected: {0},Sizes selected: {0}
+Markets selected: {0},Markets selected: {0}
+Select a product to view its variant combinations.,Select a product to view its variant combinations.
+Product not found.,Product not found.
+You do not have permission to view this product.,You do not have permission to view this product.
+You do not have permission to view this product's variant combinations.,You do not have permission to view this product's variant combinations.
 The Product variant combinations field has an unexpected type.,The Product variant combinations field has an unexpected type.
