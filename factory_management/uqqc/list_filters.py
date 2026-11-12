@@ -143,7 +143,7 @@ def _rewrite_condition(condition):
     if len(condition) == 3:
         field_index, operator_index, value_index = 0, 1, 2
     elif len(condition) == 4:
-        if condition[0] not in DEVICE_LINK_DOCTYPES:
+        if not isinstance(condition[0], str) or condition[0] not in DEVICE_LINK_DOCTYPES:
             return None
         field_index, operator_index, value_index = 1, 2, 3
     else:

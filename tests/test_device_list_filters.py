@@ -104,6 +104,33 @@ class DeviceListFilterTests(unittest.TestCase):
         self.assertEqual(included, [["device", "in", ["uuid-1", "uuid-2", "uuid-4", "uuid-5"]]])
         self.assertEqual(excluded, [["device", "not in", ["uuid-1", "uuid-2", "uuid-4", "uuid-5"]]])
 
+    def test_four_filter_collection_from_uqqc_list_request_is_left_unchanged(self):
+        filters = [
+            ["UQQC Inspection Event", "occurred_at", "Between", ["2026-11-10", "2026-11-10"]],
+            ["UQQC Inspection Event", "event_kind", "=", "rework"],
+            ["UQQC Inspection Event", "device", "=", "af982e98-47c0-4a0c-a3fc-fa6fa37357a5"],
+            ["UQQC Inspection Event", "product", "=", "9d847830-6430-4db4-ba18-1c39be3da884"],
+        ]
+
+        rewritten = self.rewrite("UQQC Inspection Event", filters)
+
+        self.assertEqual(rewritten, filters)
+        self.assertEqual(self.calls, [])
+
+    def test_four_filter_collection_rewrites_only_qualified_device_filter(self):
+        filters = [
+            ["UQQC Inspection Event", "occurred_at", "Between", ["2026-11-10", "2026-11-10"]],
+            ["UQQC Inspection Event", "event_kind", "=", "rework"],
+            ["UQQC Inspection Event", "device", "in", ["Cutting"]],
+            ["UQQC Inspection Event", "product", "=", "product-id"],
+        ]
+
+        rewritten = self.rewrite("UQQC Inspection Event", filters)
+
+        expected = [list(condition) for condition in filters]
+        expected[2] = ["UQQC Inspection Event", "device", "in", ["uuid-3"]]
+        self.assertEqual(rewritten, expected)
+
     def test_supports_doctype_qualified_and_dictionary_filters_in_or_filters(self):
         qualified = self.rewrite(
             "QC Favorite", [["QC Favorite", "device", "in", ["Cutting"]]], key="or_filters"
