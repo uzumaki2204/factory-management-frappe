@@ -46,7 +46,7 @@ doc_events = {
 }
 
 app_include_js = [
-    "/assets/factory_management/js/factory_device.js",
+    "factory_device.bundle.js",
     "/assets/factory_management/js/dock_url_fix_v1.js",
     "/assets/factory_management/js/desktop_shortcuts.js",
     "/assets/factory_management/js/spl_import_settings.js",
