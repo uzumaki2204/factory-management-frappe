@@ -150,7 +150,10 @@ MASTER_TYPE_MODULES = {
 # Keep shared master naming behavior in app metadata so it is identical on
 # every site, even when the DocType already existed before an app upgrade.
 DOCTYPE_SETTINGS = {
-    "Factory Device": {"title_field": "device_name", "show_title_field_in_link": 1},
+    "Factory Device": {
+        "title_field": "device_name", "show_title_field_in_link": 1,
+        "autoname": "", "naming_rule": "By script",
+    },
     "UQQC Defect": {"title_field": "code", "show_title_field_in_link": 1},
     "UQQC Defect Position": {"title_field": "code", "show_title_field_in_link": 1},
     "Customer": {"autoname": "hash", "allow_rename": 1},
@@ -240,7 +243,7 @@ DEVICE_TYPES = {
         field("reset_at_utc", "Reset At UTC", "Datetime", reqd=1),
     ],
     "Factory Device": [
-        field("device_name", "Device Name", in_list_view=1),
+        field("device_name", "Device Name", in_list_view=1, reqd=1),
         field("status", "Status", "Select", "Pending\nApproved\nRejected\nDeactivated", default="Pending", in_list_view=1),
         field("is_active", "Active", "Check", default="1"),
         field("company", "Company", "Link", "Company"),
@@ -299,7 +302,7 @@ def _doctype_definition(name, fields, module, is_child):
         "name": name,
         "module": module,
         "custom": 1,
-        "autoname": "prompt" if name == "Factory Device" else "hash",
+        "autoname": "" if name == "Factory Device" else "hash",
         "issingle": 0,
         "istable": 1 if is_child else 0,
         "track_changes": 1,

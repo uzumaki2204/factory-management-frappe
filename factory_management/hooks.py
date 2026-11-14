@@ -38,7 +38,10 @@ doc_events = {
     "QC Defect Position": {"validate": "factory_management.catalog.validate_qc_position"},
     "UQQC Defect": {"validate": "factory_management.catalog.validate_uqqc_defect"},
     "UQQC Defect Position": {"validate": "factory_management.catalog.validate_uqqc_position"},
-    "Factory Device": {"before_naming": "factory_management.device_registry.before_naming"},
+    "Factory Device": {
+        "before_naming": "factory_management.device_registry.before_naming",
+        "autoname": "factory_management.device_registry.autoname",
+    },
     "Factory": {"before_naming": "factory_management.factory_naming.before_naming"},
 }
 

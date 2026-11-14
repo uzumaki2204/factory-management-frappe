@@ -33,6 +33,7 @@ def before_naming(device, method=None):
     name = str(device.name or "").strip()
     if not name:
         device.name = str(uuid.uuid4())
+        device.flags.factory_device_name = device.name
         return
     try:
         valid = str(uuid.UUID(name)) == name.lower()
@@ -40,3 +41,13 @@ def before_naming(device, method=None):
         valid = False
     if not valid:
         frappe.throw(message("error.device_id_invalid"), frappe.ValidationError)
+    device.flags.factory_device_name = device.name
+
+
+def autoname(device, method=None):
+    """Restore the validated UUID after Frappe clears name for script naming.
+
+    Using a script keeps the existing VARCHAR primary key and avoids the
+    synthetic Name input created by prompt naming.
+    """
+    device.name = device.flags.factory_device_name

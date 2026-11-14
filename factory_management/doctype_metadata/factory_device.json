@@ -9,7 +9,7 @@
     "allow_guest_to_view": 0,
     "allow_import": 1,
     "allow_rename": 1,
-    "autoname": "prompt",
+    "autoname": "",
     "beta": 0,
     "custom": 1,
     "deprecated": 0,
@@ -59,7 +59,7 @@
         "read_only": 0,
         "remember_last_selected_value": 0,
         "report_hide": 0,
-        "reqd": 0,
+        "reqd": 1,
         "search_index": 0,
         "set_only_once": 0,
         "show_dashboard": 0,
@@ -452,7 +452,7 @@
     "max_attachments": 0,
     "module": "Factory Management",
     "name": "Factory Device",
-    "naming_rule": "",
+    "naming_rule": "By script",
     "permissions": [
       {
         "amend": 0,
