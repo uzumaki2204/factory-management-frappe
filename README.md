@@ -111,6 +111,8 @@ Data Import của **UQQC Inspection Event** chỉ nhận **Insert New Records**.
 
 Từ bản **0.1.85**, Pilot cần cập nhật app từ nhánh `version-16` và chạy migrate. Patch `set_factory_device_script_naming` áp dụng Naming Rule **By script** và bắt buộc **Device Name** cho site đã cài. Sau cập nhật, tải lại Desk để nhận metadata mới; không cần Client Script ẩn Name.
 
+Từ bản **0.1.86**, form Factory Device lọc Factory theo Company và Line theo Factory. Chưa chọn cấp trên thì danh sách cấp dưới trống; đổi Company sẽ xóa Factory/Line đang chọn, đổi Factory sẽ xóa Line. Cập nhật app qua Pilot và tải lại Desk để nhận bộ lọc.
+
 ### ID Factory Device
 
 Factory Device dùng khóa chính Frappe `name` với giá trị UUID. Hook `before_naming` chuẩn bị UUID và kiểm tra ID được cung cấp; hook `autoname` gán UUID theo quy tắc `By script`, giữ kiểu cột khóa chính hiện có. Form không yêu cầu nhập Name; Device Name là bắt buộc. Khi nâng cấp, migration kiểm tra mọi `device_id` cũ bằng `name`, giữ nguyên ID hiện có và Link từ QC/UQQC, rồi xóa `device_id`, `device_uid` và DocType `Factory Device Client`. Thiết bị không còn token; API tablet dùng tham số `id`, vẫn nhận tạm `device_id`/`deviceId` và trả alias `device_id` cho client cũ. Trước khi chạy migration trên site có dữ liệu, sao lưu database cùng public/private files bằng `bench --site <site> backup --with-files`, sau đó chạy `bench --site <site> migrate` và kiểm tra lại các liên kết thiết bị. Nếu hai ID cũ không khớp, migration dừng trước khi xóa cột.
