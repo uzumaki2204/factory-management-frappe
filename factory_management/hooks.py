@@ -20,9 +20,13 @@ override_whitelisted_methods = {
 doctype_js = {
     "Data Import": "public/js/data_import_bulk_skip.js",
 }
+doctype_list_js = {
+    "Trim": "public/js/trim_list.js",
+}
 scheduler_events = {
     "cron": {"* * * * *": ["factory_management.spl_po.schedule.tick"]},
-    "daily": ["factory_management.spl_po.service.cleanup_snapshots"],
+    "daily": ["factory_management.spl_po.service.cleanup_snapshots",
+              "factory_management.trim.service.cleanup_snapshots"],
 }
 update_website_context = [
     "factory_management.qc_web_page.update_website_context",

@@ -150,6 +150,7 @@ MASTER_TYPE_MODULES = {
 # Keep shared master naming behavior in app metadata so it is identical on
 # every site, even when the DocType already existed before an app upgrade.
 DOCTYPE_SETTINGS = {
+    "Trim": {"title_field": "order_no", "show_title_field_in_link": 1},
     "Factory Device": {
         "title_field": "device_name", "show_title_field_in_link": 1,
         "autoname": "", "naming_rule": "By script",
@@ -448,6 +449,7 @@ def export_doctype_metadata():
     """Export current app-managed DocType metadata for source-controlled releases."""
     from factory_management.uqqc.provision import CATALOG_TYPES
     from factory_management.spl_po.schema import TYPES as SPL_TYPES
+    from factory_management.trim.schema import TYPES as TRIM_TYPES
 
     names = (
         *MASTER_TYPES,
@@ -456,6 +458,7 @@ def export_doctype_metadata():
         *DOCUMENTATION_TYPES,
         *CATALOG_TYPES,
         *SPL_TYPES,
+        *TRIM_TYPES,
         "UQQC Inspection Event",
     )
     METADATA_DIRECTORY.mkdir(parents=True, exist_ok=True)
@@ -550,6 +553,8 @@ def ensure_schema():
     ensure_uqqc()
     from factory_management.spl_po.provision import ensure as ensure_spl_po
     ensure_spl_po()
+    from factory_management.trim.provision import ensure as ensure_trim
+    ensure_trim()
     frappe.clear_cache()
 
 

@@ -1,0 +1,9 @@
+{
+  "doctype": "Page",
+  "name": "trim-import",
+  "page_name": "trim-import",
+  "title": "Trim Import",
+  "module": "Factory Management",
+  "standard": "Yes",
+  "roles": [{"role": "System Manager"}]
+}

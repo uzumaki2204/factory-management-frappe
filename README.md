@@ -93,6 +93,12 @@ Lịch mặc định tắt. Khi bật, nhập các giờ địa phương dạng 
 
 Kiểm thử parser/gateway không cần site (cài thêm extra `.[test]` để tạo fixture `.xls`): `python -m unittest discover -s tests -p 'test_spl_po*.py' -v`. Kiểm thử upsert trên site thử: `bench --site <site-thu> run-tests --app factory_management --module factory_management.spl_po.test_spl_po_frappe`.
 
+## Nhập đơn Trim từ workbook
+
+Trong danh sách **Trim** của Frappe Desk, System Manager chọn **Import Trim**. Trang import nhận file `.xlsx` dạng `ExcelOut(Trim)` (tối đa 20 MB và 50.000 dòng), tải lên dưới dạng Private File, hiển thị preview 100 dòng mỗi trang và tổng số đơn/dòng theo trạng thái. Sau khi kiểm tra, chọn **Import All Orders** và theo dõi kết quả ở **Import History**.
+
+Một bản ghi Trim ứng với cặp `Order No.` và `Revision No.`; mỗi dòng Excel thành một Trim Item. Các cột nguyên liệu và nhà cung cấp nguyên liệu được giữ ở dòng chi tiết dù `Trim Description`, `Trim Item No.` và `Trim Supplier` để trống. `Document Status` giữ nguyên `New`, `Change` hoặc `Cancel`. Nhập lại cùng đơn/revision cập nhật bản ghi và thay thế các dòng chi tiết của đơn đó. Import xử lý từng đơn riêng và ghi các đơn lỗi vào Trim Import Run. `bench migrate` tạo DocType và trang Desk; worker queue `long` cần hoạt động để xử lý file.
+
 ## Generation dữ liệu sau khi làm mới QC
 
 `GET /api/method/factory_management.api.data_epoch` trả trực tiếp `{generation, resetAtUtc}`. Trước lần làm mới, `generation` rỗng. Sau lần làm mới, các lệnh ghi/đăng ký/kiểm tra thiết bị QC và UQQC cần header `X-Factory-Data-Epoch` bằng generation hiện tại; request cũ bị từ chối. Client QC/UQQC đọc generation trước khi đồng bộ và xóa queue, cache cũ khi generation đổi. DocType `Factory Data Epoch` chỉ lưu generation của site. Luồng làm mới do MigrationFrappe chạy cục bộ bằng Bench trong Docker; không có API HTTP để xóa dữ liệu.
