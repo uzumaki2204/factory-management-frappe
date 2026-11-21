@@ -5,5 +5,5 @@
   "title": "Trim Import",
   "module": "Factory Management",
   "standard": "Yes",
-  "roles": [{"role": "System Manager"}]
+  "roles": [{"role": "System Manager"}, {"role": "Trim Manager"}]
 }

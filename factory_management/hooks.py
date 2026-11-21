@@ -5,6 +5,8 @@ app_description = "Quality Control"
 app_email = ""
 app_license = "Proprietary"
 
+before_install = "factory_management.trim.provision.ensure_role"
+before_migrate = "factory_management.trim.provision.ensure_role"
 after_install = "factory_management.install.after_install"
 after_migrate = "factory_management.install.ensure_schema"
 after_request = ["factory_management.api_response.direct_qc_response"]
@@ -46,6 +48,7 @@ doc_events = {
         "before_naming": "factory_management.device_registry.before_naming",
         "autoname": "factory_management.device_registry.autoname",
     },
+    "Trim": {"before_validate": "factory_management.trim.identity.set_derived_fields"},
     "Factory": {"before_naming": "factory_management.factory_naming.before_naming"},
     "Line Group Assignment": {
         "before_validate": "factory_management.line_group_assignment.ensure_assignment_uid",

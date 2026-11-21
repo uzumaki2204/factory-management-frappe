@@ -1,7 +1,6 @@
 """Private preview and transactional import of Trim orders."""
 
 import gzip
-import hashlib
 import json
 import os
 import secrets
@@ -13,6 +12,7 @@ import frappe
 from frappe.utils import get_datetime, now_datetime
 
 from factory_management.trim.parser import MAX_BYTES, WorkbookError, parse_workbook
+from factory_management.trim.identity import source_key
 
 IMPORT_BATCH_SIZE = 50
 
@@ -162,11 +162,10 @@ def queue_import(source, token):
 
 def _import_group(group):
     header = group[0]["header"]
-    source_key = hashlib.sha256(json.dumps([header["order_no"], header["revision_no"]],
-                                        ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
-    existing = frappe.db.get_value("Trim", {"source_key": source_key}, "name")
+    key = source_key(header["order_no"], header["revision_no"])
+    existing = frappe.db.get_value("Trim", {"source_key": key}, "name")
     doc = frappe.get_doc("Trim", existing) if existing else frappe.new_doc("Trim")
-    doc.update({**header, "source_key": source_key,
+    doc.update({**header, "source_key": key,
                 "total_quantity": sum(row["item"]["order_qty"] for row in group),
                 "imported_at": now_datetime()})
     doc.set("items", [])

@@ -95,7 +95,9 @@ Kiểm thử parser/gateway không cần site (cài thêm extra `.[test]` để 
 
 ## Nhập đơn Trim từ workbook
 
-Trong danh sách **Trim** của Frappe Desk, System Manager chọn **Import Trim**. Trang import nhận file `.xlsx` dạng `ExcelOut(Trim)` (tối đa 20 MB và 50.000 dòng), tải lên dưới dạng Private File, hiển thị preview 100 dòng mỗi trang và tổng số đơn/dòng theo trạng thái. Sau khi kiểm tra, chọn **Import All Orders** và theo dõi kết quả ở **Import History**.
+Trong danh sách **Trim** của Frappe Desk, System Manager hoặc Trim Manager chọn **Import Trim**. Trang import nhận file `.xlsx` dạng `ExcelOut(Trim)` (tối đa 20 MB và 50.000 dòng), tải lên dưới dạng Private File, hiển thị preview 100 dòng mỗi trang và tổng số đơn/dòng theo trạng thái. Sau khi kiểm tra, chọn **Import All Orders** và theo dõi kết quả ở **Import History**.
+
+Vai trò **Trim Manager** có thể tạo, xem, sửa, xóa đơn Trim và nhập Excel. Khi sửa đơn trong Desk, hệ thống tính lại Source Key từ Order No. và Revision No., đồng thời tính tổng số lượng từ các dòng chi tiết. Đơn trùng cặp mã bị từ chối. Nhập lại Excel cùng cặp mã sẽ ghi đè thông tin đơn và dòng chi tiết.
 
 Một bản ghi Trim ứng với cặp `Order No.` và `Revision No.`; mỗi dòng Excel thành một Trim Item. Các cột nguyên liệu và nhà cung cấp nguyên liệu được giữ ở dòng chi tiết dù `Trim Description`, `Trim Item No.` và `Trim Supplier` để trống. `Document Status` giữ nguyên `New`, `Change` hoặc `Cancel`. Nhập lại cùng đơn/revision cập nhật bản ghi và thay thế các dòng chi tiết của đơn đó. Import xử lý từng đơn riêng và ghi các đơn lỗi vào Trim Import Run. `bench migrate` tạo DocType và trang Desk; worker queue `long` cần hoạt động để xử lý file.
 
