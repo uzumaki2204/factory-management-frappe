@@ -47,6 +47,9 @@ doc_events = {
         "autoname": "factory_management.device_registry.autoname",
     },
     "Factory": {"before_naming": "factory_management.factory_naming.before_naming"},
+    "Line Group Assignment": {
+        "before_validate": "factory_management.line_group_assignment.ensure_assignment_uid",
+    },
 }
 
 app_include_js = [

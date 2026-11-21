@@ -97,7 +97,7 @@ MASTER_TYPES = {
         field("legacy_id", "Legacy ID", read_only=1),
     ],
     "Line Group Assignment": [
-        field("assignment_uid", "Assignment UID", reqd=1, unique=1),
+        field("assignment_uid", "Assignment UID", unique=1, read_only=1, no_copy=1),
         field("line", "Line", "Link", "Production Line", reqd=1, in_list_view=1),
         field("line_group", "Line Group", "Link", "Line Group", reqd=1, in_list_view=1),
         field("legacy_id", "Legacy ID", read_only=1),
