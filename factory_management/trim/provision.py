@@ -28,9 +28,15 @@ def ensure():
         run_type.save(ignore_permissions=True)
     for name, permissions in (
         ("Trim", {"read": 1, "write": 1, "create": 1, "delete": 1, "report": 1, "export": 1}),
-        ("Trim Import Run", {"read": 1, "report": 1, "export": 1}),
+        ("Trim Import Run", {"read": 1, "write": 0, "create": 0, "delete": 0,
+                             "report": 1, "export": 1, "share": 0, "email": 0}),
     ):
         doctype = frappe.get_doc("DocType", name)
-        if not any(row.role == ROLE and row.permlevel == 0 for row in doctype.permissions):
+        row = next((row for row in doctype.permissions if row.role == ROLE and row.permlevel == 0), None)
+        if row:
+            if any(row.get(field) != value for field, value in permissions.items()):
+                row.update(permissions)
+                doctype.save(ignore_permissions=True)
+        else:
             doctype.append("permissions", {"role": ROLE, "permlevel": 0, **permissions})
             doctype.save(ignore_permissions=True)
