@@ -11,7 +11,7 @@
   gap: 12px;
   width: min(100%, 1680px);
   margin: 0 auto;
-  padding: 8px clamp(12px, 1.5vw, 24px) 16px;
+  padding: 8px clamp(12px, 1.5vw, 24px) 32px;
   color: var(--text-color, #172033);
 }
 
@@ -38,14 +38,18 @@
 
 .uqqc-report__panel {
   min-width: 0;
-  overflow: hidden;
   border: 1px solid var(--uqqc-report-border);
   border-radius: 12px;
   background: var(--uqqc-report-surface);
   box-shadow: 0 2px 8px rgb(15 23 42 / 4%);
 }
 
+/* ── Filters Panel (phải overflow: visible và z-index cao để dropdown không bị che) ── */
+
 .uqqc-report__filters {
+  position: relative;
+  z-index: 50;
+  overflow: visible !important;
   display: grid;
   gap: 12px;
   padding: 14px 16px 12px;
@@ -65,7 +69,7 @@
   line-height: 1.4;
 }
 
-/* ── Filter rows ──────────────────────────────────────────────────────────── */
+/* ── Filter rows (Row 1 z-index cao hơn Row 2 để dropdown không che nhau) ── */
 
 .uqqc-report__filter-row {
   display: grid;
@@ -74,7 +78,14 @@
   gap: 12px;
 }
 
+.uqqc-report__filter-row:first-child {
+  position: relative;
+  z-index: 20;
+}
+
 .uqqc-report__filter-row--detail {
+  position: relative;
+  z-index: 10;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -82,9 +93,10 @@
   display: none;
 }
 
-/* ── Controls & Input styling (Nền xám rõ ràng, viền nổi bật) ────────────── */
+/* ── Controls & Input styling ─────────────────────────────────────────────── */
 
 .uqqc-report__date-control {
+  position: relative;
   min-width: 0;
 }
 
@@ -133,9 +145,36 @@
   outline: none !important;
 }
 
+/* ── Dropdown / Awesomplete / Datepicker z-index và hiển thị đè lên trên ── */
+
+.uqqc-report__date-control .awesomplete {
+  position: relative;
+}
+
+.uqqc-report__date-control .awesomplete > ul,
+.uqqc-report__date-control ul[role="listbox"] {
+  position: absolute;
+  top: 100% !important;
+  left: 0 !important;
+  z-index: 1050 !important;
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  background-color: #ffffff !important;
+}
+
+.datepicker {
+  z-index: 1050 !important;
+}
+
 /* ── Actions row (Nút View Report) ────────────────────────────────────────── */
 
 .uqqc-report__actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -197,6 +236,8 @@
 /* ── Tabs ─────────────────────────────────────────────────────────────────── */
 
 .uqqc-report__tabs {
+  position: relative;
+  z-index: 5;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
@@ -264,9 +305,21 @@
   line-height: 1.25;
 }
 
+/* Fallback nếu trình duyệt còn lưu cache JS cũ */
+.uqqc-report__tab > .uqqc-report__tab-title {
+  display: block;
+}
+
+.uqqc-report__tab > .uqqc-report__tab-hint {
+  display: block;
+  margin-left: 6px;
+}
+
 /* ── Metric Cards ─────────────────────────────────────────────────────────── */
 
 .uqqc-report__metrics {
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
@@ -349,15 +402,23 @@
 
 /* ── Results Panel ────────────────────────────────────────────────────────── */
 
+.uqqc-report__results {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
 .uqqc-report__results-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   min-height: 32px;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--uqqc-report-border);
   background: var(--uqqc-report-subtle);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .uqqc-report__results-meta {
@@ -374,7 +435,7 @@
 }
 
 .uqqc-report__status:not(:empty) {
-  margin: 14px 18px 0;
+  margin: 14px 18px;
 }
 
 .uqqc-report__status.is-error {
@@ -386,28 +447,27 @@
   color: var(--uqqc-report-accent);
 }
 
-/* ── Table ────────────────────────────────────────────────────────────────── */
+/* ── Table (Hiển thị hết tất cả hàng, KHÔNG cuộn dọc) ─────────────────────── */
 
 .uqqc-report__table-wrap {
-  flex: 1;
   width: 100%;
-  min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
+  overflow-x: auto; /* Cho phép cuộn ngang nếu màn hình nhỏ / nhiều cột */
+  overflow-y: visible !important; /* Không cuộn dọc - bảng dài bao nhiêu hiển thị bấy nhiêu */
+  max-height: none !important;
 }
 
 .uqqc-report__table {
-  width: max-content;
+  width: 100%;
   min-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .uqqc-report__table th,
 .uqqc-report__table td {
   min-width: 88px;
-  padding: 10px 13px;
+  padding: 10px 14px;
   border-right: 1px solid var(--uqqc-report-border);
   border-bottom: 1px solid var(--uqqc-report-border);
   text-align: left;
@@ -415,14 +475,11 @@
 }
 
 .uqqc-report__table th {
-  position: sticky;
-  z-index: 1;
-  top: 0;
   background: var(--uqqc-report-subtle);
   color: var(--heading-color, #334155);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 
 .uqqc-report__table th:first-child,
@@ -460,9 +517,6 @@
 /* ── Grand Total Row ──────────────────────────────────────────────────────── */
 
 .uqqc-report__total-row td {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
   background: color-mix(in srgb, var(--uqqc-report-accent) 10%, var(--uqqc-report-subtle));
   border-top: 2px solid var(--uqqc-report-accent);
   font-variant-numeric: tabular-nums;
@@ -485,7 +539,7 @@
   align-content: center;
   justify-items: center;
   gap: 8px;
-  padding: 32px 24px;
+  padding: 36px 24px;
   color: var(--uqqc-report-muted);
   text-align: center;
 }
@@ -494,13 +548,6 @@
   font-size: 48px;
   line-height: 1;
   opacity: 0.65;
-}
-
-.uqqc-report__results {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 180px;
 }
 
 .uqqc-report__empty strong {
@@ -623,7 +670,7 @@
   }
 
   .uqqc-report__results-header {
-    padding: 5px 10px;
+    padding: 6px 12px;
   }
 }
 

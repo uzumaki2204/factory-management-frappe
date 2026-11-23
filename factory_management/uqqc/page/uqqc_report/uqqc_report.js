@@ -82,11 +82,6 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
   resultsPanel.append(resultsHeader, status, tableWrap);
   root.append(resultsPanel);
   page.body.append(root);
-  const fitHeight = () => {
-    root.style.height = `${Math.max(420, window.innerHeight - root.getBoundingClientRect().top - 8)}px`;
-  };
-  window.addEventListener('resize', fitHeight);
-  requestAnimationFrame(fitHeight);
 
   runButton.addEventListener('click', runReport);
   summaryTab.addEventListener('click', () => selectTab('summary'));
@@ -151,7 +146,6 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     }
     detailFilters.hidden = tab !== 'device';
     resultsPanel.id = 'uqqc-report-results';
-    requestAnimationFrame(fitHeight);
     runReport();
   }
 
