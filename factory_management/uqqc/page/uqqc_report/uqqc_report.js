@@ -125,15 +125,19 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     icon.setAttribute('aria-hidden', 'true');
     icon.innerHTML = iconHtml || '';
 
-    const title = document.createElement('span');
+    const textWrap = document.createElement('div');
+    textWrap.className = 'uqqc-report__tab-text';
+
+    const title = document.createElement('div');
     title.className = 'uqqc-report__tab-title';
     title.textContent = __(label);
 
-    const hintEl = document.createElement('span');
+    const hintEl = document.createElement('div');
     hintEl.className = 'uqqc-report__tab-hint';
     hintEl.textContent = hint || '';
 
-    button.append(icon, title, hintEl);
+    textWrap.append(title, hintEl);
+    button.append(icon, textWrap);
     return button;
   }
 
