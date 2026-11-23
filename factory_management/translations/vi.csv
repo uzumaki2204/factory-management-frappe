@@ -407,6 +407,35 @@ Colors selected: {0},Màu đã chọn: {0}
 Sizes selected: {0},Size đã chọn: {0}
 Markets selected: {0},Thị trường đã chọn: {0}
 Select a product to view its variant combinations.,Chọn mã hàng để xem tổ hợp biến thể.
+UQQC Report,Báo cáo UQQC
+From Date,Từ ngày
+To Date,Đến ngày
+Run Report,Xem báo cáo
+View Report,Xem báo cáo
+Item Summary,Tổng hợp mã hàng
+Device Details,Chi tiết thiết bị
+Choose both report dates.,Vui lòng chọn đủ ngày bắt đầu và ngày kết thúc.
+The start date must be on or before the end date.,Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.
+Loading report...,Đang tải báo cáo...
+Rows: {0},Số dòng: {0}
+Unable to load the UQQC report.,Không thể tải báo cáo UQQC.
+Report request failed.,Yêu cầu báo cáo thất bại.
+No records found for this period.,Không có dữ liệu trong khoảng thời gian này.
+UQQC inspection performance,Kết quả kiểm tra UQQC
+Review inspection results by item or device.,Theo dõi kết quả kiểm tra theo mã hàng hoặc thiết bị.
+Report period,Khoảng thời gian báo cáo
+Select any date range for the report.,Chọn khoảng ngày tùy ý để xem báo cáo.
+UQQC report type,Loại báo cáo UQQC
+Selected period metrics,Chỉ số trong kỳ đã chọn
+Daily quantities and all-time totals,Số lượng theo ngày và lũy kế toàn thời gian
+Results by device and variant,Kết quả theo thiết bị và biến thể
+Passed,Đạt
+Rework,Tái sửa
+Defects,Lỗi
+Inspected,Đã kiểm
+Defect Rate,Tỷ lệ lỗi
+In selected period,Trong kỳ đã chọn
+Try another date range.,Thử chọn khoảng ngày khác.
 Product not found.,Không tìm thấy mã hàng.
 You do not have permission to view this product.,Bạn không có quyền xem mã hàng này.
 You do not have permission to view this product's variant combinations.,Bạn không có quyền xem tổ hợp biến thể của mã hàng.

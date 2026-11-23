@@ -1,0 +1,321 @@
+frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
+  const page = frappe.ui.make_app_page({
+    parent: wrapper,
+    title: __('UQQC Report'),
+    single_column: true,
+  });
+  const today = frappe.datetime.get_today();
+  const state = {active: 'summary', request: 0};
+  const root = document.createElement('section');
+  root.className = 'uqqc-report';
+
+  const filtersPanel = document.createElement('section');
+  filtersPanel.className = 'uqqc-report__panel uqqc-report__filters';
+  const filterRow = document.createElement('div');
+  filterRow.className = 'uqqc-report__filter-row';
+  const controls = {
+    from_date: makeControl('From Date', 'from_date', 'Date', '', `${today.slice(0, 8)}01`),
+    to_date: makeControl('To Date', 'to_date', 'Date', '', today),
+    qc: makeControl('QC', 'qc', 'Select', '\nQC1\nQC2'),
+    company: makeControl('Company', 'company', 'Link', 'Company'),
+    product: makeControl('Product', 'product', 'Link', 'Product'),
+    device: makeControl('Device', 'device', 'Link', 'Factory Device'),
+    market: makeControl('Market', 'market', 'Link', 'Market'),
+    color: makeControl('Color', 'color', 'Link', 'Product Color'),
+    size: makeControl('Size', 'size', 'Link', 'ProductSize'),
+  };
+  for (const key of ['from_date', 'to_date', 'qc', 'company', 'product']) {
+    filterRow.append(controls[key].wrapper);
+  }
+
+  const runButton = document.createElement('button');
+  runButton.type = 'button';
+  runButton.className = 'btn btn-primary uqqc-report__run';
+  runButton.textContent = __('View Report');
+  filterRow.append(runButton);
+  const detailFilters = document.createElement('div');
+  detailFilters.className = 'uqqc-report__filter-row uqqc-report__filter-row--detail';
+  for (const key of ['device', 'market', 'color', 'size']) {
+    detailFilters.append(controls[key].wrapper);
+  }
+  filtersPanel.append(filterRow, detailFilters);
+  root.append(filtersPanel);
+
+  const tabs = document.createElement('div');
+  tabs.className = 'uqqc-report__tabs';
+  tabs.setAttribute('role', 'tablist');
+  tabs.setAttribute('aria-label', __('UQQC report type'));
+  const summaryTab = makeTab('summary', 'Item Summary');
+  const deviceTab = makeTab('device', 'Device Details');
+  tabs.append(summaryTab, deviceTab);
+  root.append(tabs);
+
+  const metrics = document.createElement('section');
+  metrics.className = 'uqqc-report__metrics';
+  metrics.setAttribute('aria-label', __('Selected period metrics'));
+  metrics.setAttribute('aria-live', 'polite');
+  root.append(metrics);
+
+  const resultsPanel = document.createElement('section');
+  resultsPanel.className = 'uqqc-report__panel uqqc-report__results';
+  const resultsHeader = document.createElement('div');
+  resultsHeader.className = 'uqqc-report__results-header';
+  const resultsMeta = document.createElement('div');
+  resultsMeta.className = 'uqqc-report__results-meta';
+  resultsHeader.append(resultsMeta);
+
+  const status = document.createElement('div');
+  status.className = 'uqqc-report__status';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+
+  const tableWrap = document.createElement('div');
+  tableWrap.className = 'uqqc-report__table-wrap';
+  resultsPanel.append(resultsHeader, status, tableWrap);
+  root.append(resultsPanel);
+  page.body.append(root);
+  const fitHeight = () => {
+    root.style.height = `${Math.max(420, window.innerHeight - root.getBoundingClientRect().top - 8)}px`;
+  };
+  window.addEventListener('resize', fitHeight);
+  requestAnimationFrame(fitHeight);
+
+  runButton.addEventListener('click', runReport);
+  summaryTab.addEventListener('click', () => selectTab('summary'));
+  deviceTab.addEventListener('click', () => selectTab('device'));
+  selectTab('summary');
+
+  function makeControl(label, fieldname, fieldtype, options = '', defaultValue = '') {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'uqqc-report__date-control';
+    const control = frappe.ui.form.make_control({
+      parent: wrapper,
+      df: {
+        fieldtype,
+        fieldname,
+        label: __(label),
+        options,
+        reqd: fieldtype === 'Date' ? 1 : 0,
+        default: defaultValue,
+      },
+      render_input: true,
+    });
+    control.refresh();
+    return {wrapper, control};
+  }
+
+  function makeTab(key, label) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'uqqc-report__tab';
+    button.dataset.tab = key;
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-controls', 'uqqc-report-results');
+    const title = document.createElement('span');
+    title.className = 'uqqc-report__tab-title';
+    title.textContent = __(label);
+    button.append(title);
+    return button;
+  }
+
+  function selectTab(tab) {
+    state.active = tab;
+    for (const button of tabs.querySelectorAll('[role="tab"]')) {
+      const active = button.dataset.tab === tab;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-selected', String(active));
+      button.tabIndex = active ? 0 : -1;
+    }
+    detailFilters.hidden = tab !== 'device';
+    resultsPanel.id = 'uqqc-report-results';
+    requestAnimationFrame(fitHeight);
+    runReport();
+  }
+
+  async function runReport() {
+    const request = ++state.request;
+    const fromDate = controls.from_date.control.get_value();
+    const toDate = controls.to_date.control.get_value();
+    if (!fromDate || !toDate) {
+      runButton.disabled = false;
+      runButton.classList.remove('is-loading');
+      clearResults();
+      showStatus(__('Choose both report dates.'), 'error');
+      return;
+    }
+    if (fromDate > toDate) {
+      runButton.disabled = false;
+      runButton.classList.remove('is-loading');
+      clearResults();
+      showStatus(__('The start date must be on or before the end date.'), 'error');
+      return;
+    }
+
+    clearResults();
+    runButton.disabled = true;
+    runButton.classList.add('is-loading');
+    showStatus(__('Loading report...'), 'loading');
+    try {
+      const filters = {
+        from_date: fromDate,
+        to_date: toDate,
+        qc: controls.qc.control.get_value() || '',
+        company: controls.company.control.get_value() || '',
+        product: controls.product.control.get_value() || '',
+      };
+      if (state.active === 'device') {
+        for (const key of ['device', 'market', 'color', 'size']) {
+          filters[key] = controls[key].control.get_value() || '';
+        }
+      }
+      const response = await frappe.call({
+        method: 'frappe.desk.query_report.run',
+        args: {
+          report_name: state.active === 'summary' ? 'UQQC Item Summary' : 'UQQC Device Details',
+          filters: JSON.stringify(filters),
+          are_default_filters: 0,
+        },
+      });
+      if (request !== state.request) return;
+      const result = response.message || {};
+      const columns = result.columns || [];
+      const rows = result.result || [];
+      renderMetrics(columns, rows);
+      renderTable(columns, rows);
+      resultsMeta.textContent = __('Rows: {0}', [rows.length]);
+      showStatus('', '');
+    } catch {
+      if (request !== state.request) return;
+      clearResults();
+      showStatus(__('Unable to load the UQQC report.'), 'error');
+      frappe.show_alert({message: __('Report request failed.'), indicator: 'red'});
+    } finally {
+      if (request === state.request) {
+        runButton.disabled = false;
+        runButton.classList.remove('is-loading');
+      }
+    }
+  }
+
+  function renderMetrics(columns, rows) {
+    const names = state.active === 'summary'
+      ? {passed: 'Số lượng đạt', rework: 'Số lượng tái sửa', defect: 'Số lượng lỗi'}
+      : {passed: 'Đạt', rework: 'Tái sửa', defect: 'Lỗi'};
+    const passed = sumColumn(columns, rows, names.passed);
+    const rework = sumColumn(columns, rows, names.rework);
+    const defect = sumColumn(columns, rows, names.defect);
+    const inspected = passed + defect;
+    const rate = inspected ? (defect * 100) / inspected : 0;
+    const cards = [
+      {label: 'Passed', value: passed, tone: 'success'},
+      {label: 'Rework', value: rework, tone: 'warning'},
+      {label: 'Defects', value: defect, tone: 'danger'},
+      {label: 'Inspected', value: inspected, tone: 'primary'},
+      {label: 'Defect Rate', value: rate, tone: 'neutral', percent: true},
+    ];
+    metrics.replaceChildren();
+    for (const item of cards) {
+      const card = document.createElement('article');
+      card.className = `uqqc-report__metric uqqc-report__metric--${item.tone}`;
+      const label = document.createElement('div');
+      label.className = 'uqqc-report__metric-label';
+      label.textContent = __(item.label);
+      const value = document.createElement('div');
+      value.className = 'uqqc-report__metric-value';
+      value.textContent = item.percent ? formatPercent(rate) : formatNumber(item.value);
+      card.append(label, value);
+      metrics.append(card);
+    }
+  }
+
+  function sumColumn(columns, rows, label) {
+    const column = columns.find((item) => item.label === label);
+    if (!column) return 0;
+    return rows.reduce((total, row) => total + (Number(row[column.fieldname]) || 0), 0);
+  }
+
+  function renderTable(columns, rows) {
+    if (!rows.length) {
+      const empty = document.createElement('div');
+      empty.className = 'uqqc-report__empty';
+      const title = document.createElement('strong');
+      title.textContent = __('No records found for this period.');
+      const hint = document.createElement('span');
+      hint.textContent = __('Try another date range.');
+      empty.append(title, hint);
+      tableWrap.replaceChildren(empty);
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'uqqc-report__table';
+    table.setAttribute('aria-label', __(state.active === 'summary' ? 'Item Summary' : 'Device Details'));
+    const head = table.createTHead().insertRow();
+    for (const column of columns) {
+      const cell = document.createElement('th');
+      cell.scope = 'col';
+      cell.textContent = column.label || column.fieldname || '';
+      if (isNumericColumn(column)) cell.classList.add('is-numeric');
+      head.append(cell);
+    }
+    const body = table.createTBody();
+    for (const row of rows) {
+      const tr = body.insertRow();
+      for (const column of columns) {
+        const cell = tr.insertCell();
+        const value = row[column.fieldname];
+        cell.textContent = formatValue(column, value);
+        if (isNumericColumn(column)) cell.classList.add('is-numeric');
+        if (isDefectColumn(column) && Number(value) > 0) cell.classList.add('is-defect');
+        if (isRateColumn(column)) cell.classList.add('is-rate');
+      }
+    }
+    tableWrap.replaceChildren(table);
+  }
+
+  function isNumericColumn(column) {
+    return ['Int', 'Float', 'Currency', 'Percent'].includes(column.fieldtype);
+  }
+
+  function isDefectColumn(column) {
+    return (column.label || '').toLowerCase().includes('lỗi') ||
+      (column.label || '').toLowerCase().includes('defect');
+  }
+
+  function isRateColumn(column) {
+    return column.fieldtype === 'Percent' ||
+      (column.label || '').toLowerCase().includes('tỷ lệ') ||
+      (column.label || '').toLowerCase().includes('rate');
+  }
+
+  function formatValue(column, value) {
+    if (value === null || value === undefined) return '';
+    if (isRateColumn(column)) return formatPercent(value);
+    if (typeof value === 'number') return formatNumber(value);
+    return String(value);
+  }
+
+  function formatNumber(value) {
+    return new Intl.NumberFormat(frappe.boot.lang || undefined, {
+      maximumFractionDigits: 2,
+    }).format(value);
+  }
+
+  function formatPercent(value) {
+    return `${new Intl.NumberFormat(frappe.boot.lang || undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)}%`;
+  }
+
+  function clearResults() {
+    metrics.replaceChildren();
+    resultsMeta.textContent = '';
+    tableWrap.replaceChildren();
+  }
+
+  function showStatus(message, type) {
+    status.textContent = message || '';
+    status.className = `uqqc-report__status${type ? ` is-${type}` : ''}`;
+  }
+};

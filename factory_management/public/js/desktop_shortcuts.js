@@ -8,6 +8,13 @@
             newTab: true,
         },
         {
+            id: "uqqc-report",
+            label: "UQQC Report",
+            logo: "/assets/factory_management/uqqc/icon.svg",
+            href: "/desk/uqqc/uqqc-report",
+            roles: ["QC Report Reader", "System Manager"],
+        },
+        {
             id: "qc",
             label: "QC",
             logo: "/assets/factory_management/images/qc-desktop.svg",
@@ -40,7 +47,8 @@
         const isSystemManager = frappe.session?.user === "Administrator" ||
             frappe.user?.has_role?.("System Manager") === true;
         const visibleShortcuts = shortcuts.filter(
-            (shortcut) => !shortcut.systemManagerOnly || isSystemManager
+            (shortcut) => (!shortcut.systemManagerOnly || isSystemManager) &&
+                (!shortcut.roles || shortcut.roles.some((role) => frappe.user?.has_role?.(role)))
         );
 
         if (grid === currentGrid && visibleShortcuts.every(

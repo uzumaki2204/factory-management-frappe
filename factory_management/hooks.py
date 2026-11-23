@@ -64,4 +64,5 @@ app_include_js = [
 app_include_css = [
     "/assets/factory_management/css/desktop_shortcuts.css",
     "/assets/factory_management/css/spl_import_settings.css",
+    "/assets/factory_management/css/uqqc_report.css",
 ]

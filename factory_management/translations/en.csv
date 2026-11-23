@@ -407,6 +407,35 @@ Colors selected: {0},Colors selected: {0}
 Sizes selected: {0},Sizes selected: {0}
 Markets selected: {0},Markets selected: {0}
 Select a product to view its variant combinations.,Select a product to view its variant combinations.
+UQQC Report,UQQC Report
+From Date,From Date
+To Date,To Date
+Run Report,Run Report
+View Report,View Report
+Item Summary,Item Summary
+Device Details,Device Details
+Choose both report dates.,Choose both report dates.
+The start date must be on or before the end date.,The start date must be on or before the end date.
+Loading report...,Loading report...
+Rows: {0},Rows: {0}
+Unable to load the UQQC report.,Unable to load the UQQC report.
+Report request failed.,Report request failed.
+No records found for this period.,No records found for this period.
+UQQC inspection performance,UQQC inspection performance
+Review inspection results by item or device.,Review inspection results by item or device.
+Report period,Report period
+Select any date range for the report.,Select any date range for the report.
+UQQC report type,UQQC report type
+Selected period metrics,Selected period metrics
+Daily quantities and all-time totals,Daily quantities and all-time totals
+Results by device and variant,Results by device and variant
+Passed,Passed
+Rework,Rework
+Defects,Defects
+Inspected,Inspected
+Defect Rate,Defect Rate
+In selected period,In selected period
+Try another date range.,Try another date range.
 Product not found.,Product not found.
 You do not have permission to view this product.,You do not have permission to view this product.
 You do not have permission to view this product's variant combinations.,You do not have permission to view this product's variant combinations.

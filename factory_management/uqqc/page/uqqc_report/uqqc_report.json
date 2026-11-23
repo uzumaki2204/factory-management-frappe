@@ -1,0 +1,12 @@
+{
+  "doctype": "Page",
+  "name": "uqqc-report",
+  "page_name": "uqqc-report",
+  "title": "UQQC Report",
+  "module": "UQQC",
+  "standard": "Yes",
+  "roles": [
+    {"role": "QC Report Reader"},
+    {"role": "System Manager"}
+  ]
+}

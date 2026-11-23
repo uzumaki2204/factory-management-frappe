@@ -1,0 +1,19 @@
+{
+  "doctype": "Report",
+  "name": "UQQC Device Details",
+  "report_name": "UQQC Device Details",
+  "ref_doctype": "UQQC Inspection Event",
+  "report_type": "Query Report",
+  "is_standard": "Yes",
+  "module": "UQQC",
+  "add_total_row": 0,
+  "roles": [
+    {
+      "role": "QC Report Reader"
+    },
+    {
+      "role": "System Manager"
+    }
+  ],
+  "query": "SELECT company.company_name AS 'Công ty:Data:150', DATE(DATE_ADD(e.occurred_at, INTERVAL 7 HOUR)) AS 'Ngày:Date:100', CASE WHEN LOCATE('QC1', UPPER(device.device_name)) > 0 AND (LOCATE('QC2', UPPER(device.device_name)) = 0 OR LOCATE('QC1', UPPER(device.device_name)) < LOCATE('QC2', UPPER(device.device_name))) THEN 'QC1' WHEN LOCATE('QC2', UPPER(device.device_name)) > 0 THEN 'QC2' ELSE '' END AS 'QC:Data:70', device.device_name AS 'Mã máy:Data:130', product.product_code AS 'Mã hàng:Data:120', market.name_en AS 'Quốc gia:Data:100', color.color_code AS 'Màu:Data:80', size.size_label AS 'Size:Data:80', SUM(CASE WHEN e.event_kind = 'pass' THEN e.quantity ELSE 0 END) AS 'Đạt:Int:90', SUM(CASE WHEN e.event_kind = 'rework' THEN e.quantity ELSE 0 END) AS 'Tái sửa:Int:100', SUM(CASE WHEN e.event_kind = 'defect' THEN e.quantity ELSE 0 END) AS 'Lỗi:Int:90' FROM `tabUQQC Inspection Event` e JOIN `tabFactory Device` device ON device.name = e.device JOIN `tabProduction Line` line ON line.name = e.line AND line.company = device.company JOIN `tabCompany` company ON company.name = line.company JOIN `tabProduct` product ON product.name = e.product JOIN `tabMarket` market ON market.name = e.market JOIN `tabProduct Color` color ON color.name = e.color JOIN `tabProductSize` size ON size.name = e.size WHERE e.occurred_at >= DATE_SUB(CONCAT(%(from_date)s, ' 00:00:00'), INTERVAL 7 HOUR) AND e.occurred_at < DATE_SUB(DATE_ADD(CONCAT(%(to_date)s, ' 00:00:00'), INTERVAL 1 DAY), INTERVAL 7 HOUR) AND (COALESCE(%(qc)s, '') = '' OR CASE WHEN LOCATE('QC1', UPPER(device.device_name)) > 0 AND (LOCATE('QC2', UPPER(device.device_name)) = 0 OR LOCATE('QC1', UPPER(device.device_name)) < LOCATE('QC2', UPPER(device.device_name))) THEN 'QC1' WHEN LOCATE('QC2', UPPER(device.device_name)) > 0 THEN 'QC2' ELSE '' END = %(qc)s) AND (COALESCE(%(company)s, '') = '' OR company.name = %(company)s) AND (COALESCE(%(product)s, '') = '' OR product.name = %(product)s) AND (COALESCE(%(device)s, '') = '' OR e.device = %(device)s) AND (COALESCE(%(market)s, '') = '' OR e.market = %(market)s) AND (COALESCE(%(color)s, '') = '' OR e.color = %(color)s) AND (COALESCE(%(size)s, '') = '' OR e.size = %(size)s) GROUP BY 1, 2, 3, 4, 5, 6, 7, 8 ORDER BY company.company_name, DATE_ADD(e.occurred_at, INTERVAL 7 HOUR), device.device_name, product.product_code, market.name_en, color.color_code, size.size_label"
+}

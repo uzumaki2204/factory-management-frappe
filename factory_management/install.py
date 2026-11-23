@@ -508,11 +508,16 @@ def ensure_report_reader_role():
     from factory_management.api_access import READER_ROLE
 
     if not frappe.db.exists("Role", READER_ROLE):
-        frappe.get_doc({
+        role = frappe.get_doc({
             "doctype": "Role",
             "role_name": READER_ROLE,
-            "desk_access": 0,
+            "desk_access": 1,
         }).insert(ignore_permissions=True)
+    else:
+        role = frappe.get_doc("Role", READER_ROLE)
+        if not role.desk_access:
+            role.desk_access = 1
+            role.save(ignore_permissions=True)
 
 
 def ensure_custom_field(dt, name, label, kind="Data", options=None):

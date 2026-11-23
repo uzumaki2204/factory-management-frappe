@@ -33,6 +33,32 @@ def _ensure_catalog_permission(doctype):
     frappe.clear_cache(doctype=doctype)
 
 
+def _ensure_report_permission():
+    role = "QC Report Reader"
+    link_types = (
+        "Company", "Product", "Factory Device", "Market", "Product Color", "ProductSize",
+    )
+    for name in ("UQQC Inspection Event", *link_types):
+        doctype = frappe.get_doc("DocType", name)
+        report = int(name == "UQQC Inspection Event")
+        permission = next(
+            (row for row in doctype.permissions if row.role == role and row.permlevel == 0),
+            None,
+        )
+        if permission and permission.report == report and permission.select and not permission.read:
+            continue
+        values = {
+            "report": report, "select": 1, "read": 0, "write": 0,
+            "create": 0, "delete": 0,
+        }
+        if permission:
+            permission.update(values)
+        else:
+            doctype.append("permissions", {"role": role, "permlevel": 0, **values})
+        doctype.save(ignore_permissions=True)
+        frappe.clear_cache(doctype=name)
+
+
 def ensure_schema():
     owner = frappe.db.get_value("Module Def", "UQQC", "app_name")
     if owner and owner != "factory_management":
@@ -86,6 +112,8 @@ def ensure_schema():
         _field("synced_at", "Datetime", reqd=1),
     ], module="UQQC")
     frappe.db.add_index("UQQC Inspection Event", ["device", "occurred_at"], "uqqc_device_occurred")
+    frappe.db.add_index("UQQC Inspection Event", ["occurred_at"], "uqqc_occurred_at")
+    _ensure_report_permission()
 
 
 def ensure_catalog():
