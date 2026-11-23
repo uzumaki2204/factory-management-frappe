@@ -5,10 +5,11 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     single_column: true,
   });
   const today = frappe.datetime.get_today();
-  const state = {active: 'summary', request: 0};
+  const state = { active: 'summary', request: 0 };
   const root = document.createElement('section');
   root.className = 'uqqc-report';
 
+  // ── Filters Panel ──────────────────────────────────────────────────────────
   const filtersPanel = document.createElement('section');
   filtersPanel.className = 'uqqc-report__panel uqqc-report__filters';
   const filterRow = document.createElement('div');
@@ -27,35 +28,42 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
   for (const key of ['from_date', 'to_date', 'qc', 'company', 'product']) {
     filterRow.append(controls[key].wrapper);
   }
-
-  const runButton = document.createElement('button');
-  runButton.type = 'button';
-  runButton.className = 'btn btn-primary uqqc-report__run';
-  runButton.textContent = __('View Report');
-  filterRow.append(runButton);
   const detailFilters = document.createElement('div');
   detailFilters.className = 'uqqc-report__filter-row uqqc-report__filter-row--detail';
   for (const key of ['device', 'market', 'color', 'size']) {
     detailFilters.append(controls[key].wrapper);
   }
-  filtersPanel.append(filterRow, detailFilters);
+
+  // Run button lives in its own actions row (separated from the filter grid)
+  const runButton = document.createElement('button');
+  runButton.type = 'button';
+  runButton.className = 'btn btn-primary uqqc-report__run';
+  runButton.innerHTML = `<span class="uqqc-report__run-icon" aria-hidden="true">&#128269;</span>${__('View Report')}`;
+  const actionsRow = document.createElement('div');
+  actionsRow.className = 'uqqc-report__actions';
+  actionsRow.append(runButton);
+
+  filtersPanel.append(filterRow, detailFilters, actionsRow);
   root.append(filtersPanel);
 
+  // ── Tabs ───────────────────────────────────────────────────────────────────
   const tabs = document.createElement('div');
   tabs.className = 'uqqc-report__tabs';
   tabs.setAttribute('role', 'tablist');
   tabs.setAttribute('aria-label', __('UQQC report type'));
-  const summaryTab = makeTab('summary', 'Item Summary');
-  const deviceTab = makeTab('device', 'Device Details');
+  const summaryTab = makeTab('summary', 'Item Summary', __('By date & item'), '&#128203;');
+  const deviceTab = makeTab('device', 'Device Details', __('By device & variant'), '&#128295;');
   tabs.append(summaryTab, deviceTab);
   root.append(tabs);
 
+  // ── Metrics ────────────────────────────────────────────────────────────────
   const metrics = document.createElement('section');
   metrics.className = 'uqqc-report__metrics';
   metrics.setAttribute('aria-label', __('Selected period metrics'));
   metrics.setAttribute('aria-live', 'polite');
   root.append(metrics);
 
+  // ── Results Panel ──────────────────────────────────────────────────────────
   const resultsPanel = document.createElement('section');
   resultsPanel.className = 'uqqc-report__panel uqqc-report__results';
   const resultsHeader = document.createElement('div');
@@ -101,20 +109,31 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
       render_input: true,
     });
     control.refresh();
-    return {wrapper, control};
+    return { wrapper, control };
   }
 
-  function makeTab(key, label) {
+  function makeTab(key, label, hint, iconHtml) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'uqqc-report__tab';
     button.dataset.tab = key;
     button.setAttribute('role', 'tab');
     button.setAttribute('aria-controls', 'uqqc-report-results');
+
+    const icon = document.createElement('span');
+    icon.className = 'uqqc-report__tab-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = iconHtml || '';
+
     const title = document.createElement('span');
     title.className = 'uqqc-report__tab-title';
     title.textContent = __(label);
-    button.append(title);
+
+    const hintEl = document.createElement('span');
+    hintEl.className = 'uqqc-report__tab-hint';
+    hintEl.textContent = hint || '';
+
+    button.append(icon, title, hintEl);
     return button;
   }
 
@@ -154,7 +173,7 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     clearResults();
     runButton.disabled = true;
     runButton.classList.add('is-loading');
-    showStatus(__('Loading report...'), 'loading');
+    showSkeleton();
     try {
       const filters = {
         from_date: fromDate,
@@ -188,7 +207,7 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
       if (request !== state.request) return;
       clearResults();
       showStatus(__('Unable to load the UQQC report.'), 'error');
-      frappe.show_alert({message: __('Report request failed.'), indicator: 'red'});
+      frappe.show_alert({ message: __('Report request failed.'), indicator: 'red' });
     } finally {
       if (request === state.request) {
         runButton.disabled = false;
@@ -199,31 +218,40 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
 
   function renderMetrics(columns, rows) {
     const names = state.active === 'summary'
-      ? {passed: 'Số lượng đạt', rework: 'Số lượng tái sửa', defect: 'Số lượng lỗi'}
-      : {passed: 'Đạt', rework: 'Tái sửa', defect: 'Lỗi'};
+      ? { passed: 'Số lượng đạt', rework: 'Số lượng tái sửa', defect: 'Số lượng lỗi' }
+      : { passed: 'Đạt', rework: 'Tái sửa', defect: 'Lỗi' };
     const passed = sumColumn(columns, rows, names.passed);
     const rework = sumColumn(columns, rows, names.rework);
     const defect = sumColumn(columns, rows, names.defect);
     const inspected = passed + defect;
     const rate = inspected ? (defect * 100) / inspected : 0;
+    const rateTone = rate > 5 ? 'danger' : rate > 2 ? 'warning' : 'neutral';
     const cards = [
-      {label: 'Passed', value: passed, tone: 'success'},
-      {label: 'Rework', value: rework, tone: 'warning'},
-      {label: 'Defects', value: defect, tone: 'danger'},
-      {label: 'Inspected', value: inspected, tone: 'primary'},
-      {label: 'Defect Rate', value: rate, tone: 'neutral', percent: true},
+      { label: 'Passed', value: passed, tone: 'success', icon: '✅' },
+      { label: 'Rework', value: rework, tone: 'warning', icon: '🔁' },
+      { label: 'Defects', value: defect, tone: 'danger', icon: '⚠️' },
+      { label: 'Inspected', value: inspected, tone: 'primary', icon: '🔍' },
+      { label: 'Defect Rate', value: rate, tone: rateTone, icon: '📊', percent: true },
     ];
     metrics.replaceChildren();
     for (const item of cards) {
       const card = document.createElement('article');
       card.className = `uqqc-report__metric uqqc-report__metric--${item.tone}`;
+
+      const iconEl = document.createElement('div');
+      iconEl.className = 'uqqc-report__metric-icon';
+      iconEl.setAttribute('aria-hidden', 'true');
+      iconEl.textContent = item.icon;
+
       const label = document.createElement('div');
       label.className = 'uqqc-report__metric-label';
       label.textContent = __(item.label);
+
       const value = document.createElement('div');
       value.className = 'uqqc-report__metric-value';
       value.textContent = item.percent ? formatPercent(rate) : formatNumber(item.value);
-      card.append(label, value);
+
+      card.append(iconEl, label, value);
       metrics.append(card);
     }
   }
@@ -238,11 +266,15 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     if (!rows.length) {
       const empty = document.createElement('div');
       empty.className = 'uqqc-report__empty';
+      const emptyIcon = document.createElement('div');
+      emptyIcon.className = 'uqqc-report__empty-icon';
+      emptyIcon.setAttribute('aria-hidden', 'true');
+      emptyIcon.textContent = '📭';
       const title = document.createElement('strong');
       title.textContent = __('No records found for this period.');
       const hint = document.createElement('span');
       hint.textContent = __('Try another date range.');
-      empty.append(title, hint);
+      empty.append(emptyIcon, title, hint);
       tableWrap.replaceChildren(empty);
       return;
     }
@@ -270,6 +302,35 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
         if (isRateColumn(column)) cell.classList.add('is-rate');
       }
     }
+
+    // ── Grand Total Row ──────────────────────────────────────────────────────
+    const numericColumns = columns.filter(isNumericColumn);
+    if (numericColumns.length > 0 && rows.length > 1) {
+      const totals = {};
+      for (const col of numericColumns) {
+        totals[col.fieldname] = rows.reduce(
+          (sum, row) => sum + (Number(row[col.fieldname]) || 0), 0
+        );
+      }
+      const tfoot = table.createTFoot();
+      const totalRow = tfoot.insertRow();
+      totalRow.className = 'uqqc-report__total-row';
+      for (let i = 0; i < columns.length; i++) {
+        const col = columns[i];
+        const cell = totalRow.insertCell();
+        if (i === 0) {
+          cell.textContent = __('Total');
+          cell.className = 'uqqc-report__total-label';
+        } else if (isNumericColumn(col)) {
+          // Skip rate/percent columns — summing % values is meaningless
+          if (!isRateColumn(col)) {
+            cell.textContent = formatNumber(totals[col.fieldname] || 0);
+          }
+          cell.classList.add('is-numeric');
+        }
+      }
+    }
+
     tableWrap.replaceChildren(table);
   }
 
@@ -312,6 +373,29 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     metrics.replaceChildren();
     resultsMeta.textContent = '';
     tableWrap.replaceChildren();
+  }
+
+  function showSkeleton() {
+    status.textContent = '';
+    status.className = 'uqqc-report__status';
+    const skeleton = document.createElement('div');
+    skeleton.className = 'uqqc-report__skeleton';
+    // Render a placeholder metrics strip
+    const metricsSkel = document.createElement('div');
+    metricsSkel.className = 'uqqc-report__skeleton-metrics';
+    for (let i = 0; i < 5; i++) {
+      const card = document.createElement('div');
+      card.className = 'uqqc-report__skeleton-metric';
+      metricsSkel.append(card);
+    }
+    metrics.replaceChildren(metricsSkel);
+    // Render table rows skeleton
+    for (let i = 0; i < 7; i++) {
+      const row = document.createElement('div');
+      row.className = 'uqqc-report__skeleton-row';
+      skeleton.append(row);
+    }
+    tableWrap.replaceChildren(skeleton);
   }
 
   function showStatus(message, type) {
