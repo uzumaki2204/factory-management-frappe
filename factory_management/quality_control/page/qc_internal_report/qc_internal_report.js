@@ -1,11 +1,16 @@
 frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
+  frappe.require('/assets/factory_management/js/qc_internal_report_filters.js')
+    .then(() => initializeQcInternalReport(wrapper));
+};
+
+function initializeQcInternalReport(wrapper) {
   const page = frappe.ui.make_app_page({
     parent: wrapper,
     title: __('Báo cáo QC nội bộ'),
     single_column: true,
   });
   const today = frappe.datetime.get_today();
-  const state = {active: 'summary', request: 0, rows: []};
+  const state = {active: 'summary', request: 0, rows: [], datasetKey: ''};
   const rendererReady = frappe.require('/assets/factory_management/js/qc_internal_report_view.js');
   const root = document.createElement('section');
   root.className = 'qc-internal-report';
@@ -37,12 +42,17 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
   const filterGrid = document.createElement('div');
   filterGrid.className = 'qc-ir-filter-grid';
 
+  let ready = false;
+  let refreshTimer;
+  const filterChanged = () => {
+    if (ready) refreshFilters();
+  };
   const controls = {
-    company: makeControl('CÔNG TY', 'company', 'Link', '', 'Company', __('All')),
-    factory: makeControl('XƯỞNG', 'factory', 'Link', '', 'Factory', __('All')),
-    production_line: makeControl('CHUYỀN', 'production_line', 'Link', '', 'Production Line', __('All')),
-    product: makeControl('MÃ HÀNG', 'product', 'Link', '', 'Product', __('All')),
-    qc: makeControl('QC', 'qc', 'Select', 'QC1', '\nAll\nQC1\nQC2'),
+    company: QCInternalReportFilters.makeMultiControl('CÔNG TY', filterChanged),
+    factory: QCInternalReportFilters.makeMultiControl('XƯỞNG', filterChanged),
+    production_line: QCInternalReportFilters.makeMultiControl('CHUYỀN', filterChanged),
+    product: QCInternalReportFilters.makeMultiControl('MÃ HÀNG', filterChanged),
+    qc: makeControl('QC', 'qc', 'Select', 'QC1', 'QC1\nQC2', '', true),
     from_date: makeControl('TỪ NGÀY', 'from_date', 'Date', today.slice(0, 8) + '01'),
     to_date: makeControl('ĐẾN NGÀY', 'to_date', 'Date', today),
   };
@@ -83,25 +93,24 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
 
   page.body.append(root);
   root.append(masthead, filtersPanel, results, tabs);
-  refreshButton.addEventListener('click', runReport);
+  refreshButton.addEventListener('click', () => runReport(true));
   tabs.addEventListener('click', (event) => {
     const button = event.target.closest('[data-tab]');
     if (button) selectTab(button.dataset.tab);
   });
 
-  let ready = false;
-  let refreshTimer;
-  Object.values(controls).forEach(({control}) => {
-    if (control.$input) control.$input.on('change awesomplete-selectcomplete', scheduleReport);
+  [controls.from_date, controls.to_date].forEach(({control}) => {
+    if (control.$input) control.$input.on('change', scheduleReport);
   });
+  controls.qc.control.$input.on('change', onQcChange);
   selectTab('summary', false);
   ready = true;
-  runReport();
+  runReport(true);
 
-  function makeControl(label, fieldname, fieldtype, defaultValue = '', options = '', placeholder = '') {
+  function makeControl(label, fieldname, fieldtype, defaultValue = '', options = '', placeholder = '', required = false) {
     const wrapper = document.createElement('div');
     wrapper.className = 'qc-ir-control';
-    const df = {fieldtype, fieldname, label: __(label), options, default: defaultValue};
+    const df = {fieldtype, fieldname, label: __(label), options, default: defaultValue, reqd: required};
     if (placeholder) df.placeholder = placeholder;
     const control = frappe.ui.form.make_control({parent: wrapper, df, render_input: true});
     control.refresh();
@@ -132,21 +141,40 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
         dateRange
       );
     }
-    if (refresh && ready) runReport();
+    if (refresh && ready) refreshFilters();
   }
 
   function scheduleReport() {
     if (!ready) return;
     window.clearTimeout(refreshTimer);
-    refreshTimer = window.setTimeout(runReport, 400);
+    refreshTimer = window.setTimeout(() => runReport(true), 400);
   }
 
-  async function runReport() {
+  function onQcChange() {
+    refreshFilters();
+  }
+
+  function refreshFilters() {
+    updateFilterOptions();
+    applyFilters();
+  }
+
+  async function runReport(force = false) {
     const request = ++state.request;
-    const fromDate = normalizeDate(readDateInput(controls.from_date.control));
-    const toDate = normalizeDate(readDateInput(controls.to_date.control));
+    const fromDate = QCInternalReportFilters.normalizeDate(
+      QCInternalReportFilters.readDateInput(controls.from_date.control)
+    );
+    const toDate = QCInternalReportFilters.normalizeDate(
+      QCInternalReportFilters.readDateInput(controls.to_date.control)
+    );
     if (!fromDate || !toDate || fromDate > toDate) {
       showStatus(__('Vui lòng chọn khoảng ngày hợp lệ.'), true);
+      return;
+    }
+    const datasetKey = JSON.stringify([fromDate, toDate]);
+    if (!force && state.datasetKey === datasetKey) {
+      updateFilterOptions();
+      applyFilters();
       return;
     }
     showStatus(__('Đang tải dữ liệu QC…'), false);
@@ -155,13 +183,13 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
     const filters = {
       from_date: fromDate,
       to_date: toDate,
-      qc: controls.qc.control.get_value() === 'All' ? '' : controls.qc.control.get_value() || '',
-      company: state.active === 'summary' ? '' : controls.company.control.get_value() || '',
-      factory: state.active === 'summary' ? '' : controls.factory.control.get_value() || '',
+      qc: '',
+      company: '',
+      factory: '',
       line_group: '',
-      production_line: state.active === 'summary' ? '' : controls.production_line.control.get_value() || '',
+      production_line: '',
       customer: '',
-      product: controls.product.control.get_value() || '',
+      product: '',
     };
     try {
       await rendererReady;
@@ -176,12 +204,18 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
       });
       if (request !== state.request) return;
       const result = response.message || {};
-      state.rows = normalizeRows(result.columns || [], result.result || []);
+      state.rows = QCInternalReportFilters.normalizeRows(result.columns || [], result.result || []);
+      state.datasetKey = datasetKey;
+      updateQcOptions();
+      updateFilterOptions();
       showStatus('', false);
-      renderResults();
+      applyFilters();
     } catch (error) {
       if (request !== state.request) return;
       state.rows = [];
+      state.datasetKey = '';
+      updateQcOptions();
+      updateFilterOptions();
       content.replaceChildren();
       showStatus(__('Không tải được dữ liệu QC. Kiểm tra quyền báo cáo và bộ lọc.'), true);
       console.error('QC Internal Report failed', error);
@@ -190,12 +224,56 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
     }
   }
 
-  function renderResults() {
+  function updateQcOptions() {
+    const control = controls.qc.control;
+    const select = control.$input[0];
+    const current = control.get_value();
+    const available = Array.from(new Set(state.rows.map((row) => String(row.qc || '').trim())))
+      .filter((value) => value === 'QC1' || value === 'QC2')
+      .sort();
+    control.df.options = available.join('\n');
+    select.replaceChildren();
+    if (!available.length) {
+      select.add(new Option(__('Không có dữ liệu'), ''));
+      select.disabled = true;
+      return;
+    }
+    available.forEach((value) => select.add(new Option(value, value)));
+    select.disabled = false;
+    select.value = available.includes(current) ? current : available.includes('QC1') ? 'QC1' : available[0];
+  }
+
+  function updateFilterOptions() {
+    const qc = controls.qc.control.get_value();
+    const activeFilters = state.active === 'summary' ? ['product'] : QCInternalReportFilters.fields.map((item) => item.fieldname);
+    QCInternalReportFilters.updateOptions(state.rows, qc, activeFilters, controls);
+  }
+
+  function applyFilters() {
+    const qc = controls.qc.control.get_value();
+    if (qc !== 'QC1' && qc !== 'QC2') {
+      const hasAvailableQc = state.rows.some((row) => row.qc === 'QC1' || row.qc === 'QC2');
+      showStatus(
+        hasAvailableQc ? __('Chọn QC1 hoặc QC2 để xem báo cáo.') : __('Không có dữ liệu QC1 hoặc QC2 trong khoảng ngày này.'),
+        hasAvailableQc
+      );
+      renderResults([]);
+      return;
+    }
+    const activeFilters = state.active === 'summary'
+      ? ['product']
+      : ['company', 'factory', 'production_line', 'product'];
+    const rows = QCInternalReportFilters.filterRows(state.rows, qc, activeFilters, controls);
+    showStatus(rows.length ? '' : __('Không có dữ liệu phù hợp với các bộ lọc đã chọn.'), false);
+    renderResults(rows);
+  }
+
+  function renderResults(rows = state.rows) {
     if (!window.QCInternalReportView) {
       showStatus(__('Thiếu thành phần hiển thị báo cáo QC.'), true);
       return;
     }
-    const summary = window.QCInternalReportView.summarize(state.rows);
+    const summary = window.QCInternalReportView.summarize(rows);
     window.QCInternalReportView.render({tab: state.active, summary, content});
   }
 
@@ -205,41 +283,6 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
     status.classList.toggle('is-visible', Boolean(message));
   }
 
-  function normalizeRows(columns, rows) {
-    const aliases = {
-      occurreddate: 'occurredDate', companiescode: 'companiesCode', companiesname: 'companiesName',
-      factoriescode: 'factoriesCode', factoriesname: 'factoriesName',
-      linegroupscode: 'lineGroupsCode', linegroupsname: 'lineGroupsName',
-      productionlinescode: 'productionLinesCode', productionlinesname: 'productionLinesName',
-      customerscode: 'customersCode', customersname: 'customersName',
-      productscode: 'productsCode', productsname: 'productsName',
-      qcdefectscode: 'qcDefectsCode', qcdefectsname: 'qcDefectsName',
-      eventtype: 'eventType', quantitysummary: 'quantitySummary',
-    };
-    const canonical = (name) => aliases[String(name).toLowerCase()] || name;
-    const names = columns.map((column) => {
-      const name = typeof column === 'string' ? column.split(':')[0] : column.label || column.fieldname || '';
-      return canonical(name.split(':')[0]);
-    });
-    return rows.map((row) => Array.isArray(row)
-      ? Object.fromEntries(names.map((name, index) => [name, row[index]]))
-      : Object.fromEntries(Object.entries(row).map(([name, value]) => [canonical(name), value])));
-  }
-
-  function normalizeDate(value) {
-    if (!value) return '';
-    const date = String(value).trim();
-    const iso = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if (iso) return iso[1] + '-' + iso[2].padStart(2, '0') + '-' + iso[3].padStart(2, '0');
-    const localized = date.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
-    if (localized) return localized[3] + '-' + localized[2].padStart(2, '0') + '-' + localized[1].padStart(2, '0');
-    return '';
-  }
-
-  function readDateInput(control) {
-    return control.$input ? control.$input.val() : control.get_value();
-  }
-
   const stylesheet = '/assets/factory_management/css/qc_internal_report.css';
   if (!document.querySelector('link[href="' + stylesheet + '"]')) {
     const link = document.createElement('link');
@@ -247,4 +290,4 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
     link.href = stylesheet;
     document.head.append(link);
   }
-};
+}

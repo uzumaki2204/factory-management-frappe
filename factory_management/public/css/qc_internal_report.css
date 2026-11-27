@@ -69,6 +69,9 @@
 .qc-ir-refresh:disabled { opacity: .45; cursor: wait; }
 
 .qc-ir-filters {
+  position: relative;
+  z-index: 20;
+  overflow: visible;
   padding: 0 4px 5px;
   border-bottom: 1px solid #8a8a8a;
 }
@@ -126,6 +129,78 @@
 }
 
 .qc-ir-control .control-input-wrapper { min-width: 0; }
+.qc-ir-multiselect { position: relative; }
+.qc-ir-multiselect.is-open { z-index: 50; }
+.qc-ir-multiselect-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.qc-ir-multiselect-trigger::after {
+  width: 7px;
+  height: 7px;
+  margin-left: 8px;
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
+  content: '';
+  flex: none;
+  transform: rotate(45deg) translateY(-2px);
+}
+.qc-ir-multiselect-menu {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 3px);
+  right: 10px;
+  left: 10px;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  box-shadow: 0 8px 20px rgb(15 23 42 / 18%);
+}
+.qc-ir-multiselect-menu[hidden] { display: none !important; }
+.qc-ir-multiselect-search { margin-bottom: 6px; }
+.qc-ir-multiselect-options { max-height: 240px; overflow-y: auto; }
+.qc-ir-multiselect-option {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  color: #263449;
+  font-size: 13px;
+  cursor: pointer;
+}
+.qc-ir-multiselect-option:hover { background: #f1f5f9; }
+.qc-ir-multiselect-option input {
+  width: 15px !important;
+  height: 15px !important;
+  min-height: 15px !important;
+  margin: 0;
+  padding: 0 !important;
+  border: 1px solid #64748b !important;
+  border-radius: 3px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  appearance: auto;
+  accent-color: var(--qc-header);
+  flex: none;
+}
+.qc-ir-multiselect-option span { overflow-wrap: anywhere; }
+.qc-ir-multiselect-empty { padding: 9px 5px; color: #64748b; font-size: 12px; }
+.qc-ir-multiselect-clear {
+  margin-top: 7px;
+  padding: 4px 8px;
+  border: 1px solid #d5dce4;
+  background: #f8fafc;
+  color: var(--qc-blue);
+  font-size: 12px;
+  cursor: pointer;
+}
 .qc-ir-date-range { grid-column: span 2; }
 .qc-ir-filter-grid.is-summary .qc-ir-date-range { grid-column: auto; }
 .qc-ir-date-inputs {
