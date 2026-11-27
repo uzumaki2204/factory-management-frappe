@@ -1,0 +1,12 @@
+{
+  "doctype": "Page",
+  "name": "qc-internal-report",
+  "page_name": "qc-internal-report",
+  "title": "Báo cáo QC nội bộ",
+  "module": "Quality Control",
+  "standard": "Yes",
+  "roles": [
+    {"role": "QC Report Reader"},
+    {"role": "System Manager"}
+  ]
+}
