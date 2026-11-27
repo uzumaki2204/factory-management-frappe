@@ -488,13 +488,15 @@
   background: #dc4050;
 }
 .qc-ir-product-bar span {
-  width: 80px;
-  margin-top: 4px;
+  display: block;
+  width: 100%;
+  margin-top: 5px;
   color: #555;
-  font-size: 11px;
-  white-space: nowrap;
-  transform: rotate(-45deg);
-  transform-origin: 13px 4px;
+  font-size: 10px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
 }
 
 .qc-ir-defect-page {
