@@ -1,261 +1,261 @@
 window.QCInternalReportView = (() => {
-  const inspectedTypes = new Set(['CumulativeSubtract', 'CumulativeAdd']);
-  const number = new Intl.NumberFormat('vi-VN', {maximumFractionDigits: 0});
-  const percent = new Intl.NumberFormat('vi-VN', {style: 'percent', maximumFractionDigits: 2});
+  const inspectTypes = new Set(['CumulativeSubtract', 'CumulativeAdd']);
+  const num = new Intl.NumberFormat('vi-VN', {maximumFractionDigits: 0});
+  const pct = new Intl.NumberFormat('vi-VN', {style: 'percent', maximumFractionDigits: 0});
+  const companyColors = ['#7b168c', '#1496ee', '#202ca6', '#f26435'];
+  const defectColors = ['#168dee', '#86128f', '#202ca6'];
 
   function summarize(rows) {
-    const companies = new Map();
-    const products = new Map();
-    const dailyProduct = new Map();
-    for (const row of rows) {
-      const eventType = String(row.eventType || '');
-      const qty = Number(row.quantitySummary || 0);
+    const companies = new Map(), products = new Map(), defects = new Map(), daily = new Map();
+    rows.forEach((row) => {
+      const type = String(row.eventType || ''), qty = Number(row.quantitySummary || 0);
       const date = String(row.occurredDate || '').slice(0, 10);
-      const line = row.productionLinesCode || '';
-      const productCode = row.productsCode || '';
-      const companyId = `${row.companiesCode || ''}|${row.companiesName || ''}`;
-      let company = companies.get(companyId);
+      const line = row.productionLinesCode || '', productCode = row.productsCode || '';
+      const companyKey = String(row.companiesCode || '') + '|' + String(row.companiesName || '');
+      let company = companies.get(companyKey);
       if (!company) {
-        company = {
-          id: companyId,
-          code: row.companiesCode || '',
-          name: row.companiesName || __('Chưa gán công ty'),
-          inspected: 0,
-          defects: 0,
-          days: new Map(),
-          dailyProduct: new Map(),
-          defectMap: new Map(),
-        };
-        companies.set(companyId, company);
+        company = {code: row.companiesCode || '', name: row.companiesName || __('Chưa gán công ty'),
+          inspected: 0, defects: 0, days: new Map(), lineDays: new Map(), defectMap: new Map()};
+        companies.set(companyKey, company);
       }
-      const inspectedQty = inspectedTypes.has(eventType) ? qty : 0;
-      const defectQty = eventType === 'DefectAdd' ? qty : 0;
-      company.inspected += inspectedQty;
+      const inspected = inspectTypes.has(type) ? qty : 0;
+      const defectQty = type === 'DefectAdd' ? qty : 0;
+      company.inspected += inspected;
       company.defects += defectQty;
-
       let day = company.days.get(date);
-      if (!day) {
-        day = {date, inspected: 0, defects: 0};
-        company.days.set(date, day);
-      }
-      day.inspected += inspectedQty;
+      if (!day) { day = {date, inspected: 0, defects: 0}; company.days.set(date, day); }
+      day.inspected += inspected;
       day.defects += defectQty;
-
-      const dayProductKey = `${date}|${line}|${productCode}`;
-      company.dailyProduct.set(dayProductKey, (company.dailyProduct.get(dayProductKey) || 0) + inspectedQty);
-
-      if (defectQty && row.qcDefectsCode && row.qcDefectsName) {
-        const defectKey = `${row.qcDefectsCode}|${row.qcDefectsName}`;
-        const defect = company.defectMap.get(defectKey) || {
-          code: row.qcDefectsCode,
-          name: row.qcDefectsName,
-          quantity: 0,
-        };
-        defect.quantity += defectQty;
-        company.defectMap.set(defectKey, defect);
+      const key = date + '|' + line + '|' + productCode;
+      company.lineDays.set(key, (company.lineDays.get(key) || 0) + inspected);
+      daily.set(key, (daily.get(key) || 0) + inspected);
+      if (defectQty) {
+        const code = row.qcDefectsCode || row.qcDefectsName || __('Chưa phân loại');
+        const name = row.qcDefectsName || code;
+        add(defects, code, name, defectQty);
+        add(company.defectMap, code, name, defectQty);
       }
-
-      const productKey = `${productCode}|${row.productsName || ''}`;
+      const productKey = String(productCode) + '|' + String(row.productsName || '');
       let product = products.get(productKey);
-      if (!product) {
-        product = {code: productCode, name: row.productsName || __('Chưa gán mã hàng'), inspected: 0, defects: 0};
-        products.set(productKey, product);
-      }
-      product.inspected += inspectedQty;
+      if (!product) { product = {code: productCode, name: row.productsName || __('Chưa gán mã hàng'), inspected: 0, defects: 0}; products.set(productKey, product); }
+      product.inspected += inspected;
       product.defects += defectQty;
-    }
+    });
 
     const companyRows = Array.from(companies.values());
-    const grandInspected = companyRows.reduce((sum, company) => sum + company.inspected, 0);
-    const grandDefects = companyRows.reduce((sum, company) => sum + company.defects, 0);
-    for (const company of companyRows) {
-      company.defectRate = divide(company.defects, company.inspected);
-      company.share = divide(company.inspected, grandInspected);
-      company.averagePerDayLineProduct = company.dailyProduct.size
-        ? Array.from(company.dailyProduct.values()).reduce((sum, value) => sum + value, 0) / company.dailyProduct.size
-        : 0;
-      company.trend = Array.from(company.days.values())
-        .sort((left, right) => left.date.localeCompare(right.date))
-        .map((day, index, values) => ({
-          ...day,
-          rate: divide(day.defects, day.inspected),
-          direction: index === 0 || day.defects / (day.inspected || Infinity) === values[index - 1].defects / (values[index - 1].inspected || Infinity)
-            ? 'flat'
-            : day.defects / (day.inspected || Infinity) > values[index - 1].defects / (values[index - 1].inspected || Infinity) ? 'up' : 'down',
-        }));
-      company.topDefects = Array.from(company.defectMap.values())
-        .sort((left, right) => right.quantity - left.quantity || left.code.localeCompare(right.code))
-        .slice(0, 3)
-        .map((defect) => ({...defect, share: divide(defect.quantity, company.defects)}));
-      let rank = 0;
-      let previous = null;
-      company.rankedDefects = Array.from(company.defectMap.values())
-        .sort((left, right) => right.quantity - left.quantity || left.code.localeCompare(right.code))
-        .map((defect) => {
-          if (previous !== defect.quantity) rank += 1;
-          previous = defect.quantity;
-          return {...defect, rank, share: divide(defect.quantity, company.defects), rate: divide(defect.quantity, company.inspected)};
-        });
-    }
-    const productRows = Array.from(products.values())
-      .map((product) => ({...product, passed: product.inspected - product.defects, rate: divide(product.defects, product.inspected)}))
-      .sort((left, right) => right.defects - left.defects || left.code.localeCompare(right.code));
+    const totalInspected = companyRows.reduce((n, item) => n + item.inspected, 0);
+    const totalDefects = companyRows.reduce((n, item) => n + item.defects, 0);
+    companyRows.forEach((company) => {
+      company.passed = company.inspected - company.defects;
+      company.share = ratio(company.inspected, totalInspected);
+      company.defectRate = ratio(company.defects, company.inspected);
+      company.passRate = ratio(company.passed, company.inspected);
+      company.average = mean(company.lineDays);
+      company.defectMap = Array.from(company.defectMap.values()).sort(byQuantity);
+      company.topDefects = company.defectMap.slice(0, 3).map((item) => ({...item, share: ratio(item.quantity, company.defects)}));
+      const days = Array.from(company.days.values()).sort((a, b) => a.date.localeCompare(b.date));
+      company.trend = days.map((item, index) => {
+        const rate = ratio(item.defects, item.inspected);
+        const prev = index ? ratio(days[index - 1].defects, days[index - 1].inspected) : null;
+        return {...item, rate, direction: prev === null ? 'first' : rate > prev ? 'up' : rate < prev ? 'down' : 'flat'};
+      });
+    });
+    const productRows = Array.from(products.values()).map((item) => ({
+      ...item, passed: item.inspected - item.defects, rate: ratio(item.defects, item.inspected),
+    })).sort((a, b) => b.rate - a.rate || b.defects - a.defects || a.code.localeCompare(b.code));
+    const defectRows = Array.from(defects.values())
+      .map((item) => ({...item, share: ratio(item.quantity, totalDefects)})).sort(byQuantity);
     return {
-      companies: companyRows.sort((left, right) => right.inspected - left.inspected || left.name.localeCompare(right.name)),
-      products: productRows,
-      grandInspected,
-      grandDefects,
-      grandPassed: grandInspected - grandDefects,
-      defectRate: divide(grandDefects, grandInspected),
+      companies: companyRows.sort((a, b) => b.inspected - a.inspected || a.name.localeCompare(b.name)),
+      products: productRows, defects: defectRows, topDefects: defectRows.slice(0, 3),
+      totalInspected, totalDefects, totalPassed: totalInspected - totalDefects,
+      defectRate: ratio(totalDefects, totalInspected), passRate: ratio(totalInspected - totalDefects, totalInspected),
+      average: mean(daily),
     };
   }
 
-  function render({tab, summary, metrics, content}) {
-    renderMetrics(summary, metrics);
-    if (tab === 'summary') renderOverview(summary, content);
-    else if (tab === 'company') renderCompanies(summary, content);
-    else if (tab === 'product') renderProducts(summary, content);
-    else renderDefects(summary, content);
+  function add(map, code, name, quantity) {
+    const key = String(code) + '|' + String(name);
+    const item = map.get(key) || {code: String(code), name: String(name), quantity: 0};
+    item.quantity += quantity;
+    map.set(key, item);
   }
 
-  function renderMetrics(summary, target) {
-    const cards = [
-      ['Tổng kiểm', summary.grandInspected, 'blue'],
-      ['Tổng lỗi', summary.grandDefects, 'red'],
-      ['Số lượng đạt', summary.grandPassed, 'green'],
-      ['Tỷ lệ lỗi', percent.format(summary.defectRate), 'orange'],
-    ];
-    target.replaceChildren();
-    target.innerHTML = cards.map(([label, value, tone]) => `
-      <article class="qc-ir-metric qc-ir-metric--${tone}">
-        <div class="qc-ir-metric-label">${escapeHtml(__(label))}</div>
-        <div class="qc-ir-metric-value">${escapeHtml(typeof value === 'number' ? number.format(value) : value)}</div>
-      </article>`).join('');
+  function render({tab, summary, content}) {
+    if (tab === 'summary') overview(summary, content);
+    else if (tab === 'company') companyPage(summary, content);
+    else if (tab === 'product') productPage(summary, content);
+    else defectPage(summary, content);
   }
 
-  function renderOverview(summary, target) {
-    if (!summary.companies.length) return empty(target);
-    target.innerHTML = `
-      <div class="qc-ir-overview-scroll"><div class="qc-ir-overview">
-        <div class="qc-ir-overview-head"><span>Công ty</span><span>Tỷ trọng</span><span>Tổng kiểm</span><span>Tổng lỗi</span><span>Tỷ lệ lỗi</span><span>TB kiểm/ngày</span><span>Top 3 lỗi</span><span>Biểu đồ lỗi theo ngày</span></div>
-        ${summary.companies.map((company) => `
-          <div class="qc-ir-overview-row">
-            <div class="qc-ir-company-name" title="${escapeHtml(company.code)}">${escapeHtml(company.name)}</div>
-            <div class="qc-ir-share" title="${escapeHtml(percent.format(company.share))}">${shareDots(company.share)}</div>
-            <div class="qc-ir-number">${number.format(company.inspected)}</div>
-            <div class="qc-ir-number qc-ir-danger">${number.format(company.defects)}</div>
-            <div class="qc-ir-gauge-cell">${gauge(company.defectRate)}</div>
-            <div class="qc-ir-number">${number.format(company.averagePerDayLineProduct)}</div>
-            <div class="qc-ir-top-defects">${topDefects(company)}</div>
-            <div class="qc-ir-trend-cell">${trendChart(company.trend)}</div>
-          </div>`).join('')}
-      </div></div>`;
+  function overview(s, target) {
+    if (!s.companies.length) return empty(target);
+    const rows = s.companies.map((c) =>
+      '<div class="qc-ir-overview-row"><div class="qc-ir-company-name">' + esc(c.name) + '</div>' +
+      '<div class="qc-ir-share"><strong>' + pct.format(c.share) + '</strong>' + dots(c.share) + '</div>' +
+      '<div class="qc-ir-number">' + num.format(c.inspected) + '</div><div class="qc-ir-number qc-ir-danger">' + num.format(c.defects) + '</div>' +
+      '<div>' + gauge(c.defectRate) + '</div><div class="qc-ir-number">' + num.format(c.average) + '</div>' +
+      '<div class="qc-ir-top-defects">' + top3(c) + '</div><div class="qc-ir-trend-cell">' + trend(c) + '</div></div>'
+    ).join('');
+    target.innerHTML = '<div class="qc-ir-overview-scroll"><div class="qc-ir-overview">' +
+      '<div class="qc-ir-overview-head"><span>Công ty</span><span>Tỷ trọng</span><span>Tổng kiểm</span><span>Tổng lỗi</span><span>Tỷ lệ lỗi</span><span>Trung bình<br>kiểm/ngày</span><span>Top 3 lỗi</span><span>Biểu đồ lỗi theo ngày</span></div>' + rows +
+      '</div></div>';
   }
 
-  function renderCompanies(summary, target) {
-    if (!summary.companies.length) return empty(target);
-    target.innerHTML = `<div class="qc-ir-company-list">${summary.companies.map((company) => `
-      <article class="qc-ir-company-card">
-        <div class="qc-ir-company-card-head">
-          <div><div class="qc-ir-eyebrow">${escapeHtml(company.code || __('Công ty'))}</div><h3>${escapeHtml(company.name)}</h3></div>
-          <div class="qc-ir-rate-pill">${percent.format(company.defectRate)}</div>
-        </div>
-        <div class="qc-ir-company-stats">
-          <span><b>${number.format(company.inspected)}</b>Tổng kiểm</span>
-          <span><b>${number.format(company.defects)}</b>Tổng lỗi</span>
-          <span><b>${number.format(company.inspected - company.defects)}</b>Số lượng đạt</span>
-          <span><b>${number.format(company.averagePerDayLineProduct)}</b>TB kiểm/ngày</span>
-        </div>
-        <div class="qc-ir-chart-title">Tỷ lệ lỗi theo ngày</div>${trendChart(company.trend, true)}
-      </article>`).join('')}</div>`;
+  function companyPage(s, target) {
+    if (!s.companies.length) return empty(target);
+    const topCodes = s.topDefects.map((item) => item.code);
+    target.innerHTML = '<div class="qc-ir-company-page"><div class="qc-ir-company-kpis">' +
+      barPanel(s.companies, 'inspected', 'TỔNG HÀNG KIỂM', '#168dee', (c) => c.share) +
+      barPanel(s.companies, 'defects', 'TỔNG HÀNG LỖI', '#d94655', (c) => c.defectRate) +
+      barPanel(s.companies, 'passed', 'TỔNG HÀNG ĐẠT', '#00c853', (c) => c.passRate) +
+      '</div><div class="qc-ir-company-analysis">' + groupedDefects(s.companies, topCodes) +
+      '<section class="qc-ir-chart-panel"><h2>TỶ LỆ LỖI THEO NGÀY</h2>' + companyTrend(s.companies) + '</section></div></div>';
   }
 
-  function renderProducts(summary, target) {
-    if (!summary.products.length) return empty(target);
-    target.innerHTML = `<div class="qc-ir-table-scroll"><table class="qc-ir-table">
-      <thead><tr><th>#</th><th>Mã hàng</th><th>Tổng kiểm</th><th>Tổng lỗi</th><th>Số lượng đạt</th><th>Rate_Defect / Tỷ lệ lỗi</th></tr></thead>
-      <tbody>${summary.products.map((product, index) => `
-        <tr><td>${index + 1}</td><td><strong>${escapeHtml(product.code || product.name)}</strong><small>${escapeHtml(product.name)}</small></td>
-        <td>${number.format(product.inspected)}</td><td class="qc-ir-danger">${number.format(product.defects)}</td><td>${number.format(product.passed)}</td>
-        <td><div class="qc-ir-rate-cell"><span class="qc-ir-donut" style="--rate:${clamp(product.rate * 100, 0, 100)}%"><i></i></span><strong>${percent.format(product.rate)}</strong><span class="qc-ir-bar"><i style="width:${clamp(product.rate * 100, 0, 100)}%"></i></span></div></td></tr>`).join('')}</tbody>
-    </table></div>`;
+  function barPanel(companies, field, title, color, ratioFn) {
+    const list = companies.slice().sort((a, b) => b[field] - a[field]);
+    const max = Math.max(1, ...list.map((c) => c[field]));
+    const bars = list.map((c) => '<div class="qc-ir-bar-column" title="' + esc(c.name + ': ' + num.format(c[field])) + '">' +
+      '<strong>' + num.format(c[field]) + '</strong><div class="qc-ir-column-plot"><i style="--bar-height:' + Math.max(3, c[field] / max * 100) + '%;--bar-color:' + color + '"><b>' + pct.format(ratioFn(c)) + '</b></i></div>' +
+      '<span>' + esc(c.name) + '</span></div>').join('');
+    return '<section class="qc-ir-chart-panel"><h2 style="--title-color:' + color + '">' + title + '</h2><div class="qc-ir-company-bars">' + bars + '</div></section>';
   }
 
-  function renderDefects(summary, target) {
-    const rows = summary.companies.flatMap((company) => company.rankedDefects.map((defect) => ({company, defect})));
-    if (!rows.length) return empty(target);
-    target.innerHTML = `<div class="qc-ir-table-scroll"><table class="qc-ir-table qc-ir-defect-table">
-      <thead><tr><th>Công ty</th><th>Hạng</th><th>Mã lỗi</th><th>Loại lỗi</th><th>Số lượng lỗi</th><th>Tỷ trọng lỗi công ty</th><th>Tỷ lệ lỗi / tổng kiểm</th></tr></thead>
-      <tbody>${rows.map(({company, defect}) => `
-        <tr><td>${escapeHtml(company.name)}</td><td><span class="qc-ir-rank">${defect.rank}</span></td><td>${escapeHtml(defect.code)}</td><td><strong>${escapeHtml(defect.name)}</strong></td>
-        <td class="qc-ir-danger">${number.format(defect.quantity)}</td><td>${percent.format(defect.share)}</td><td>${percent.format(defect.rate)}</td></tr>`).join('')}</tbody>
-    </table></div>`;
+  function groupedDefects(companies, codes) {
+    const defects = codes.map((code) => {
+      for (const c of companies) { const d = c.defectMap.find((item) => item.code === code); if (d) return d; }
+      return null;
+    }).filter(Boolean);
+    const legend = defects.map((d, i) => '<span><i style="--legend-color:' + defectColors[i % 3] + '"></i>' + esc(d.name) + '</span>').join('');
+    const groups = companies.map((c) => '<div class="qc-ir-company-group"><div class="qc-ir-group-bars">' +
+      defects.map((d, i) => {
+        const found = c.defectMap.find((item) => item.code === d.code);
+        const value = found ? ratio(found.quantity, c.defects) : 0;
+        return '<div class="qc-ir-group-bar" title="' + esc(d.name + ': ' + pct.format(value)) + '"><strong>' + pct.format(value) +
+          '</strong><i style="--bar-height:' + Math.max(1, value * 100) + '%;--bar-color:' + defectColors[i % 3] + '"></i></div>';
+      }).join('') + '</div><span>' + esc(c.name) + '</span></div>').join('');
+    return '<section class="qc-ir-chart-panel"><h2>TOP 3 LỖI PHỔ BIẾN</h2><div class="qc-ir-legend">' + legend +
+      '</div><div class="qc-ir-grouped-chart">' + groups + '</div></section>';
   }
 
-  function shareDots(share) {
-    const filled = Math.round(clamp(share * 100, 0, 100));
-    return `<span class="qc-ir-dots" aria-label="${escapeHtml(percent.format(share))}">${Array.from({length: 100}, (_, index) => `<i class="${index < filled ? 'is-filled' : ''}"></i>`).join('')}</span>`;
+  function productPage(s, target) {
+    if (!s.companies.length && !s.products.length) return empty(target);
+    target.innerHTML = '<div class="qc-ir-product-page"><div class="qc-ir-product-kpis">' +
+      barPanel(s.companies, 'inspected', 'TỔNG HÀNG KIỂM', '#168dee', (c) => c.share) +
+      barPanel(s.companies, 'defects', 'TỔNG HÀNG LỖI', '#d94655', (c) => c.defectRate) +
+      '<section class="qc-ir-chart-panel"><h2>TỶ LỆ LỖI</h2>' + donut(s) + '</section></div>' +
+      '<div class="qc-ir-product-analysis"><section class="qc-ir-average-card"><strong>' + num.format(s.average) +
+      '</strong><span>Trung bình kiểm/chuyền/ngày</span></section>' + productRates(s.products) + '</div></div>';
+  }
+
+  function donut(s) {
+    return '<div class="qc-ir-donut-layout"><div class="qc-ir-donut-label"><strong>' + num.format(s.totalDefects) + '</strong><span>(' + pct.format(s.defectRate) + ')</span></div>' +
+      '<div class="qc-ir-donut-chart" style="--defect-angle:' + (s.defectRate * 360) + 'deg"><i></i></div>' +
+      '<div class="qc-ir-donut-label"><strong>' + num.format(s.totalPassed) + '</strong><span>(' + pct.format(s.passRate) + ')</span></div></div>';
+  }
+
+  function productRates(products) {
+    if (!products.length) return '<section class="qc-ir-chart-panel"><h2>TỶ LỆ LỖI THEO MÃ HÀNG</h2>' + emptyHtml() + '</section>';
+    const max = Math.max(0.01, ...products.map((p) => p.rate));
+    const bars = products.map((p) => '<div class="qc-ir-product-bar" title="' + esc(p.name + ': ' + pct.format(p.rate)) + '">' +
+      '<strong>' + pct.format(p.rate) + '</strong><i style="--bar-height:' + Math.max(3, p.rate / max * 100) + '%"></i><span>' + esc(p.code || p.name) + '</span></div>').join('');
+    return '<section class="qc-ir-chart-panel qc-ir-product-rate-panel"><h2>TỶ LỆ LỖI THEO MÃ HÀNG</h2>' +
+      '<div class="qc-ir-product-rate-scroll"><div class="qc-ir-product-bars">' + bars + '</div></div></section>';
+  }
+
+  function defectPage(s, target) {
+    target.innerHTML = '<div class="qc-ir-defect-page"><section class="qc-ir-defect-total"><strong>' + num.format(s.totalDefects) +
+      '</strong><span>Tổng lỗi</span></section>' + defectTop(s.topDefects) + defectChart(s.defects) + '</div>';
+  }
+
+  function defectTop(items) {
+    if (!items.length) return '<section class="qc-ir-chart-panel"><h2>TOP 3 LỖI PHỔ BIẾN</h2>' + emptyHtml() + '</section>';
+    const max = Math.max(1, ...items.map((d) => d.quantity));
+    const bars = items.map((d) => '<div class="qc-ir-top-defect-column"><strong>' + num.format(d.quantity) + '</strong>' +
+      '<div class="qc-ir-top-defect-track"><i style="--bar-height:' + d.quantity / max * 100 + '%"><b>' + pct.format(d.share) + '</b></i></div>' +
+      '<span>' + esc(d.name) + '</span></div>').join('');
+    return '<section class="qc-ir-chart-panel qc-ir-defect-top-panel"><h2>TOP 3 LỖI PHỔ BIẾN</h2><div class="qc-ir-top-defect-chart">' + bars + '</div></section>';
+  }
+
+  function defectChart(items) {
+    if (!items.length) return '<section class="qc-ir-chart-panel"><h2>BIỂU ĐỒ LỖI</h2>' + emptyHtml() + '</section>';
+    const max = Math.max(1, ...items.map((d) => d.quantity));
+    const bars = items.map((d) => '<div class="qc-ir-all-defect-column" title="' + esc(d.name + ': ' + num.format(d.quantity)) + '">' +
+      '<strong>' + pct.format(d.share) + '</strong><b>' + num.format(d.quantity) + '</b><i style="--bar-height:' + Math.max(3, d.quantity / max * 100) + '%"></i><span>' + esc(d.name) + '</span></div>').join('');
+    return '<section class="qc-ir-chart-panel qc-ir-all-defects-panel"><h2>BIỂU ĐỒ LỖI</h2><div class="qc-ir-all-defects-scroll"><div class="qc-ir-all-defect-chart">' + bars + '</div></div></section>';
+  }
+
+  function dots(share) {
+    const count = Math.max(0, Math.min(100, Math.round(share * 100)));
+    return '<span class="qc-ir-dots">' + Array.from({length: count}, () => '<i></i>').join('') + '</span>';
   }
 
   function gauge(rate) {
-    const value = clamp(rate, 0, 1);
-    const color = value > 0.5 ? '#dc2626' : value > 0.25 ? '#ea580c' : '#16a34a';
-    const circumference = 125.66;
-    return `<svg class="qc-ir-gauge" viewBox="0 0 100 62" role="img" aria-label="${escapeHtml(percent.format(rate))}">
-      <path d="M10 54 A40 40 0 0 1 90 54" fill="none" stroke="#e2e8f0" stroke-width="9" stroke-linecap="round" />
-      <path d="M10 54 A40 40 0 0 1 90 54" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(circumference * value).toFixed(2)} ${circumference}" />
-      <text x="50" y="50" text-anchor="middle">${escapeHtml(percent.format(rate))}</text></svg>`;
+    const r = Math.max(0, Math.min(1, rate || 0)), c = 125.66;
+    return '<svg class="qc-ir-gauge" viewBox="0 0 100 62" aria-label="' + pct.format(rate) + '">' +
+      '<path d="M10 54 A40 40 0 0 1 90 54" fill="none" stroke="#e1e5eb" stroke-width="9"></path>' +
+      '<path d="M10 54 A40 40 0 0 1 90 54" fill="none" stroke="#e6232a" stroke-width="9" stroke-dasharray="' + (c * r) + ' ' + c + '"></path>' +
+      '<text x="50" y="48" text-anchor="middle">' + pct.format(rate) + '</text></svg>';
   }
 
-  function topDefects(company) {
-    if (!company.topDefects.length) return '<span class="qc-ir-muted">—</span>';
-    return company.topDefects.map((defect, index) => `<div class="qc-ir-top-defect"><span>${index + 1}. ${escapeHtml(defect.name)}</span><strong>${number.format(defect.quantity)} <small>(${percent.format(defect.share)})</small></strong></div>`).join('');
+  function top3(company) {
+    return company.topDefects.map((d) => '<div class="qc-ir-top-defect"><span>' + esc(d.name) + '</span><strong>' + num.format(d.quantity) + ' (' + pct.format(d.share) + ')</strong></div>').join('');
   }
 
-  function trendChart(points, large = false) {
-    if (!points.length) return '<div class="qc-ir-muted">Chưa có dữ liệu</div>';
-    const width = large ? 760 : 420;
-    const height = large ? 175 : 76;
-    const left = 14;
-    const right = width - 14;
-    const top = 12;
-    const bottom = height - 18;
-    const max = Math.max(...points.map((point) => point.rate), 0.01);
-    const positions = points.map((point, index) => ({
-      ...point,
-      x: points.length === 1 ? width / 2 : left + (index / (points.length - 1)) * (right - left),
-      y: bottom - (point.rate / max) * (bottom - top),
-    }));
-    const path = positions.map((point, index) => `${index ? 'L' : 'M'}${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' ');
-    const labels = [0, Math.floor((positions.length - 1) / 2), positions.length - 1];
-    return `<svg class="qc-ir-trend ${large ? 'is-large' : ''}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="${__('Tỷ lệ lỗi theo ngày')}">
-      <path d="M${left},${bottom} H${right}" stroke="#e2e8f0" stroke-width="1" fill="none"/><path d="${path}" stroke="#f87171" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      ${positions.map((point) => `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${large ? 4 : 3}" fill="${point.direction === 'up' ? '#dc2626' : point.direction === 'down' ? '#16a34a' : '#94a3b8'}"><title>${escapeHtml(formatDate(point.date))}: ${escapeHtml(percent.format(point.rate))}</title></circle>`).join('')}
-      ${Array.from(new Set(labels)).map((index) => `<text x="${positions[index].x.toFixed(1)}" y="${height - 2}" text-anchor="middle">${escapeHtml(formatDate(points[index].date))}</text>`).join('')}</svg>`;
+  function trend(company) {
+    const points = company.trend, w = 600, h = 110, left = 18, right = w - 18, top = 22, bottom = h - 22;
+    if (!points.length) return '<span class="qc-ir-muted">—</span>';
+    const max = Math.max(0.01, ...points.map((p) => p.rate));
+    const xy = points.map((p, i) => ({...p, x: points.length === 1 ? w / 2 : left + i / (points.length - 1) * (right - left), y: bottom - p.rate / max * (bottom - top)}));
+    const path = xy.map((p, i) => (i ? 'L' : 'M') + p.x + ',' + p.y).join(' ');
+    const area = path + ' L' + xy[xy.length - 1].x + ',' + bottom + ' L' + xy[0].x + ',' + bottom + ' Z';
+    const id = 'qc-gradient-' + String(company.code || company.name).replace(/[^a-z0-9_-]/gi, '-');
+    const labels = xy.map((p, i) => {
+      const marker = i === 0 ? '<circle cx="' + p.x + '" cy="' + p.y + '" r="3" fill="#a6aab2"></circle>' :
+        triangle(p.x, p.y, p.direction, p.direction === 'up' ? '#e6232a' : '#00b957');
+      return '<text class="qc-ir-trend-value" x="' + p.x + '" y="' + Math.max(12, p.y - 8) + '" text-anchor="middle">' + pct.format(p.rate) + '</text>' + marker +
+        '<text class="qc-ir-trend-date" x="' + p.x + '" y="' + (h - 3) + '" text-anchor="middle">' + dateLabel(p.date) + '</text>';
+    }).join('');
+    return '<svg class="qc-ir-trend" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"><defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ed4a53" stop-opacity=".42"></stop><stop offset="1" stop-color="#ed4a53" stop-opacity="0"></stop></linearGradient></defs>' +
+      '<path d="' + area + '" fill="url(#' + id + ')"></path><path d="' + path + '" fill="none" stroke="#ff626b" stroke-width="2.5"></path>' + labels + '</svg>';
   }
 
-  function empty(target) {
-    target.innerHTML = `<div class="qc-ir-empty"><span>◎</span><strong>${__('Không có dữ liệu trong khoảng thời gian đã chọn')}</strong><small>${__('Thử thay đổi ngày hoặc bộ lọc để xem báo cáo.')}</small></div>`;
+  function triangle(x, y, direction, color) {
+    const points = direction === 'up' ? x + ',' + (y - 5) + ' ' + (x + 4) + ',' + (y + 3) + ' ' + (x - 4) + ',' + (y + 3) :
+      (x - 4) + ',' + (y - 3) + ' ' + (x + 4) + ',' + (y - 3) + ' ' + x + ',' + (y + 5);
+    return '<polygon points="' + points + '" fill="' + color + '"></polygon>';
   }
 
-  function divide(value, denominator) {
-    return denominator ? value / denominator : 0;
+  function companyTrend(companies) {
+    const dates = Array.from(new Set(companies.flatMap((c) => c.trend.map((p) => p.date)))).sort();
+    if (!dates.length) return emptyHtml();
+    const w = 920, h = 270, left = 38, right = w - 20, top = 38, bottom = h - 38;
+    const rates = companies.flatMap((c) => c.trend.map((p) => p.rate));
+    const min = Math.max(0, Math.min(...rates) - .06), max = Math.min(1, Math.max(...rates) + .06), span = Math.max(.08, max - min);
+    const xAt = (i) => dates.length === 1 ? (left + right) / 2 : left + i / (dates.length - 1) * (right - left);
+    let lines = '';
+    companies.forEach((c, ci) => {
+      const byDate = new Map(c.trend.map((p) => [p.date, p]));
+      const pts = dates.map((date, i) => { const p = byDate.get(date); return p ? {...p, x: xAt(i), y: bottom - (p.rate - min) / span * (bottom - top)} : null; }).filter(Boolean);
+      if (!pts.length) return;
+      const color = companyColors[ci % companyColors.length];
+      const path = pts.map((p, i) => (i ? 'L' : 'M') + p.x + ',' + p.y).join(' ');
+      lines += '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="3"></path>' +
+        pts.map((p) => '<polygon points="' + p.x + ',' + (p.y - 5) + ' ' + (p.x + 5) + ',' + p.y + ' ' + p.x + ',' + (p.y + 5) + ' ' + (p.x - 5) + ',' + p.y + '" fill="' + color + '"></polygon><text x="' + p.x + '" y="' + (p.y - 10 - ci % 2 * 12) + '" text-anchor="middle">' + pct.format(p.rate) + '</text>').join('');
+    });
+    const axis = dates.map((date, i) => '<text class="qc-ir-multi-date" x="' + xAt(i) + '" y="' + (h - 8) + '" text-anchor="middle">' + dateLabel(date) + '</text>').join('');
+    const legend = companies.map((c, i) => '<span><i style="--legend-color:' + companyColors[i % companyColors.length] + '"></i>' + esc(c.name) + '</span>').join('');
+    return '<div class="qc-ir-multi-wrap"><div class="qc-ir-legend">' + legend + '</div><svg class="qc-ir-multi-trend" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"><path d="M' + left + ',' + bottom + ' H' + right + '" stroke="#d9e0e7"></path>' + lines + axis + '</svg></div>';
   }
 
-  function clamp(value, minimum, maximum) {
-    return Math.min(Math.max(Number(value) || 0, minimum), maximum);
-  }
-
-  function formatDate(value) {
-    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
-    return match ? `${match[3]}/${match[2]}` : value;
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, (character) => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-    }[character]));
-  }
+  function empty(target) { target.innerHTML = emptyHtml(); }
+  function emptyHtml() { return '<div class="qc-ir-empty"><strong>' + __('Không có dữ liệu trong khoảng thời gian đã chọn') + '</strong></div>'; }
+  function mean(map) { return map.size ? Array.from(map.values()).reduce((a, b) => a + b, 0) / map.size : 0; }
+  function ratio(a, b) { return b ? a / b : 0; }
+  function byQuantity(a, b) { return b.quantity - a.quantity || a.code.localeCompare(b.code); }
+  function dateLabel(value) { const m = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] : value; }
+  function esc(value) { return String(value ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   return {summarize, render};
 })();

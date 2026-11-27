@@ -9,107 +9,136 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
   const rendererReady = frappe.require('/assets/factory_management/js/qc_internal_report_view.js');
   const root = document.createElement('section');
   root.className = 'qc-internal-report';
-  page.body.append(root);
+
+  const tabDefinitions = [
+    {key: 'company', label: 'Công ty', title: 'BÁO CÁO TÌNH HÌNH CHẤT LƯỢNG THEO CÔNG TY'},
+    {key: 'product', label: 'Mã hàng', title: 'BÁO CÁO TÌNH HÌNH CHẤT LƯỢNG THEO MÃ HÀNG'},
+    {key: 'defect', label: 'Loại lỗi', title: 'BÁO CÁO TÌNH HÌNH CHẤT LƯỢNG THEO LOẠI LỖI'},
+    {key: 'summary', label: 'Tổng hợp', title: 'BÁO CÁO TỔNG HỢP CHẤT LƯỢNG KIM THÀNH GROUP'},
+  ];
+
+  const masthead = document.createElement('header');
+  masthead.className = 'qc-ir-masthead';
+  const logo = document.createElement('img');
+  logo.className = 'qc-ir-logo';
+  logo.src = '/assets/factory_management/images/qc-logo.png';
+  logo.alt = 'Kim Thành Group';
+  const title = document.createElement('h1');
+  const refreshButton = document.createElement('button');
+  refreshButton.type = 'button';
+  refreshButton.className = 'qc-ir-refresh';
+  refreshButton.title = __('Cập nhật báo cáo');
+  refreshButton.setAttribute('aria-label', __('Cập nhật báo cáo'));
+  refreshButton.textContent = '↻';
+  masthead.append(logo, title, refreshButton);
 
   const filtersPanel = document.createElement('section');
-  filtersPanel.className = 'qc-ir-panel qc-ir-filters';
-  const filterRows = [document.createElement('div'), document.createElement('div')];
-  filterRows.forEach((row) => row.className = 'qc-ir-filter-row');
-  const controls = {
-    from_date: makeControl('Từ ngày', 'from_date', 'Date', `${today.slice(0, 8)}01`),
-    to_date: makeControl('Đến ngày', 'to_date', 'Date', today),
-    qc: makeControl('QC', 'qc', 'Select', '', '\nQC1\nQC2'),
-    company: makeControl('Công ty', 'company', 'Link', '', 'Company'),
-    factory: makeControl('Nhà máy', 'factory', 'Link', '', 'Factory'),
-    line_group: makeControl('Nhóm chuyền', 'line_group', 'Link', '', 'Line Group'),
-    production_line: makeControl('Chuyền', 'production_line', 'Link', '', 'Production Line'),
-    customer: makeControl('Khách hàng', 'customer', 'Link', '', 'Customer'),
-    product: makeControl('Mã hàng', 'product', 'Link', '', 'Product'),
-  };
-  ['from_date', 'to_date', 'qc', 'company', 'factory'].forEach((key) => filterRows[0].append(controls[key].wrapper));
-  ['line_group', 'production_line', 'customer', 'product'].forEach((key) => filterRows[1].append(controls[key].wrapper));
+  filtersPanel.className = 'qc-ir-filters';
+  const filterGrid = document.createElement('div');
+  filterGrid.className = 'qc-ir-filter-grid';
 
-  const actions = document.createElement('div');
-  actions.className = 'qc-ir-actions';
+  const controls = {
+    company: makeControl('CÔNG TY', 'company', 'Link', '', 'Company', __('All')),
+    factory: makeControl('XƯỞNG', 'factory', 'Link', '', 'Factory', __('All')),
+    production_line: makeControl('CHUYỀN', 'production_line', 'Link', '', 'Production Line', __('All')),
+    product: makeControl('MÃ HÀNG', 'product', 'Link', '', 'Product', __('All')),
+    qc: makeControl('QC', 'qc', 'Select', 'QC1', '\nAll\nQC1\nQC2'),
+    from_date: makeControl('TỪ NGÀY', 'from_date', 'Date', today.slice(0, 8) + '01'),
+    to_date: makeControl('ĐẾN NGÀY', 'to_date', 'Date', today),
+  };
+
+  const dateRange = document.createElement('div');
+  dateRange.className = 'qc-ir-date-range';
+  const dateLabel = document.createElement('span');
+  dateLabel.className = 'qc-ir-date-label';
+  dateLabel.textContent = __('NGÀY');
+  const dateInputs = document.createElement('div');
+  dateInputs.className = 'qc-ir-date-inputs';
+  dateInputs.append(controls.from_date.wrapper, controls.to_date.wrapper);
+  dateRange.append(dateLabel, dateInputs);
+  filtersPanel.append(filterGrid);
+
   const status = document.createElement('div');
   status.className = 'qc-ir-status';
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
-  const runButton = document.createElement('button');
-  runButton.type = 'button';
-  runButton.className = 'btn btn-primary';
-  runButton.textContent = __('Xem báo cáo');
-  actions.append(status, runButton);
-  filtersPanel.append(...filterRows, actions);
-  root.append(filtersPanel);
+  filtersPanel.append(status);
 
-  const tabs = document.createElement('div');
-  tabs.className = 'qc-ir-tabs';
-  tabs.setAttribute('role', 'tablist');
-  tabs.setAttribute('aria-label', __('Các trang báo cáo QC'));
-  const tabDefinitions = [
-    ['summary', 'Tổng hợp', 'Theo công ty'],
-    ['company', 'Công ty', 'Sản lượng và xu hướng'],
-    ['product', 'Mã hàng', 'Tỷ lệ lỗi theo mã hàng'],
-    ['defect', 'Loại lỗi', 'Xếp hạng lỗi'],
-  ];
-  tabDefinitions.forEach(([key, label, hint]) => tabs.append(makeTab(key, label, hint)));
-  root.append(tabs);
-
-  const metrics = document.createElement('section');
-  metrics.className = 'qc-ir-metrics';
-  const results = document.createElement('section');
-  results.className = 'qc-ir-panel qc-ir-results';
-  const meta = document.createElement('div');
-  meta.className = 'qc-ir-meta';
   const content = document.createElement('div');
   content.className = 'qc-ir-content';
-  results.append(meta, content);
-  root.append(metrics, results);
+  const results = document.createElement('section');
+  results.className = 'qc-ir-results';
+  results.append(content);
+  const tabs = document.createElement('nav');
+  tabs.className = 'qc-ir-tabs';
+  tabs.setAttribute('aria-label', __('Các trang báo cáo QC'));
+  tabDefinitions.forEach((item) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'qc-ir-tab';
+    button.dataset.tab = item.key;
+    button.textContent = __(item.label);
+    tabs.append(button);
+  });
 
-  runButton.addEventListener('click', runReport);
+  page.body.append(root);
+  root.append(masthead, filtersPanel, results, tabs);
+  refreshButton.addEventListener('click', runReport);
   tabs.addEventListener('click', (event) => {
     const button = event.target.closest('[data-tab]');
     if (button) selectTab(button.dataset.tab);
   });
-  selectTab('summary');
+
+  let ready = false;
+  let refreshTimer;
+  Object.values(controls).forEach(({control}) => {
+    if (control.$input) control.$input.on('change awesomplete-selectcomplete', scheduleReport);
+  });
+  selectTab('summary', false);
+  ready = true;
   runReport();
 
-  function makeControl(label, fieldname, fieldtype, defaultValue = '', options = '') {
+  function makeControl(label, fieldname, fieldtype, defaultValue = '', options = '', placeholder = '') {
     const wrapper = document.createElement('div');
     wrapper.className = 'qc-ir-control';
-    const control = frappe.ui.form.make_control({
-      parent: wrapper,
-      df: {fieldtype, fieldname, label: __(label), options, default: defaultValue},
-      render_input: true,
-    });
+    const df = {fieldtype, fieldname, label: __(label), options, default: defaultValue};
+    if (placeholder) df.placeholder = placeholder;
+    const control = frappe.ui.form.make_control({parent: wrapper, df, render_input: true});
     control.refresh();
     if (defaultValue) control.set_value(defaultValue);
     return {wrapper, control};
   }
 
-  function makeTab(key, label, hint) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'qc-ir-tab';
-    button.dataset.tab = key;
-    button.setAttribute('role', 'tab');
-    button.setAttribute('aria-selected', 'false');
-    button.textContent = __(label);
-    const subtitle = document.createElement('span');
-    subtitle.textContent = __(hint);
-    button.append(subtitle);
-    return button;
-  }
-
-  function selectTab(tab) {
+  function selectTab(tab, refresh = true) {
     state.active = tab;
-    tabs.querySelectorAll('[role="tab"]').forEach((button) => {
+    const definition = tabDefinitions.find((item) => item.key === tab);
+    title.textContent = __(definition.title);
+    tabs.querySelectorAll('[data-tab]').forEach((button) => {
       const active = button.dataset.tab === tab;
       button.classList.toggle('is-active', active);
-      button.setAttribute('aria-selected', String(active));
+      button.setAttribute('aria-current', active ? 'page' : 'false');
     });
-    if (state.rows.length) renderResults();
+    filterGrid.replaceChildren();
+    filterGrid.classList.toggle('is-summary', tab === 'summary');
+    if (tab === 'summary') {
+      filterGrid.append(controls.product.wrapper, controls.qc.wrapper, dateRange);
+    } else {
+      filterGrid.append(
+        controls.company.wrapper,
+        controls.factory.wrapper,
+        controls.production_line.wrapper,
+        controls.product.wrapper,
+        controls.qc.wrapper,
+        dateRange
+      );
+    }
+    if (refresh && ready) runReport();
+  }
+
+  function scheduleReport() {
+    if (!ready) return;
+    window.clearTimeout(refreshTimer);
+    refreshTimer = window.setTimeout(runReport, 400);
   }
 
   async function runReport() {
@@ -117,15 +146,23 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
     const fromDate = normalizeDate(readDateInput(controls.from_date.control));
     const toDate = normalizeDate(readDateInput(controls.to_date.control));
     if (!fromDate || !toDate || fromDate > toDate) {
-      showStatus(__('Khai báo ngày hợp lệ; Từ ngày phải trước hoặc bằng Đến ngày.'), true);
+      showStatus(__('Vui lòng chọn khoảng ngày hợp lệ.'), true);
       return;
     }
-    runButton.disabled = true;
-    status.textContent = __('Đang tải dữ liệu QC…');
+    showStatus(__('Đang tải dữ liệu QC…'), false);
     content.replaceChildren();
-    const filters = {from_date: fromDate, to_date: toDate};
-    ['qc', 'company', 'factory', 'line_group', 'production_line', 'customer', 'product']
-      .forEach((key) => filters[key] = controls[key].control.get_value() || '');
+    refreshButton.disabled = true;
+    const filters = {
+      from_date: fromDate,
+      to_date: toDate,
+      qc: controls.qc.control.get_value() === 'All' ? '' : controls.qc.control.get_value() || '',
+      company: state.active === 'summary' ? '' : controls.company.control.get_value() || '',
+      factory: state.active === 'summary' ? '' : controls.factory.control.get_value() || '',
+      line_group: '',
+      production_line: state.active === 'summary' ? '' : controls.production_line.control.get_value() || '',
+      customer: '',
+      product: controls.product.control.get_value() || '',
+    };
     try {
       await rendererReady;
       const response = await frappe.call({
@@ -145,13 +182,11 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
     } catch (error) {
       if (request !== state.request) return;
       state.rows = [];
-      metrics.replaceChildren();
       content.replaceChildren();
       showStatus(__('Không tải được dữ liệu QC. Kiểm tra quyền báo cáo và bộ lọc.'), true);
-      frappe.show_alert({message: __('Yêu cầu báo cáo thất bại.'), indicator: 'red'});
       console.error('QC Internal Report failed', error);
     } finally {
-      if (request === state.request) runButton.disabled = false;
+      if (request === state.request) refreshButton.disabled = false;
     }
   }
 
@@ -161,56 +196,43 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
       return;
     }
     const summary = window.QCInternalReportView.summarize(state.rows);
-    window.QCInternalReportView.render({tab: state.active, summary, metrics, content});
-    meta.textContent = __('Số nhóm dữ liệu: {0}', [state.rows.length.toLocaleString()]);
+    window.QCInternalReportView.render({tab: state.active, summary, content});
   }
 
   function showStatus(message, isError) {
     status.textContent = message;
     status.classList.toggle('is-error', Boolean(isError));
+    status.classList.toggle('is-visible', Boolean(message));
   }
 
   function normalizeRows(columns, rows) {
     const aliases = {
-      occurreddate: 'occurredDate',
-      companiescode: 'companiesCode',
-      companiesname: 'companiesName',
-      factoriescode: 'factoriesCode',
-      factoriesname: 'factoriesName',
-      linegroupscode: 'lineGroupsCode',
-      linegroupsname: 'lineGroupsName',
-      productionlinescode: 'productionLinesCode',
-      productionlinesname: 'productionLinesName',
-      customerscode: 'customersCode',
-      customersname: 'customersName',
-      productscode: 'productsCode',
-      productsname: 'productsName',
-      qcdefectscode: 'qcDefectsCode',
-      qcdefectsname: 'qcDefectsName',
-      eventtype: 'eventType',
-      quantitysummary: 'quantitySummary',
+      occurreddate: 'occurredDate', companiescode: 'companiesCode', companiesname: 'companiesName',
+      factoriescode: 'factoriesCode', factoriesname: 'factoriesName',
+      linegroupscode: 'lineGroupsCode', linegroupsname: 'lineGroupsName',
+      productionlinescode: 'productionLinesCode', productionlinesname: 'productionLinesName',
+      customerscode: 'customersCode', customersname: 'customersName',
+      productscode: 'productsCode', productsname: 'productsName',
+      qcdefectscode: 'qcDefectsCode', qcdefectsname: 'qcDefectsName',
+      eventtype: 'eventType', quantitysummary: 'quantitySummary',
     };
-    const canonicalName = (name) => aliases[String(name).toLowerCase()] || name;
+    const canonical = (name) => aliases[String(name).toLowerCase()] || name;
     const names = columns.map((column) => {
       const name = typeof column === 'string' ? column.split(':')[0] : column.label || column.fieldname || '';
-      return canonicalName(name.split(':')[0]);
+      return canonical(name.split(':')[0]);
     });
-    return rows.map((row) => {
-      if (Array.isArray(row)) return Object.fromEntries(names.map((name, index) => [name, row[index]]));
-      return Object.fromEntries(Object.entries(row).map(([name, value]) => [canonicalName(name), value]));
-    });
+    return rows.map((row) => Array.isArray(row)
+      ? Object.fromEntries(names.map((name, index) => [name, row[index]]))
+      : Object.fromEntries(Object.entries(row).map(([name, value]) => [canonical(name), value])));
   }
 
   function normalizeDate(value) {
     if (!value) return '';
     const date = String(value).trim();
     const iso = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if (iso) return `${iso[1]}-${iso[2].padStart(2, '0')}-${iso[3].padStart(2, '0')}`;
+    if (iso) return iso[1] + '-' + iso[2].padStart(2, '0') + '-' + iso[3].padStart(2, '0');
     const localized = date.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
-    if (localized) {
-      const [, day, month, year] = localized;
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
+    if (localized) return localized[3] + '-' + localized[2].padStart(2, '0') + '-' + localized[1].padStart(2, '0');
     return '';
   }
 
@@ -219,7 +241,7 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
   }
 
   const stylesheet = '/assets/factory_management/css/qc_internal_report.css';
-  if (!document.querySelector(`link[href="${stylesheet}"]`)) {
+  if (!document.querySelector('link[href="' + stylesheet + '"]')) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = stylesheet;
