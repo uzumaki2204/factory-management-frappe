@@ -212,13 +212,18 @@ window.QCInternalReportView = (() => {
     const area = path + ' L' + xy[xy.length - 1].x + ',' + bottom + ' L' + xy[0].x + ',' + bottom + ' Z';
     const id = 'qc-gradient-' + String(company.code || company.name).replace(/[^a-z0-9_-]/gi, '-');
     const labels = xy.map((p, i) => {
-      const marker = i === 0 ? '<circle cx="' + p.x + '" cy="' + p.y + '" r="3" fill="#a6aab2"></circle>' :
-        triangle(p.x, p.y, p.direction, p.direction === 'up' ? '#e6232a' : '#00b957');
-      return '<text class="qc-ir-trend-value" x="' + p.x + '" y="' + Math.max(12, p.y - 8) + '" text-anchor="middle">' + pct.format(p.rate) + '</text>' + marker +
-        '<text class="qc-ir-trend-date" x="' + p.x + '" y="' + (h - 3) + '" text-anchor="middle">' + dateLabel(p.date) + '</text>';
+      const x = p.x / w * 100 + '%', y = p.y / h * 100 + '%';
+      const marker = i === 0
+        ? '<span class="qc-ir-trend-point" style="left:' + x + ';top:' + y + '"></span>'
+        : '<span class="qc-ir-trend-marker is-' + (p.direction === 'up' ? 'up' : 'down') + '" style="left:' + x + ';top:' + y + '"></span>';
+      return '<span class="qc-ir-trend-value" style="left:' + x + ';top:' + y + '">' + pct.format(p.rate) + '</span>' + marker +
+        '<span class="qc-ir-trend-date" style="left:' + x + '">' + esc(dateLabel(p.date)) + '</span>';
     }).join('');
-    return '<svg class="qc-ir-trend" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"><defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ed4a53" stop-opacity=".42"></stop><stop offset="1" stop-color="#ed4a53" stop-opacity="0"></stop></linearGradient></defs>' +
-      '<path d="' + area + '" fill="url(#' + id + ')"></path><path d="' + path + '" fill="none" stroke="#ff626b" stroke-width="2.5"></path>' + labels + '</svg>';
+    const accessibleLabel = esc(xy.map((p) => dateLabel(p.date) + ': ' + pct.format(p.rate)).join(', '));
+    return '<div class="qc-ir-trend" role="img" aria-label="Tỷ lệ lỗi theo ngày: ' + accessibleLabel + '">' +
+      '<svg class="qc-ir-trend-svg" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ed4a53" stop-opacity=".42"></stop><stop offset="1" stop-color="#ed4a53" stop-opacity="0"></stop></linearGradient></defs>' +
+      '<path d="' + area + '" fill="url(#' + id + ')"></path><path d="' + path + '" fill="none" stroke="#ff626b" stroke-width="2.5" vector-effect="non-scaling-stroke"></path></svg>' +
+      '<div class="qc-ir-trend-label-layer" aria-hidden="true">' + labels + '</div></div>';
   }
 
   function triangle(x, y, direction, color) {

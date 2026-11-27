@@ -4,13 +4,11 @@
   --qc-red: #df4655;
   --qc-green: #00c85a;
   --qc-border: #d6e0e7;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   gap: 0;
   width: 100%;
   max-width: none;
-  height: calc(100vh - 80px);
-  height: calc(100dvh - 80px);
   min-height: calc(100vh - 80px);
   min-height: calc(100dvh - 80px);
   margin: 0;
@@ -148,7 +146,7 @@
 .qc-ir-status.is-visible { display: block; }
 .qc-ir-status.is-error { color: #b91c1c; }
 
-.qc-ir-results { min-width: 0; padding-top: 5px; }
+.qc-ir-results { flex: 1 0 auto; min-width: 0; padding-top: 5px; }
 .qc-ir-content { min-width: 0; }
 .qc-ir-panel,
 .qc-ir-chart-panel {
@@ -233,9 +231,46 @@
 .qc-ir-top-defect span { max-width: 68%; overflow: hidden; text-overflow: ellipsis; }
 .qc-ir-top-defect strong { flex: none; font-size: 9px; font-weight: 700; white-space: nowrap; }
 .qc-ir-trend-cell { display: block !important; padding: 0 5px !important; }
-.qc-ir-trend { display: block; width: 100%; height: 101px; overflow: visible; }
-.qc-ir-trend-value { fill: #111; font-family: inherit; font-size: 11px; font-weight: 800; }
-.qc-ir-trend-date { fill: #111; font-family: inherit; font-size: 10px; font-weight: 700; }
+.qc-ir-trend {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 101px;
+  overflow: visible;
+}
+.qc-ir-trend-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.qc-ir-trend-label-layer { position: absolute; inset: 0; pointer-events: none; }
+.qc-ir-trend-value,
+.qc-ir-trend-date {
+  position: absolute;
+  color: #111;
+  font-family: "Segoe UI", Inter, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+  line-height: 1;
+  white-space: nowrap;
+}
+.qc-ir-trend-value {
+  font-size: 12px;
+  font-weight: 700;
+  transform: translate(-50%, calc(-100% - 4px));
+}
+.qc-ir-trend-date {
+  bottom: 0;
+  font-size: 11px;
+  font-weight: 600;
+  transform: translateX(-50%);
+}
+.qc-ir-trend-point,
+.qc-ir-trend-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+.qc-ir-trend-point { width: 7px; height: 7px; border-radius: 50%; background: #a6aab2; }
+.qc-ir-trend-marker { width: 0; height: 0; border-right: 4px solid transparent; border-left: 4px solid transparent; }
+.qc-ir-trend-marker.is-up { border-bottom: 7px solid #e6232a; }
+.qc-ir-trend-marker.is-down { border-top: 7px solid #00b957; }
 .qc-ir-muted { color: #8b929c; font-size: 12px; }
 
 .qc-ir-company-kpis,
