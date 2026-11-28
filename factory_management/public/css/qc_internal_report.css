@@ -240,9 +240,17 @@
 .qc-ir-date-cal-btn:hover { background: #f1f5f9; color: var(--qc-blue); }
 .qc-ir-date-cal-btn:active { background: #e2e8f0; }
 .qc-ir-date-cal-btn:focus { outline: none; }
-/* Make room for the icon on the right of each date input */
+/* Make room for the icon on the right of each date input and keep picker clickable */
 .qc-ir-date-range .form-control,
-.qc-ir-date-range input.form-control { padding-right: 32px !important; }
+.qc-ir-date-range input.form-control,
+.qc-ir-date-range input[readonly].form-control {
+  padding-right: 32px !important;
+  background: #fff !important;
+  cursor: pointer;
+  caret-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
 .datepicker { z-index: 1060 !important; }
 
 .qc-ir-status {

@@ -8,7 +8,7 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
 };
 
 async function initializeQcInternalReport(wrapper) {
-  const assetVersion = '20261128b';
+  const assetVersion = '20261128c';
   const stylesheetBase = '/assets/factory_management/css/qc_internal_report.css';
   const stylesheet = stylesheetBase + '?v=' + assetVersion;
   document.querySelectorAll('link[href^="' + stylesheetBase + '"]').forEach((el) => {
@@ -159,6 +159,15 @@ async function initializeQcInternalReport(wrapper) {
     if (inputContainer.querySelector('.qc-ir-date-cal-btn')) return; // idempotent
     inputContainer.style.position = 'relative';
 
+    const $input = control.$input;
+    if ($input && $input.length) {
+      // Lock manual text editing and suppress the virtual keyboard on tablets
+      $input.prop('readonly', true);
+      $input.attr('inputmode', 'none');
+      $input.attr('autocomplete', 'off');
+      $input.attr('tabindex', '-1');
+    }
+
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'qc-ir-date-cal-btn';
@@ -176,37 +185,41 @@ async function initializeQcInternalReport(wrapper) {
 
     let wasOpenOnPress = false;
     let touched = false;
-    btn.addEventListener('touchstart', () => {
+    const getDatepicker = () => {
+      if (!control.datepicker && $input && !$input.data('datepicker') && typeof control.set_datepicker === 'function') {
+        control.set_datepicker();
+      }
+      return control.datepicker || ($input && $input.data('datepicker'));
+    };
+
+    // Listen on the entire inputContainer (textbox + calendar icon) so tapping
+    // anywhere on the date control opens/closes the calendar without keyboard focus.
+    inputContainer.addEventListener('touchstart', () => {
       touched = true;
-      const dp = control.datepicker || (control.$input && control.$input.data('datepicker'));
+      const dp = getDatepicker();
       wasOpenOnPress = Boolean(dp && dp.visible);
     }, {passive: true});
-    btn.addEventListener('mousedown', (e) => {
+    inputContainer.addEventListener('mousedown', (e) => {
       e.preventDefault();
       if (!touched) {
-        const dp = control.datepicker || (control.$input && control.$input.data('datepicker'));
+        const dp = getDatepicker();
         wasOpenOnPress = Boolean(dp && dp.visible);
       }
       touched = false;
     });
-    btn.addEventListener('click', (e) => {
+    inputContainer.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       const shouldClose = wasOpenOnPress;
       wasOpenOnPress = false;
-      const $input = control.$input;
       if (!$input || !$input.length) return;
-      const wasFocused = document.activeElement === $input[0];
-      if (wasFocused) $input[0].blur();
-      if (!control.datepicker && !$input.data('datepicker') && typeof control.set_datepicker === 'function') {
-        control.set_datepicker();
-      }
-      const dp = control.datepicker || $input.data('datepicker');
+      if (document.activeElement === $input[0]) $input[0].blur();
+      const dp = getDatepicker();
       if (!dp) return;
       if (shouldClose || dp.visible) {
         dp.hide();
       } else {
-        setTimeout(() => dp.show(), wasFocused ? 40 : 0);
+        setTimeout(() => dp.show(), 0);
       }
     });
 
