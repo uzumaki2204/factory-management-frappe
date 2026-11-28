@@ -1,13 +1,16 @@
-const QC_IR_ASSET_VERSION = '20261128b';
-
 frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
-  frappe.require('/assets/factory_management/js/qc_internal_report_filters.js?v=' + QC_IR_ASSET_VERSION)
-    .then(() => initializeQcInternalReport(wrapper));
+  frappe.require('/assets/factory_management/js/qc_internal_report_filters.js')
+    .then(() => initializeQcInternalReport(wrapper))
+    .catch((error) => {
+      console.error('QC Internal Report failed to load filters', error);
+      frappe.msgprint(__('Không tải được bộ lọc báo cáo QC.'));
+    });
 };
 
 async function initializeQcInternalReport(wrapper) {
+  const assetVersion = '20261128b';
   const stylesheetBase = '/assets/factory_management/css/qc_internal_report.css';
-  const stylesheet = stylesheetBase + '?v=' + QC_IR_ASSET_VERSION;
+  const stylesheet = stylesheetBase + '?v=' + assetVersion;
   document.querySelectorAll('link[href^="' + stylesheetBase + '"]').forEach((el) => {
     if (el.getAttribute('href') !== stylesheet) el.remove();
   });
@@ -25,7 +28,7 @@ async function initializeQcInternalReport(wrapper) {
   });
   const today = frappe.datetime.get_today();
   const state = {active: 'summary', request: 0, rows: [], datasetKey: ''};
-  const rendererReady = frappe.require('/assets/factory_management/js/qc_internal_report_view.js?v=' + QC_IR_ASSET_VERSION);
+  const rendererReady = frappe.require('/assets/factory_management/js/qc_internal_report_view.js');
   const root = document.createElement('section');
   root.className = 'qc-internal-report';
 
