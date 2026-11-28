@@ -1,9 +1,23 @@
+const QC_IR_ASSET_VERSION = '20261128b';
+
 frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
-  frappe.require('/assets/factory_management/js/qc_internal_report_filters.js')
+  frappe.require('/assets/factory_management/js/qc_internal_report_filters.js?v=' + QC_IR_ASSET_VERSION)
     .then(() => initializeQcInternalReport(wrapper));
 };
 
-function initializeQcInternalReport(wrapper) {
+async function initializeQcInternalReport(wrapper) {
+  const stylesheetBase = '/assets/factory_management/css/qc_internal_report.css';
+  const stylesheet = stylesheetBase + '?v=' + QC_IR_ASSET_VERSION;
+  document.querySelectorAll('link[href^="' + stylesheetBase + '"]').forEach((el) => {
+    if (el.getAttribute('href') !== stylesheet) el.remove();
+  });
+  if (!document.querySelector('link[href="' + stylesheet + '"]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = stylesheet;
+    document.head.append(link);
+  }
+
   const page = frappe.ui.make_app_page({
     parent: wrapper,
     title: __('Báo cáo QC nội bộ'),
@@ -11,7 +25,7 @@ function initializeQcInternalReport(wrapper) {
   });
   const today = frappe.datetime.get_today();
   const state = {active: 'summary', request: 0, rows: [], datasetKey: ''};
-  const rendererReady = frappe.require('/assets/factory_management/js/qc_internal_report_view.js');
+  const rendererReady = frappe.require('/assets/factory_management/js/qc_internal_report_view.js?v=' + QC_IR_ASSET_VERSION);
   const root = document.createElement('section');
   root.className = 'qc-internal-report';
 
@@ -104,6 +118,11 @@ function initializeQcInternalReport(wrapper) {
   });
   controls.qc.control.$input.on('change', onQcChange);
   selectTab('summary', false);
+  await Promise.all([
+    controls.qc.ready,
+    controls.from_date.ready,
+    controls.to_date.ready,
+  ]);
   ready = true;
   runReport(true);
 
@@ -112,23 +131,35 @@ function initializeQcInternalReport(wrapper) {
     wrapper.className = 'qc-ir-control';
     const df = {fieldtype, fieldname, label: __(label), options, default: defaultValue, reqd: required};
     if (placeholder) df.placeholder = placeholder;
+    if (fieldtype === 'Date') df.onchange = scheduleReport;
     const control = frappe.ui.form.make_control({parent: wrapper, df, render_input: true});
     control.refresh();
-    if (defaultValue) control.set_value(defaultValue);
-    const result = {wrapper, control};
+    const readyPromise = defaultValue
+      ? Promise.resolve(control.set_value(defaultValue)).then(() => {
+          if (fieldtype === 'Date' && control.$input && !control.$input.val()) {
+            const formatted = frappe.datetime && frappe.datetime.str_to_user
+              ? frappe.datetime.str_to_user(defaultValue)
+              : defaultValue;
+            control.$input.val(formatted);
+          }
+        }).catch(() => {})
+      : Promise.resolve();
+    const result = {wrapper, control, ready: readyPromise};
     if (fieldtype === 'Date') attachDateCalButton(result);
     return result;
   }
 
   function attachDateCalButton({wrapper, control}) {
-    // Find the input wrapper created by Frappe
-    const inputWrapper = wrapper.querySelector('.control-input-wrapper') || wrapper;
-    if (inputWrapper.querySelector('.qc-ir-date-cal-btn')) return; // idempotent
-    inputWrapper.style.position = 'relative';
+    const inputContainer = wrapper.querySelector('.control-input')
+      || wrapper.querySelector('.control-input-wrapper')
+      || wrapper;
+    if (inputContainer.querySelector('.qc-ir-date-cal-btn')) return; // idempotent
+    inputContainer.style.position = 'relative';
 
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'qc-ir-date-cal-btn';
+    btn.tabIndex = -1;
     btn.setAttribute('aria-label', __('Mở lịch'));
     btn.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"' +
@@ -140,26 +171,43 @@ function initializeQcInternalReport(wrapper) {
       '<line x1="3" y1="10" x2="21" y2="10"></line>' +
       '</svg>';
 
-    // Prevent mobile keyboard from popping up when tapping the icon
-    btn.addEventListener('mousedown', (e) => e.preventDefault());
-    btn.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
-
+    let wasOpenOnPress = false;
+    let touched = false;
+    btn.addEventListener('touchstart', () => {
+      touched = true;
+      const dp = control.datepicker || (control.$input && control.$input.data('datepicker'));
+      wasOpenOnPress = Boolean(dp && dp.visible);
+    }, {passive: true});
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if (!touched) {
+        const dp = control.datepicker || (control.$input && control.$input.data('datepicker'));
+        wasOpenOnPress = Boolean(dp && dp.visible);
+      }
+      touched = false;
+    });
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
       e.stopPropagation();
+      const shouldClose = wasOpenOnPress;
+      wasOpenOnPress = false;
       const $input = control.$input;
       if (!$input || !$input.length) return;
-      // Blur first so the virtual keyboard is dismissed, then show the datepicker
-      $input[0].blur();
-      const dp = $input.data('datepicker');
-      if (dp) {
-        setTimeout(() => dp.show(), 30);
+      const wasFocused = document.activeElement === $input[0];
+      if (wasFocused) $input[0].blur();
+      if (!control.datepicker && !$input.data('datepicker') && typeof control.set_datepicker === 'function') {
+        control.set_datepicker();
+      }
+      const dp = control.datepicker || $input.data('datepicker');
+      if (!dp) return;
+      if (shouldClose || dp.visible) {
+        dp.hide();
       } else {
-        // Frappe v16: datepicker may be under a different key — trigger focus as fallback
-        $input.trigger('focus');
+        setTimeout(() => dp.show(), wasFocused ? 40 : 0);
       }
     });
 
-    inputWrapper.append(btn);
+    inputContainer.append(btn);
   }
 
   function selectTab(tab, refresh = true) {
@@ -191,7 +239,7 @@ function initializeQcInternalReport(wrapper) {
   function scheduleReport() {
     if (!ready) return;
     window.clearTimeout(refreshTimer);
-    refreshTimer = window.setTimeout(() => runReport(true), 400);
+    refreshTimer = window.setTimeout(() => runReport(false), 400);
   }
 
   function onQcChange() {
@@ -327,11 +375,4 @@ function initializeQcInternalReport(wrapper) {
     status.classList.toggle('is-visible', Boolean(message));
   }
 
-  const stylesheet = '/assets/factory_management/css/qc_internal_report.css';
-  if (!document.querySelector('link[href="' + stylesheet + '"]')) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = stylesheet;
-    document.head.append(link);
-  }
 }

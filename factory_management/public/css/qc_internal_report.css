@@ -212,30 +212,38 @@
 .qc-ir-date-range .control-label { display: none !important; }
 
 /* ── Date calendar icon button ─────────────────────────────────────────── */
+.qc-ir-control .control-input { position: relative; }
 .qc-ir-date-cal-btn {
   position: absolute;
-  right: 4px;
+  right: 2px;
   top: 50%;
   z-index: 2;
   display: flex;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
   align-items: center;
   justify-content: center;
   transform: translateY(-50%);
   border: 0;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   color: #667085;
+  line-height: 1;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
   transition: background 120ms, color 120ms;
   -webkit-tap-highlight-color: transparent;
 }
 .qc-ir-date-cal-btn:hover { background: #f1f5f9; color: var(--qc-blue); }
 .qc-ir-date-cal-btn:active { background: #e2e8f0; }
+.qc-ir-date-cal-btn:focus { outline: none; }
 /* Make room for the icon on the right of each date input */
 .qc-ir-date-range .form-control,
 .qc-ir-date-range input.form-control { padding-right: 32px !important; }
+.datepicker { z-index: 1060 !important; }
 
 .qc-ir-status {
   display: none;
@@ -701,31 +709,64 @@
 .qc-ir-tab:hover { background: #fff; }
 .qc-ir-tab.is-active { border-bottom-color: #078b69; background: #fff; color: #111; font-weight: 700; }
 
-@media (max-width: 1100px) {
-  .qc-ir-masthead { grid-template-columns: 180px 1fr 30px; min-height: 78px; }
-  .qc-ir-logo { width: 175px; height: 56px; }
+@media (max-width: 1150px) {
+  .qc-ir-masthead { grid-template-columns: 180px 1fr 30px; min-height: 70px; }
+  .qc-ir-logo { width: 175px; height: 52px; }
   .qc-ir-masthead h1 { font-size: 20px; }
   .qc-ir-filter-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .qc-ir-filter-grid.is-summary { grid-template-columns: 1fr 1fr 2fr; }
+  .qc-ir-filter-grid.is-summary { grid-template-columns: 1fr .8fr 2fr; }
   .qc-ir-date-range { grid-column: span 2; }
+  /* Overview table: fit comfortably within 1024px tablet landscape */
+  .qc-ir-overview { min-width: 860px; }
+  .qc-ir-overview-head,
+  .qc-ir-overview-row {
+    grid-template-columns: minmax(84px, .9fr) 72px 72px 72px 80px 76px minmax(145px, 1.4fr) minmax(250px, 2.5fr);
+  }
+  .qc-ir-overview-head { min-height: 44px; font-size: 12px; }
+  .qc-ir-overview-row { min-height: 92px; }
+  .qc-ir-trend { min-height: 90px; }
+  .qc-ir-company-name { font-size: 12px; }
+  .qc-ir-share strong { font-size: 24px; }
+  .qc-ir-dots { width: 62px; grid-template-columns: repeat(10, 5px); gap: 1.5px; }
+  .qc-ir-dots i { width: 5px; height: 5px; }
+  .qc-ir-gauge { width: 70px; }
+  .qc-ir-number { font-size: 14px; }
+  /* Keep desktop multi-column chart grid on 1024x768 landscape */
+  .qc-ir-chart-panel h2 { min-height: 28px; font-size: 15px; }
+  .qc-ir-company-bars { height: 165px; gap: 4px; padding: 10px 6px 0; }
+  .qc-ir-bar-column { min-width: 36px; grid-template-rows: 17px 1fr 26px; }
+  .qc-ir-bar-column > strong, .qc-ir-column-plot b { font-size: 11px; }
+  .qc-ir-bar-column > span { font-size: 10px; line-height: 1.1; }
+  .qc-ir-company-analysis { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .qc-ir-grouped-chart { min-height: 195px; gap: 6px; padding: 8px 8px 6px; }
+  .qc-ir-company-group { min-width: 38px; grid-template-rows: 150px 26px; font-size: 10px; }
+  .qc-ir-multi-trend { height: 170px; }
+  .qc-ir-donut-layout { min-height: 165px; grid-template-columns: 1fr 118px 1fr; padding: 8px 6px; }
+  .qc-ir-donut-chart { width: 114px; height: 114px; }
+  .qc-ir-donut-chart i { width: 60px; height: 60px; }
+  .qc-ir-donut-label { flex-direction: column; gap: 1px; font-size: 11px; }
+  .qc-ir-donut-label strong { font-size: 12px; }
+  .qc-ir-product-analysis { grid-template-columns: minmax(170px, 22%) minmax(0, 1fr); }
+  .qc-ir-average-card { min-height: 240px; }
+  .qc-ir-average-card strong { font-size: clamp(36px, 4.8vw, 56px); }
+  .qc-ir-product-bars { height: 225px; }
+  .qc-ir-defect-page { grid-template-columns: minmax(250px, 38%) minmax(0, 62%); }
+  .qc-ir-defect-total { min-height: 195px; }
+  .qc-ir-defect-total strong { font-size: clamp(44px, 5vw, 68px); }
+  .qc-ir-defect-total span { font-size: 26px; }
+  .qc-ir-defect-top-panel { min-height: 195px; }
+  .qc-ir-top-defect-chart { height: 168px; }
+  .qc-ir-all-defect-chart { min-height: 225px; }
+}
+@media (max-width: 820px) {
   .qc-ir-company-kpis, .qc-ir-product-kpis { grid-template-columns: 1fr; }
   .qc-ir-company-analysis { grid-template-columns: 1fr; }
   .qc-ir-product-analysis { grid-template-columns: 1fr; }
-  .qc-ir-average-card { min-height: 180px; }
+  .qc-ir-average-card { min-height: 160px; }
   .qc-ir-defect-page { grid-template-columns: 1fr; }
   .qc-ir-all-defects-panel { grid-column: auto; }
-  /* ── Responsive chart heights for tablet (1024×768 landscape) ── */
-  .qc-ir-company-bars { height: 160px; }
-  .qc-ir-company-group { grid-template-rows: 142px 28px; }
-  .qc-ir-grouped-chart { min-height: 190px; }
-  .qc-ir-multi-trend { height: 180px; }
-  .qc-ir-product-bars { height: 220px; }
-  .qc-ir-top-defect-chart { height: 170px; }
-  .qc-ir-overview { min-width: 900px; }
-  /* Slightly smaller text in overview cells */
-  .qc-ir-share strong { font-size: 24px; }
-  .qc-ir-number { font-size: 14px; }
-  .qc-ir-chart-panel h2 { font-size: 16px; }
+  .qc-ir-donut-layout { grid-template-columns: 1fr 130px 1fr; }
+  .qc-ir-donut-label { flex-direction: row; gap: 4px; }
 }
 @media (max-width: 650px) {
   .qc-ir-masthead { grid-template-columns: 120px 1fr 28px; min-height: 64px; }
