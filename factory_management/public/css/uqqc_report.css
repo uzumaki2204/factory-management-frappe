@@ -8,10 +8,11 @@
   --uqqc-report-input-border: #d1d5db;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  isolation: isolate;
   width: min(100%, 1680px);
   margin: 0 auto;
-  padding: 8px clamp(12px, 1.5vw, 24px) 32px;
+  padding: 8px clamp(10px, 1.5vw, 20px) 24px;
   color: var(--text-color, #172033);
 }
 
@@ -39,9 +40,9 @@
 .uqqc-report__panel {
   min-width: 0;
   border: 1px solid var(--uqqc-report-border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--uqqc-report-surface);
-  box-shadow: 0 2px 8px rgb(15 23 42 / 4%);
+  box-shadow: 0 1px 4px rgb(15 23 42 / 4%);
 }
 
 /* ── Filters Panel (phải overflow: visible và z-index cao để dropdown không bị che) ── */
@@ -51,8 +52,8 @@
   z-index: 50;
   overflow: visible !important;
   display: grid;
-  gap: 12px;
-  padding: 14px 16px 12px;
+  gap: 10px;
+  padding: 12px 14px;
 }
 
 .uqqc-report__panel-heading {
@@ -73,15 +74,21 @@
 
 .uqqc-report__filter-row {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  grid-template-columns:
+    minmax(126px, 1.05fr)
+    minmax(126px, 1.05fr)
+    minmax(80px, 0.7fr)
+    minmax(110px, 1fr)
+    minmax(110px, 1fr)
+    auto;
   align-items: end;
-  gap: 12px;
+  gap: 10px;
 }
 
 /* Nút run khi nằm trong filter row — align với các input */
 .uqqc-report__filter-row .uqqc-report__run {
   align-self: end;
-  min-width: 130px;
+  min-width: 112px;
 }
 
 .uqqc-report__filter-row:first-child {
@@ -113,10 +120,17 @@
 .uqqc-report__date-control .control-label {
   display: block;
   margin-bottom: 4px;
+  overflow: hidden;
   color: var(--text-color, #334155);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uqqc-report__date-control .help-box:empty {
+  display: none;
 }
 
 /* Áp dụng nền xám nổi bật cho tất cả các thẻ input, select trong bộ lọc */
@@ -173,31 +187,78 @@
 }
 
 .datepicker {
-  z-index: 1050 !important;
+  z-index: 1060 !important;
 }
 
-/* Thêm padding-right cho input date readonly */
-.uqqc-report__date-control input[readonly] {
+/* ── Date calendar icon button & readonly picker input ─────────────────── */
+
+.uqqc-report__control--date .control-input {
+  position: relative;
+}
+
+.uqqc-rpt-cal-btn {
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--uqqc-report-muted);
+  line-height: 1;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background-color 120ms ease, color 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.uqqc-rpt-cal-btn:hover {
+  background: rgba(25, 87, 128, 0.08);
+  color: var(--uqqc-report-accent);
+}
+
+.uqqc-rpt-cal-btn:active {
+  background: rgba(25, 87, 128, 0.14);
+}
+
+.uqqc-rpt-cal-btn:focus {
+  outline: none;
+}
+
+.uqqc-report__control--date input[readonly],
+.uqqc-report__control--date input[readonly].form-control {
+  padding-right: 32px !important;
   cursor: pointer;
   caret-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .uqqc-report__run {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 38px;
-  min-width: 150px;
-  padding: 6px 20px;
+  gap: 6px;
+  height: 36px;
+  min-width: 112px;
+  padding: 0 16px;
   border: 1px solid var(--uqqc-report-accent) !important;
   border-radius: 8px;
   background-color: var(--uqqc-report-accent) !important;
   color: #ffffff !important;
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(25, 87, 128, 0.2);
+  box-shadow: 0 1px 2px rgba(25, 87, 128, 0.18);
   transition: all 150ms ease;
   cursor: pointer;
 }
@@ -205,12 +266,7 @@
 .uqqc-report__run:hover {
   background-color: #14496b !important;
   border-color: #14496b !important;
-  box-shadow: 0 2px 6px rgba(25, 87, 128, 0.3);
-}
-
-.uqqc-report__run-icon {
-  font-size: 15px;
-  line-height: 1;
+  box-shadow: 0 2px 6px rgba(25, 87, 128, 0.25);
 }
 
 .uqqc-report__run.is-loading {
@@ -238,79 +294,44 @@
   z-index: 5;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .uqqc-report__tab {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 52px;
-  padding: 10px 18px;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 16px;
   border: 1px solid var(--uqqc-report-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--uqqc-report-surface);
-  color: var(--text-color, #172033);
-  text-align: left;
+  color: var(--uqqc-report-muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
   cursor: pointer;
-  transition: border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
 }
 
 .uqqc-report__tab:hover {
   border-color: color-mix(in srgb, var(--uqqc-report-accent) 45%, var(--uqqc-report-border));
   background: var(--uqqc-report-subtle);
+  color: var(--text-color, #172033);
 }
 
 .uqqc-report__tab.is-active {
   border-color: var(--uqqc-report-accent);
   background: color-mix(in srgb, var(--uqqc-report-accent) 8%, var(--uqqc-report-surface));
-  box-shadow: inset 4px 0 0 var(--uqqc-report-accent);
-}
-
-.uqqc-report__tab.is-active .uqqc-report__tab-title {
   color: var(--uqqc-report-accent);
+  box-shadow: inset 0 -2px 0 var(--uqqc-report-accent);
 }
 
 .uqqc-report__tab:focus-visible,
 .uqqc-report__run:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--uqqc-report-accent) 28%, transparent);
   outline-offset: 2px;
-}
-
-.uqqc-report__tab-icon {
-  font-size: 24px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.uqqc-report__tab-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.uqqc-report__tab-title {
-  font-size: 14px;
-  font-weight: 650;
-  line-height: 1.25;
-}
-
-.uqqc-report__tab-hint {
-  color: var(--uqqc-report-muted);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.25;
-}
-
-/* Fallback nếu trình duyệt còn lưu cache JS cũ */
-.uqqc-report__tab>.uqqc-report__tab-title {
-  display: block;
-}
-
-.uqqc-report__tab>.uqqc-report__tab-hint {
-  display: block;
-  margin-left: 6px;
 }
 
 /* ── Metric Cards ─────────────────────────────────────────────────────────── */
@@ -327,24 +348,24 @@
   position: relative;
   display: grid;
   min-width: 0;
-  gap: 4px;
-  padding: 12px 16px;
+  gap: 3px;
+  padding: 10px 14px;
   overflow: hidden;
   border: 1px solid var(--uqqc-report-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--uqqc-report-surface);
-  box-shadow: 0 1px 4px rgb(15 23 42 / 3%);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 3%);
   transition: box-shadow 120ms ease;
 }
 
 .uqqc-report__metric:hover {
-  box-shadow: 0 4px 12px rgb(15 23 42 / 8%);
+  box-shadow: 0 3px 10px rgb(15 23 42 / 7%);
 }
 
 .uqqc-report__metric::before {
   position: absolute;
   inset: 0 auto 0 0;
-  width: 4px;
+  width: 3px;
   background: var(--metric-color, var(--uqqc-report-accent));
   content: "";
 }
@@ -373,12 +394,6 @@
 .uqqc-report__metric--neutral {
   --metric-color: #64748b;
   background: var(--uqqc-report-surface);
-}
-
-.uqqc-report__metric-icon {
-  font-size: 20px;
-  line-height: 1;
-  margin-bottom: 2px;
 }
 
 .uqqc-report__metric-label {
@@ -415,12 +430,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 32px;
-  padding: 8px 16px;
+  min-height: 30px;
+  padding: 6px 14px;
   border-bottom: 1px solid var(--uqqc-report-border);
   background: var(--uqqc-report-subtle);
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .uqqc-report__results-meta {
@@ -470,8 +485,8 @@
 
 .uqqc-report__table th,
 .uqqc-report__table td {
-  min-width: 88px;
-  padding: 10px 14px;
+  min-width: 80px;
+  padding: 8px 12px;
   border-right: 1px solid var(--uqqc-report-border);
   border-bottom: 1px solid var(--uqqc-report-border);
   text-align: left;
@@ -539,19 +554,13 @@
 
 .uqqc-report__empty {
   display: grid;
-  min-height: 220px;
+  min-height: 160px;
   align-content: center;
   justify-items: center;
-  gap: 8px;
-  padding: 36px 24px;
+  gap: 6px;
+  padding: 28px 20px;
   color: var(--uqqc-report-muted);
   text-align: center;
-}
-
-.uqqc-report__empty-icon {
-  font-size: 48px;
-  line-height: 1;
-  opacity: 0.65;
 }
 
 .uqqc-report__empty strong {
@@ -568,8 +577,8 @@
 }
 
 .uqqc-report__skeleton-metric {
-  height: 72px;
-  border-radius: 10px;
+  height: 62px;
+  border-radius: 8px;
   border: 1px solid var(--uqqc-report-border);
 }
 
@@ -615,20 +624,19 @@
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 
-/* Tablet nhỏ / màn hình nhỏ hơn 780px: 3 cột filter, nút xuống dòng */
+/* Tablet nhỏ / màn hình <= 780px: 3 cột × 2 hàng gọn */
 @media (max-width: 780px) {
   .uqqc-report__filter-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  /* Nút run xuống dòng riêng, right-align */
   .uqqc-report__filter-row .uqqc-report__run {
-    grid-column: 1 / -1;
-    justify-self: end;
+    width: 100%;
+    min-width: 0;
   }
 
   .uqqc-report__filter-row--detail {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .uqqc-report__metrics {
@@ -664,12 +672,8 @@
   }
 
   .uqqc-report__tab {
-    min-height: 48px;
-    padding: 8px 12px;
-  }
-
-  .uqqc-report__tab-icon {
-    font-size: 20px;
+    min-height: 36px;
+    padding: 6px 12px;
   }
 
   .uqqc-report__metrics {

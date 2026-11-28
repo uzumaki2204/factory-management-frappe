@@ -5,13 +5,15 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     single_column: true,
   });
 
-  const UQQC_RPT_VERSION = '20261128c';
+  const UQQC_RPT_VERSION = '20261128d';
 
-  // Inject versioned CSS — xoá link cũ nếu khác version
+  // Inject versioned CSS — xoá link cũ (kể cả link app_include_css không có ?v=)
   (function injectCss(v) {
-    const href = `/assets/factory_management/css/uqqc_report.css?v=${v}`;
-    const existing = document.querySelector('link[href*="uqqc_report.css"]');
-    if (existing && !existing.href.includes(`?v=${v}`)) existing.remove();
+    const base = '/assets/factory_management/css/uqqc_report.css';
+    const href = `${base}?v=${v}`;
+    document.querySelectorAll(`link[href*="${base}"]`).forEach((el) => {
+      if (el.getAttribute('href') !== href) el.remove();
+    });
     if (!document.querySelector(`link[href="${href}"]`)) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
@@ -46,7 +48,7 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
   const runButton = document.createElement('button');
   runButton.type = 'button';
   runButton.className = 'btn btn-primary uqqc-report__run';
-  runButton.innerHTML = `<span class="uqqc-report__run-icon" aria-hidden="true">&#128269;</span>${__('View Report')}`;
+  runButton.textContent = __('View Report');
 
   for (const key of ['from_date', 'to_date', 'qc', 'company', 'product']) {
     filterRow.append(controls[key].wrapper);
@@ -67,8 +69,8 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
   tabs.className = 'uqqc-report__tabs';
   tabs.setAttribute('role', 'tablist');
   tabs.setAttribute('aria-label', __('UQQC report type'));
-  const summaryTab = makeTab('summary', 'Item Summary', __('By date & item'), '&#128203;');
-  const deviceTab = makeTab('device', 'Device Details', __('By device & variant'), '&#128295;');
+  const summaryTab = makeTab('summary', 'Item Summary');
+  const deviceTab = makeTab('device', 'Device Details');
   tabs.append(summaryTab, deviceTab);
   root.append(tabs);
 
@@ -102,7 +104,9 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
   runButton.addEventListener('click', runReport);
   summaryTab.addEventListener('click', () => selectTab('summary'));
   deviceTab.addEventListener('click', () => selectTab('device'));
-  selectTab('summary');
+  Promise.all([controls.from_date.ready, controls.to_date.ready]).then(() => {
+    selectTab('summary');
+  });
 
   function makeControl(label, fieldname, fieldtype, options = '', defaultValue = '') {
     const wrapper = document.createElement('div');
@@ -126,31 +130,86 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
   // Date control đặc biệt: icon lịch, bấm mở datepicker (không bàn phím), default = hôm nay
   function makeDateControl(label, fieldname, defaultValue) {
     const { wrapper, control } = makeControl(label, fieldname, 'Date', '', defaultValue);
+    wrapper.classList.add('uqqc-report__control--date');
 
-    // Set giá trị mặc định ngay sau render
-    control.set_value(defaultValue);
+    const ready = Promise.resolve(control.set_value(defaultValue)).then(() => {
+      if (control.$input && !control.$input.val()) {
+        const formatted = frappe.datetime && frappe.datetime.str_to_user
+          ? frappe.datetime.str_to_user(defaultValue)
+          : defaultValue;
+        control.$input.val(formatted);
+      }
+    }).catch(() => {});
 
-    // Lấy phần tử input và tắt bàn phím hệ thống
-    const input = control.$input && control.$input[0];
-    if (input) {
-      input.setAttribute('readonly', 'readonly');
-      input.setAttribute('inputmode', 'none');
-      input.setAttribute('autocomplete', 'off');
-      input.setAttribute('tabindex', '-1');
+    const $input = control.$input;
+    const input = $input && $input[0];
+    if ($input && $input.length) {
+      $input.prop('readonly', true);
+      $input.attr('inputmode', 'none');
+      $input.attr('autocomplete', 'off');
+      $input.attr('tabindex', '-1');
     }
 
-    // Mở datepicker khi bấm vào input — không hiện bàn phím
-    const inputContainer = (input && input.parentElement) || wrapper;
-    function openPicker(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      const dp = getDatepicker(control);
-      if (dp) dp.show();
-    }
-    inputContainer.addEventListener('touchstart', openPicker, { passive: false });
-    inputContainer.addEventListener('click', openPicker);
+    const inputContainer = wrapper.querySelector('.control-input')
+      || wrapper.querySelector('.control-input-wrapper')
+      || (input && input.parentElement)
+      || wrapper;
 
-    return { wrapper, control };
+    if (!inputContainer.querySelector('.uqqc-rpt-cal-btn')) {
+      inputContainer.style.position = 'relative';
+
+      const calBtn = document.createElement('button');
+      calBtn.type = 'button';
+      calBtn.className = 'uqqc-rpt-cal-btn';
+      calBtn.tabIndex = -1;
+      calBtn.setAttribute('aria-label', __('Open calendar'));
+      calBtn.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"' +
+        ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"' +
+        ' stroke-linejoin="round" aria-hidden="true">' +
+        '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>' +
+        '<line x1="16" y1="2" x2="16" y2="6"></line>' +
+        '<line x1="8" y1="2" x2="8" y2="6"></line>' +
+        '<line x1="3" y1="10" x2="21" y2="10"></line>' +
+        '</svg>';
+
+      let wasOpenOnPress = false;
+      let touched = false;
+
+      inputContainer.addEventListener('touchstart', () => {
+        touched = true;
+        const dp = getDatepicker(control);
+        wasOpenOnPress = Boolean(dp && dp.visible);
+      }, { passive: true });
+
+      inputContainer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        if (!touched) {
+          const dp = getDatepicker(control);
+          wasOpenOnPress = Boolean(dp && dp.visible);
+        }
+        touched = false;
+      });
+
+      inputContainer.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const shouldClose = wasOpenOnPress;
+        wasOpenOnPress = false;
+        if (input && document.activeElement === input) input.blur();
+        const dp = getDatepicker(control);
+        if (!dp) return;
+        if (shouldClose || dp.visible) {
+          dp.hide();
+        } else {
+          setTimeout(() => dp.show(), 0);
+        }
+      });
+
+      inputContainer.append(calBtn);
+    }
+
+    return { wrapper, control, ready };
   }
 
   // Lazy-get Air Datepicker instance từ Frappe Date control
@@ -168,32 +227,14 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     return null;
   }
 
-  function makeTab(key, label, hint, iconHtml) {
+  function makeTab(key, label) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'uqqc-report__tab';
     button.dataset.tab = key;
     button.setAttribute('role', 'tab');
     button.setAttribute('aria-controls', 'uqqc-report-results');
-
-    const icon = document.createElement('span');
-    icon.className = 'uqqc-report__tab-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    icon.innerHTML = iconHtml || '';
-
-    const textWrap = document.createElement('div');
-    textWrap.className = 'uqqc-report__tab-text';
-
-    const title = document.createElement('div');
-    title.className = 'uqqc-report__tab-title';
-    title.textContent = __(label);
-
-    const hintEl = document.createElement('div');
-    hintEl.className = 'uqqc-report__tab-hint';
-    hintEl.textContent = hint || '';
-
-    textWrap.append(title, hintEl);
-    button.append(icon, textWrap);
+    button.textContent = __(label);
     return button;
   }
 
@@ -286,21 +327,16 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     const rate = inspected ? (defect * 100) / inspected : 0;
     const rateTone = rate > 5 ? 'danger' : rate > 2 ? 'warning' : 'neutral';
     const cards = [
-      { label: 'Passed', value: passed, tone: 'success', icon: '✅' },
-      { label: 'Rework', value: rework, tone: 'warning', icon: '🔁' },
-      { label: 'Defects', value: defect, tone: 'danger', icon: '⚠️' },
-      { label: 'Inspected', value: inspected, tone: 'primary', icon: '🔍' },
-      { label: 'Defect Rate', value: rate, tone: rateTone, icon: '📊', percent: true },
+      { label: 'Passed', value: passed, tone: 'success' },
+      { label: 'Rework', value: rework, tone: 'warning' },
+      { label: 'Defects', value: defect, tone: 'danger' },
+      { label: 'Inspected', value: inspected, tone: 'primary' },
+      { label: 'Defect Rate', value: rate, tone: rateTone, percent: true },
     ];
     metrics.replaceChildren();
     for (const item of cards) {
       const card = document.createElement('article');
       card.className = `uqqc-report__metric uqqc-report__metric--${item.tone}`;
-
-      const iconEl = document.createElement('div');
-      iconEl.className = 'uqqc-report__metric-icon';
-      iconEl.setAttribute('aria-hidden', 'true');
-      iconEl.textContent = item.icon;
 
       const label = document.createElement('div');
       label.className = 'uqqc-report__metric-label';
@@ -310,7 +346,7 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
       value.className = 'uqqc-report__metric-value';
       value.textContent = item.percent ? formatPercent(rate) : formatNumber(item.value);
 
-      card.append(iconEl, label, value);
+      card.append(label, value);
       metrics.append(card);
     }
   }
@@ -325,15 +361,11 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     if (!rows.length) {
       const empty = document.createElement('div');
       empty.className = 'uqqc-report__empty';
-      const emptyIcon = document.createElement('div');
-      emptyIcon.className = 'uqqc-report__empty-icon';
-      emptyIcon.setAttribute('aria-hidden', 'true');
-      emptyIcon.textContent = '📭';
       const title = document.createElement('strong');
       title.textContent = __('No records found for this period.');
       const hint = document.createElement('span');
       hint.textContent = __('Try another date range.');
-      empty.append(emptyIcon, title, hint);
+      empty.append(title, hint);
       tableWrap.replaceChildren(empty);
       return;
     }
