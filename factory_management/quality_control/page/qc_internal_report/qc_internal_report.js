@@ -115,7 +115,51 @@ function initializeQcInternalReport(wrapper) {
     const control = frappe.ui.form.make_control({parent: wrapper, df, render_input: true});
     control.refresh();
     if (defaultValue) control.set_value(defaultValue);
-    return {wrapper, control};
+    const result = {wrapper, control};
+    if (fieldtype === 'Date') attachDateCalButton(result);
+    return result;
+  }
+
+  function attachDateCalButton({wrapper, control}) {
+    // Find the input wrapper created by Frappe
+    const inputWrapper = wrapper.querySelector('.control-input-wrapper') || wrapper;
+    if (inputWrapper.querySelector('.qc-ir-date-cal-btn')) return; // idempotent
+    inputWrapper.style.position = 'relative';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'qc-ir-date-cal-btn';
+    btn.setAttribute('aria-label', __('Mở lịch'));
+    btn.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"' +
+      ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"' +
+      ' stroke-linejoin="round" aria-hidden="true">' +
+      '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>' +
+      '<line x1="16" y1="2" x2="16" y2="6"></line>' +
+      '<line x1="8" y1="2" x2="8" y2="6"></line>' +
+      '<line x1="3" y1="10" x2="21" y2="10"></line>' +
+      '</svg>';
+
+    // Prevent mobile keyboard from popping up when tapping the icon
+    btn.addEventListener('mousedown', (e) => e.preventDefault());
+    btn.addEventListener('touchstart', (e) => e.preventDefault(), {passive: false});
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const $input = control.$input;
+      if (!$input || !$input.length) return;
+      // Blur first so the virtual keyboard is dismissed, then show the datepicker
+      $input[0].blur();
+      const dp = $input.data('datepicker');
+      if (dp) {
+        setTimeout(() => dp.show(), 30);
+      } else {
+        // Frappe v16: datepicker may be under a different key — trigger focus as fallback
+        $input.trigger('focus');
+      }
+    });
+
+    inputWrapper.append(btn);
   }
 
   function selectTab(tab, refresh = true) {

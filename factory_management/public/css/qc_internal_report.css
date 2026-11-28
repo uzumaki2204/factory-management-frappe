@@ -211,6 +211,32 @@
 .qc-ir-date-range .qc-ir-control { padding: 0; border: 0; }
 .qc-ir-date-range .control-label { display: none !important; }
 
+/* ── Date calendar icon button ─────────────────────────────────────────── */
+.qc-ir-date-cal-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #667085;
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+  -webkit-tap-highlight-color: transparent;
+}
+.qc-ir-date-cal-btn:hover { background: #f1f5f9; color: var(--qc-blue); }
+.qc-ir-date-cal-btn:active { background: #e2e8f0; }
+/* Make room for the icon on the right of each date input */
+.qc-ir-date-range .form-control,
+.qc-ir-date-range input.form-control { padding-right: 32px !important; }
+
 .qc-ir-status {
   display: none;
   min-height: 18px;
@@ -688,6 +714,18 @@
   .qc-ir-average-card { min-height: 180px; }
   .qc-ir-defect-page { grid-template-columns: 1fr; }
   .qc-ir-all-defects-panel { grid-column: auto; }
+  /* ── Responsive chart heights for tablet (1024×768 landscape) ── */
+  .qc-ir-company-bars { height: 160px; }
+  .qc-ir-company-group { grid-template-rows: 142px 28px; }
+  .qc-ir-grouped-chart { min-height: 190px; }
+  .qc-ir-multi-trend { height: 180px; }
+  .qc-ir-product-bars { height: 220px; }
+  .qc-ir-top-defect-chart { height: 170px; }
+  .qc-ir-overview { min-width: 900px; }
+  /* Slightly smaller text in overview cells */
+  .qc-ir-share strong { font-size: 24px; }
+  .qc-ir-number { font-size: 14px; }
+  .qc-ir-chart-panel h2 { font-size: 16px; }
 }
 @media (max-width: 650px) {
   .qc-ir-masthead { grid-template-columns: 120px 1fr 28px; min-height: 64px; }
@@ -702,4 +740,17 @@
   .qc-ir-tab { min-width: 0; flex: 1; padding: 9px 5px; font-size: 12px; }
   .qc-ir-defect-total { min-height: 180px; }
   .qc-ir-defect-total span { font-size: 26px; }
+  /* ── Responsive chart heights for small screens ── */
+  .qc-ir-company-bars { height: 130px; }
+  .qc-ir-company-group { grid-template-rows: 115px 28px; }
+  .qc-ir-grouped-chart { min-height: 160px; }
+  .qc-ir-multi-trend { height: 150px; }
+  .qc-ir-product-bars { height: 180px; }
+  .qc-ir-top-defect-chart { height: 140px; }
+  .qc-ir-overview { min-width: 720px; }
+  /* Readable text */
+  .qc-ir-chart-panel h2 { font-size: 15px; }
+  .qc-ir-share strong { font-size: 20px; }
+  .qc-ir-number { font-size: 13px; }
+  .qc-ir-company-name { font-size: 11px; }
 }
