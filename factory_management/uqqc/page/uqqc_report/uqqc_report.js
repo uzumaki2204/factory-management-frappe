@@ -1,5 +1,5 @@
 frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
-  const version = '20261128f';
+  const version = '20261128g';
   loadFilterScript(version)
     .then(() => initializeUqqcReport(wrapper, version))
     .catch((error) => {
@@ -69,10 +69,16 @@ async function initializeUqqcReport(wrapper, version) {
   const today = frappe.datetime.get_today();
   const state = {
     active: 'summary',
+    ready: false,
     request: 0,
+    lastLoadedDateKey: '',
     filterRows: { summary: null, device: null },
-    filterLoading: {},
+    filterCache: new Map(),
+    filterLoading: new Map(),
   };
+  let dateRefreshTimer = null;
+  let filterRunTimer = null;
+
   const root = document.createElement('section');
   root.className = 'uqqc-report';
 
@@ -82,10 +88,13 @@ async function initializeUqqcReport(wrapper, version) {
   const filterRow = document.createElement('div');
   filterRow.className = 'uqqc-report__filter-row';
 
-  const onFilterChange = (fieldname) => () => updateFilterOptions(fieldname);
+  const onFilterChange = (fieldname) => () => {
+    updateFilterOptions(fieldname);
+    scheduleFilterRun();
+  };
   const controls = {
-    from_date: makeDateControl('From Date', 'from_date', today),
-    to_date: makeDateControl('To Date', 'to_date', today),
+    from_date: makeDateControl('From Date', 'from_date', today, scheduleDateRefresh),
+    to_date: makeDateControl('To Date', 'to_date', today, scheduleDateRefresh),
     qc: UQQCReportFilters.makeMultiControl('QC', 'qc', onFilterChange('qc')),
     company: UQQCReportFilters.makeMultiControl('Company', 'company', onFilterChange('company')),
     product: UQQCReportFilters.makeMultiControl('Product', 'product', onFilterChange('product')),
@@ -95,16 +104,9 @@ async function initializeUqqcReport(wrapper, version) {
     size: UQQCReportFilters.makeMultiControl('Size', 'size', onFilterChange('size')),
   };
 
-  // Run button — cùng dòng với các filter (cột cuối)
-  const runButton = document.createElement('button');
-  runButton.type = 'button';
-  runButton.className = 'btn btn-primary uqqc-report__run';
-  runButton.textContent = __('View Report');
-
   for (const key of ['from_date', 'to_date', 'qc', 'company', 'product']) {
     filterRow.append(controls[key].wrapper);
   }
-  filterRow.append(runButton);
 
   const detailFilters = document.createElement('div');
   detailFilters.className = 'uqqc-report__filter-row uqqc-report__filter-row--detail';
@@ -152,11 +154,46 @@ async function initializeUqqcReport(wrapper, version) {
   root.append(resultsPanel);
   page.body.append(root);
 
-  runButton.addEventListener('click', runReport);
   summaryTab.addEventListener('click', () => selectTab('summary'));
   deviceTab.addEventListener('click', () => selectTab('device'));
   await Promise.all([controls.from_date.ready, controls.to_date.ready]);
+  state.ready = true;
   selectTab('summary');
+
+  function getDateRange() {
+    const fromDate = controls.from_date.control.get_value();
+    const toDate = controls.to_date.control.get_value();
+    if (!fromDate || !toDate) {
+      return { fromDate, toDate, valid: false, key: '', errorMessage: __('Choose both report dates.') };
+    }
+    if (fromDate > toDate) {
+      return { fromDate, toDate, valid: false, key: '', errorMessage: __('The start date must be on or before the end date.') };
+    }
+    return { fromDate, toDate, valid: true, key: `${fromDate}|${toDate}`, errorMessage: '' };
+  }
+
+  function hasActiveFilters(tab) {
+    return UQQCReportFilters.fieldsForTab(tab).some((spec) => controls[spec.fieldname].getValues().length > 0);
+  }
+
+  function scheduleDateRefresh() {
+    if (!state.ready) return;
+    window.clearTimeout(dateRefreshTimer);
+    dateRefreshTimer = window.setTimeout(() => {
+      const { valid, key } = getDateRange();
+      if (valid && key === state.lastLoadedDateKey) return;
+      window.clearTimeout(filterRunTimer);
+      syncTabData(state.active);
+    }, 250);
+  }
+
+  function scheduleFilterRun() {
+    if (!state.ready) return;
+    window.clearTimeout(filterRunTimer);
+    filterRunTimer = window.setTimeout(() => {
+      runReport();
+    }, 300);
+  }
 
   function updateFilterOptions(changedField) {
     const rows = state.filterRows[state.active];
@@ -164,48 +201,79 @@ async function initializeUqqcReport(wrapper, version) {
     UQQCReportFilters.updateOptions(rows, state.active, controls, changedField);
   }
 
-  async function ensureFilterOptions(tab) {
-    if (Array.isArray(state.filterRows[tab])) {
-      updateFilterOptions();
-      return;
-    }
-    if (state.filterLoading[tab]) {
-      await state.filterLoading[tab];
+  async function ensureFilterOptions(tab, fromDate, toDate) {
+    if (!fromDate || !toDate || fromDate > toDate) {
+      state.filterRows[tab] = [];
       if (state.active === tab) updateFilterOptions();
       return;
     }
+
+    const cacheKey = `${tab}|${fromDate}|${toDate}`;
+    if (state.filterCache.has(cacheKey)) {
+      state.filterRows[tab] = state.filterCache.get(cacheKey);
+      if (state.active === tab) updateFilterOptions();
+      return;
+    }
+
+    // Clear stale options from a previous date range while loading the new range.
+    state.filterRows[tab] = [];
+    if (state.active === tab) updateFilterOptions();
+
+    if (state.filterLoading.has(cacheKey)) {
+      await state.filterLoading.get(cacheKey);
+      if (state.active === tab && getDateRange().key === `${fromDate}|${toDate}` && state.filterCache.has(cacheKey)) {
+        state.filterRows[tab] = state.filterCache.get(cacheKey);
+        updateFilterOptions();
+      }
+      return;
+    }
+
     // frappe.call() returns a jQuery Deferred which lacks .finally().
     // Wrapping in Promise.resolve() converts it to a native Promise so .finally() works.
-    state.filterLoading[tab] = Promise.resolve(frappe.call({
+    const pending = Promise.resolve(frappe.call({
       method: 'factory_management.uqqc.report_filters.get_filter_options',
       type: 'GET',
-      args: { report_type: tab },
+      args: { report_type: tab, from_date: fromDate, to_date: toDate },
     })).then((response) => {
       const payload = response && response.message ? response.message : {};
-      state.filterRows[tab] = Array.isArray(payload.rows) ? payload.rows : [];
+      const rows = Array.isArray(payload.rows) ? payload.rows : [];
+      if (state.filterCache.size >= 10) {
+        state.filterCache.delete(state.filterCache.keys().next().value);
+      }
+      state.filterCache.set(cacheKey, rows);
+      if (getDateRange().key === `${fromDate}|${toDate}`) {
+        state.filterRows[tab] = rows;
+      }
     }).catch((error) => {
       console.error('Failed to load UQQC filter options', error);
-      state.filterRows[tab] = null;
+      if (getDateRange().key === `${fromDate}|${toDate}`) {
+        state.filterRows[tab] = null;
+      }
     }).finally(() => {
-      delete state.filterLoading[tab];
+      state.filterLoading.delete(cacheKey);
     });
-    await state.filterLoading[tab];
-    if (state.active === tab) updateFilterOptions();
+    state.filterLoading.set(cacheKey, pending);
+    await pending;
+    if (state.active === tab && getDateRange().key === `${fromDate}|${toDate}`) {
+      updateFilterOptions();
+    }
   }
 
-  function makeControl(label, fieldname, fieldtype, options = '', defaultValue = '') {
+  function makeControl(label, fieldname, fieldtype, options = '', defaultValue = '', onChange = null) {
     const wrapper = document.createElement('div');
     wrapper.className = 'uqqc-report__date-control';
+    const df = {
+      fieldtype,
+      fieldname,
+      label: __(label),
+      options,
+      reqd: fieldtype === 'Date' ? 1 : 0,
+      default: defaultValue,
+    };
+    if (typeof onChange === 'function') df.onchange = onChange;
     const control = frappe.ui.form.make_control({
       parent: wrapper,
-      df: {
-        fieldtype,
-        fieldname,
-        label: __(label),
-        options,
-        reqd: fieldtype === 'Date' ? 1 : 0,
-        default: defaultValue,
-      },
+      df,
       render_input: true,
     });
     control.refresh();
@@ -213,8 +281,8 @@ async function initializeUqqcReport(wrapper, version) {
   }
 
   // Date control đặc biệt: icon lịch, bấm mở datepicker (không bàn phím), default = hôm nay
-  function makeDateControl(label, fieldname, defaultValue) {
-    const { wrapper, control } = makeControl(label, fieldname, 'Date', '', defaultValue);
+  function makeDateControl(label, fieldname, defaultValue, onChange = null) {
+    const { wrapper, control } = makeControl(label, fieldname, 'Date', '', defaultValue, onChange);
     wrapper.classList.add('uqqc-report__control--date');
 
     const ready = Promise.resolve(control.set_value(defaultValue)).then(() => {
@@ -233,6 +301,7 @@ async function initializeUqqcReport(wrapper, version) {
       $input.attr('inputmode', 'none');
       $input.attr('autocomplete', 'off');
       $input.attr('tabindex', '-1');
+      if (typeof onChange === 'function') $input.on('change', onChange);
     }
 
     const inputContainer = wrapper.querySelector('.control-input')
@@ -324,7 +393,36 @@ async function initializeUqqcReport(wrapper, version) {
     return button;
   }
 
+  async function syncTabData(tab) {
+    const { fromDate, toDate, valid, errorMessage } = getDateRange();
+    if (!valid) {
+      state.lastLoadedDateKey = '';
+      state.filterRows[tab] = [];
+      updateFilterOptions();
+      clearResults();
+      showStatus(errorMessage, 'error');
+      return;
+    }
+
+    const dateKey = `${fromDate}|${toDate}`;
+    state.lastLoadedDateKey = dateKey;
+    if (hasActiveFilters(tab)) {
+      // Wait for new date-scoped options to drop stale selections before running report.
+      await ensureFilterOptions(tab, fromDate, toDate);
+      if (state.active === tab && getDateRange().key === dateKey) {
+        await runReport();
+      }
+      return;
+    }
+
+    await Promise.all([
+      ensureFilterOptions(tab, fromDate, toDate),
+      runReport(),
+    ]);
+  }
+
   function selectTab(tab) {
+    window.clearTimeout(filterRunTimer);
     state.active = tab;
     for (const button of tabs.querySelectorAll('[role="tab"]')) {
       const active = button.dataset.tab === tab;
@@ -334,33 +432,20 @@ async function initializeUqqcReport(wrapper, version) {
     }
     detailFilters.hidden = tab !== 'device';
     resultsPanel.id = 'uqqc-report-results';
-    ensureFilterOptions(tab).then(() => {
-      if (state.active === tab) runReport();
-    });
+    syncTabData(tab);
   }
 
   async function runReport() {
+    window.clearTimeout(filterRunTimer);
     const request = ++state.request;
-    const fromDate = controls.from_date.control.get_value();
-    const toDate = controls.to_date.control.get_value();
-    if (!fromDate || !toDate) {
-      runButton.disabled = false;
-      runButton.classList.remove('is-loading');
+    const { fromDate, toDate, valid, errorMessage } = getDateRange();
+    if (!valid) {
       clearResults();
-      showStatus(__('Choose both report dates.'), 'error');
-      return;
-    }
-    if (fromDate > toDate) {
-      runButton.disabled = false;
-      runButton.classList.remove('is-loading');
-      clearResults();
-      showStatus(__('The start date must be on or before the end date.'), 'error');
+      showStatus(errorMessage, 'error');
       return;
     }
 
     clearResults();
-    runButton.disabled = true;
-    runButton.classList.add('is-loading');
     showSkeleton();
     try {
       const activeSpecs = UQQCReportFilters.fieldsForTab(state.active);
@@ -392,11 +477,6 @@ async function initializeUqqcReport(wrapper, version) {
       clearResults();
       showStatus(__('Unable to load the UQQC report.'), 'error');
       frappe.show_alert({ message: __('Report request failed.'), indicator: 'red' });
-    } finally {
-      if (request === state.request) {
-        runButton.disabled = false;
-        runButton.classList.remove('is-loading');
-      }
     }
   }
 

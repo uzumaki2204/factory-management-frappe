@@ -1,5 +1,5 @@
 ((global) => {
-  const VERSION = '20261128f';
+  const VERSION = '20261128g';
   const SEARCH_THRESHOLD = 5;
 
   const FIELD_SPECS = [
@@ -41,6 +41,49 @@
     return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label, 'vi'));
   }
 
+  function matchesSelections(row, specs, selections, skipFieldname) {
+    return specs.every((other) => {
+      if (other.fieldname === skipFieldname) return true;
+      const chosen = selections[other.fieldname];
+      if (!chosen.length) return true;
+      return chosen.includes(String(row[other.valueField] || '').trim());
+    });
+  }
+
+  function resolvePriorityConflicts(rows, activeSpecs, selections, priorityField) {
+    const prioritySpec = activeSpecs.find((spec) => spec.fieldname === priorityField);
+    if (!prioritySpec) return;
+
+    const availablePriority = new Set(getOptions(rows, prioritySpec).map((item) => item.value));
+    selections[priorityField] = selections[priorityField].filter((val) => availablePriority.has(val));
+    if (!selections[priorityField].length) return;
+
+    const priorityRows = rows.filter((row) => (
+      selections[priorityField].includes(String(row[prioritySpec.valueField] || '').trim())
+    ));
+    for (const spec of activeSpecs) {
+      if (spec.fieldname === priorityField) continue;
+      const allowed = new Set(getOptions(priorityRows, spec).map((item) => item.value));
+      selections[spec.fieldname] = selections[spec.fieldname].filter((val) => allowed.has(val));
+    }
+
+    // Keep priorityField locked if older siblings conflict with one another (e.g. stale color + size).
+    const priorityIdx = activeSpecs.findIndex((spec) => spec.fieldname === priorityField);
+    const pruneOrder = [
+      ...activeSpecs.slice(priorityIdx + 1).reverse(),
+      ...activeSpecs.slice(0, priorityIdx).reverse(),
+    ];
+    for (const victim of pruneOrder) {
+      if (!selections[victim.fieldname].length) continue;
+      const supported = new Set(
+        getOptions(rows.filter((row) => matchesSelections(row, activeSpecs, selections, priorityField)), prioritySpec)
+          .map((item) => item.value)
+      );
+      if (selections[priorityField].every((val) => supported.has(val))) break;
+      selections[victim.fieldname] = [];
+    }
+  }
+
   function computeCascadingOptions(rows, tab, currentSelections, priorityField) {
     const activeSpecs = fieldsForTab(tab);
     const selections = {};
@@ -51,38 +94,20 @@
     }
 
     if (priorityField && selections[priorityField] && selections[priorityField].length) {
-      const prioritySpec = activeSpecs.find((spec) => spec.fieldname === priorityField);
-      if (prioritySpec) {
-        const availablePriority = new Set(getOptions(rows, prioritySpec).map((item) => item.value));
-        selections[priorityField] = selections[priorityField].filter((val) => availablePriority.has(val));
-        const priorityRows = selections[priorityField].length
-          ? rows.filter((row) => (
-            selections[priorityField].includes(String(row[prioritySpec.valueField] || '').trim())
-          ))
-          : rows;
-        for (const spec of activeSpecs) {
-          if (spec.fieldname === priorityField) continue;
-          const allowed = new Set(getOptions(priorityRows, spec).map((item) => item.value));
-          selections[spec.fieldname] = selections[spec.fieldname].filter((val) => allowed.has(val));
-        }
-      }
+      resolvePriorityConflicts(rows, activeSpecs, selections, priorityField);
     }
 
     let optionsByField = {};
     for (let pass = 0; pass <= activeSpecs.length; pass++) {
       optionsByField = {};
       for (const spec of activeSpecs) {
-        const matchingRows = rows.filter((row) => activeSpecs.every((other) => {
-          if (other.fieldname === spec.fieldname) return true;
-          const chosen = selections[other.fieldname];
-          if (!chosen.length) return true;
-          return chosen.includes(String(row[other.valueField] || '').trim());
-        }));
+        const matchingRows = rows.filter((row) => matchesSelections(row, activeSpecs, selections, spec.fieldname));
         optionsByField[spec.fieldname] = getOptions(matchingRows, spec);
       }
 
       let changed = false;
       for (const spec of activeSpecs) {
+        if (spec.fieldname === priorityField && selections[spec.fieldname].length) continue;
         const available = new Set(optionsByField[spec.fieldname].map((item) => item.value));
         const valid = selections[spec.fieldname].filter((val) => available.has(val));
         if (valid.length !== selections[spec.fieldname].length) {

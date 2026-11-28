@@ -223,6 +223,94 @@ test('computeCascadingOptions preserves priorityField selection while dropping i
   assert.deepEqual(result.optionsByField.product.map((o) => o.value), ['P2']);
 });
 
+test('market selection hides unavailable colors/sizes and keeps priority market when color+size conflict', () => {
+  const { filters } = loadFilters();
+  const deviceRows = [
+    ...sampleRows,
+    {
+      qc: 'QC1',
+      companyId: 'COMP-A',
+      companyCode: 'A',
+      companyName: 'Alpha Co',
+      productId: 'P3',
+      productCode: '317H030C',
+      productName: 'Coat',
+      deviceId: 'D1',
+      deviceName: '001QC1',
+      marketId: 'JP',
+      marketCode: 'JP',
+      marketName: 'Japan',
+      colorId: 'WHT',
+      colorCode: 'WHT',
+      colorName: 'White',
+      sizeId: 'M',
+      sizeCode: 'M',
+      sizeLabel: 'M',
+    },
+    {
+      qc: 'QC1',
+      companyId: 'COMP-A',
+      companyCode: 'A',
+      companyName: 'Alpha Co',
+      productId: 'P3',
+      productCode: '317H030C',
+      productName: 'Coat',
+      deviceId: 'D1',
+      deviceName: '001QC1',
+      marketId: 'JP',
+      marketCode: 'JP',
+      marketName: 'Japan',
+      colorId: 'BLK',
+      colorCode: 'BLK',
+      colorName: 'Black',
+      sizeId: 'L',
+      sizeCode: 'L',
+      sizeLabel: 'L',
+    },
+  ];
+
+  // Selecting market US hides JP-only colors (BLK) and sizes (M).
+  const onlyUS = plain(filters.computeCascadingOptions(
+    deviceRows,
+    'device',
+    { market: ['US'] },
+    'market'
+  ));
+  assert.deepEqual(onlyUS.optionsByField.color.map((o) => o.value), ['WHT']);
+  assert.deepEqual(onlyUS.optionsByField.size.map((o) => o.value), ['L']);
+
+  // In JP, WHT exists on M and L exists on BLK, but (JP, WHT, L) does not exist in same tuple
+  // when starting from sampleRows without P3+L... test sampleRows + JP row where (JP, WHT, L) is absent:
+  const jpSplitRows = [
+    sampleRows[0], // JP, BLK, M
+    deviceRows[3], // JP, WHT, M
+    {
+      ...sampleRows[2], // US, WHT, L
+    },
+    {
+      ...sampleRows[0],
+      colorId: 'RED',
+      colorCode: 'RED',
+      colorName: 'Red',
+      sizeId: 'L',
+      sizeCode: 'L',
+      sizeLabel: 'L',
+    },
+  ];
+  // User had WHT + L (valid in US), then switches market to JP (which has WHT on M and L on RED, not together).
+  // Switching market must preserve JP (and clear conflicting size L first, keeping WHT!).
+  const switchedToJP = plain(filters.computeCascadingOptions(
+    jpSplitRows,
+    'device',
+    { market: ['JP'], color: ['WHT'], size: ['L'] },
+    'market'
+  ));
+  assert.deepEqual(switchedToJP.selections.market, ['JP']);
+  assert.deepEqual(switchedToJP.selections.color, ['WHT']);
+  assert.deepEqual(switchedToJP.selections.size, []);
+  assert.deepEqual(switchedToJP.optionsByField.size.map((o) => o.value), ['M']);
+});
+
 test('makeMultiControl updates trigger label, handles search threshold, and avoids focus on tablet', () => {
   const desktop = loadFilters({ finePointer: true });
   let changes = 0;

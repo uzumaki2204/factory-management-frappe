@@ -83,12 +83,23 @@ DEVICE_COLUMNS = [
 
 
 @frappe.whitelist(methods=["GET", "POST"])
-def get_filter_options(report_type: str = "summary"):
-    """Return distinct report filter combinations regardless of date or master Link permissions."""
+def get_filter_options(
+    report_type: str = "summary",
+    from_date: str | None = None,
+    to_date: str | None = None,
+):
+    """Return distinct report filter combinations without DocType permissions.
+
+    When from_date / to_date are provided, restrict options to events within
+    those UTC+7 dates so dropdowns never list values absent in the chosen period.
+    """
     _require_report_access()
     kind = _normalize_report_type(report_type)
+    start_date, end_date = (None, None)
+    if from_date is not None or to_date is not None:
+        start_date, end_date = _parse_date_range(from_date, to_date)
     # Query SQL directly so master DocType permissions and User Permissions do not hide report options.
-    rows = _query_filter_rows(kind)
+    rows = _query_filter_rows(kind, start_date=start_date, end_date=end_date)
     return {"rows": rows}
 
 
@@ -192,12 +203,11 @@ def _normalize_values(raw):
     ))
 
 
-def _query_filter_rows(kind):
+def _query_filter_rows(kind, start_date=None, end_date=None):
     """Return distinct filter combinations for the report dropdowns.
 
     Wraps the 900k-row event table in a DISTINCT subquery first, so joins
-    operate on ~165 unique tuples instead of the full table — cutting query
-    time from ~16 s to ~4 s without any schema changes.
+    operate on only unique foreign-key tuples instead of the full table.
     """
     if kind == "device":
         subquery_fields = "device, line, product, market, color, size"
@@ -237,7 +247,9 @@ def _query_filter_rows(kind):
         extra_joins = ""
         order_by = "companyName, companyCode, productCode, qc"
 
-    subquery = f"SELECT DISTINCT {subquery_fields} FROM `tabUQQC Inspection Event`"
+    where_sql = f" WHERE {DATE_RANGE_WHERE}" if start_date and end_date else ""
+    params = {"from_date": start_date, "to_date": end_date} if start_date and end_date else {}
+    subquery = f"SELECT DISTINCT {subquery_fields} FROM `tabUQQC Inspection Event` e{where_sql}"
     from_clause = (
         f"FROM ({subquery}) e "
         "JOIN `tabFactory Device` device ON device.name = e.device "
@@ -246,7 +258,7 @@ def _query_filter_rows(kind):
         "JOIN `tabProduct` product ON product.name = e.product"
     )
     sql = f"SELECT DISTINCT {', '.join(select_fields)} {from_clause}{extra_joins} ORDER BY {order_by}"
-    return frappe.db.sql(sql, as_dict=True)
+    return frappe.db.sql(sql, params, as_dict=True)
 
 
 def _in_clause(expr, field, values, params):

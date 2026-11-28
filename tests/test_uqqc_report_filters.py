@@ -248,6 +248,22 @@ class TestGetFilterOptions(ReportFiltersTestCase):
         self.assertIn("SELECT DISTINCT", sql)
         self.assertNotIn("occurred_at >=", sql)
 
+    def test_date_scoped_filter_options_apply_utc7_boundaries(self):
+        self.frappe.db.sql.return_value = [{"qc": "QC1", "marketId": "13", "colorId": "09", "sizeId": "M"}]
+        result = self.mod.get_filter_options(
+            report_type="device",
+            from_date="2026-11-01",
+            to_date="2026-11-28",
+        )
+        self.assertEqual(result["rows"][0]["marketId"], "13")
+        sql, params = self.frappe.db.sql.call_args[0][:2]
+        self.assertIn("INTERVAL 7 HOUR", sql)
+        self.assertEqual(params, {"from_date": "2026-11-01", "to_date": "2026-11-28"})
+
+    def test_date_scoped_reversed_dates_raise_validation(self):
+        with self.assertRaises(ValidationError):
+            self.mod.get_filter_options("summary", from_date="2026-11-28", to_date="2026-11-01")
+
     def test_device_filter_options_join_variant_tables(self):
         self.frappe.db.sql.return_value = []
         self.mod.get_filter_options("device")
