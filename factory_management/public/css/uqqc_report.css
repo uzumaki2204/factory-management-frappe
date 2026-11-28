@@ -176,35 +176,8 @@
   z-index: 1050 !important;
 }
 
-/* ── Calendar icon button (nằm bên phải trong input date) ─────────────────── */
-
-.uqqc-rpt-cal-btn {
-  position: absolute;
-  inset: 0 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 100%;
-  padding: 0;
-  border: none;
-  border-radius: 0 8px 8px 0;
-  background: transparent;
-  color: var(--uqqc-report-muted);
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  pointer-events: auto;
-  transition: color 120ms ease;
-}
-
-.uqqc-rpt-cal-btn:hover {
-  color: var(--uqqc-report-accent);
-}
-
-/* Thêm padding-right cho input để không che icon */
+/* Thêm padding-right cho input date readonly */
 .uqqc-report__date-control input[readonly] {
-  padding-right: 34px !important;
   cursor: pointer;
   caret-color: transparent;
 }

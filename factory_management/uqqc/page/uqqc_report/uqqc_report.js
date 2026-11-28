@@ -5,7 +5,7 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     single_column: true,
   });
 
-  const UQQC_RPT_VERSION = '20261128b';
+  const UQQC_RPT_VERSION = '20261128c';
 
   // Inject versioned CSS — xoá link cũ nếu khác version
   (function injectCss(v) {
@@ -139,27 +139,8 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
       input.setAttribute('tabindex', '-1');
     }
 
-    // Tạo nút icon lịch
-    const calBtn = document.createElement('button');
-    calBtn.type = 'button';
-    calBtn.className = 'uqqc-rpt-cal-btn';
-    calBtn.setAttribute('tabindex', '-1');
-    calBtn.setAttribute('aria-label', __('Open calendar'));
-    calBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-      aria-hidden="true">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-      <line x1="16" y1="2" x2="16" y2="6"></line>
-      <line x1="8" y1="2" x2="8" y2="6"></line>
-      <line x1="3" y1="10" x2="21" y2="10"></line>
-    </svg>`;
-
-    // Chèn nút vào inputContainer — dùng parentElement của $input (Frappe v16)
+    // Mở datepicker khi bấm vào input — không hiện bàn phím
     const inputContainer = (input && input.parentElement) || wrapper;
-    inputContainer.style.position = 'relative';
-    inputContainer.append(calBtn);
-
-    // Mở datepicker khi bấm vào input container hoặc nút lịch
     function openPicker(e) {
       e.preventDefault();
       e.stopPropagation();
