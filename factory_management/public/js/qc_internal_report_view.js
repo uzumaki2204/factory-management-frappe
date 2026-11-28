@@ -1,9 +1,18 @@
 window.QCInternalReportView = (() => {
+  const version = '20261128e';
   const inspectTypes = new Set(['CumulativeSubtract', 'CumulativeAdd']);
   const num = new Intl.NumberFormat('vi-VN', {maximumFractionDigits: 0});
   const pct = new Intl.NumberFormat('vi-VN', {style: 'percent', maximumFractionDigits: 0});
-  const companyColors = ['#7b168c', '#1496ee', '#202ca6', '#f26435'];
+  const companyColors = [
+    '#7b168c', '#1496ee', '#202ca6', '#f26435', '#00a878',
+    '#d92662', '#c98a00', '#0f766e', '#6d4c41', '#475569',
+  ];
   const defectColors = ['#168dee', '#86128f', '#202ca6'];
+
+  function companyColor(index) {
+    if (index < companyColors.length) return companyColors[index];
+    return 'hsl(' + Math.round((index * 137.508) % 360) + ', 68%, 42%)';
+  }
 
   function summarize(rows) {
     const companies = new Map(), products = new Map(), defects = new Map(), daily = new Map();
@@ -244,13 +253,13 @@ window.QCInternalReportView = (() => {
       const byDate = new Map(c.trend.map((p) => [p.date, p]));
       const pts = dates.map((date, i) => { const p = byDate.get(date); return p ? {...p, x: xAt(i), y: bottom - (p.rate - min) / span * (bottom - top)} : null; }).filter(Boolean);
       if (!pts.length) return;
-      const color = companyColors[ci % companyColors.length];
+      const color = companyColor(ci);
       const path = pts.map((p, i) => (i ? 'L' : 'M') + p.x + ',' + p.y).join(' ');
       lines += '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="3"></path>' +
         pts.map((p) => '<polygon points="' + p.x + ',' + (p.y - 5) + ' ' + (p.x + 5) + ',' + p.y + ' ' + p.x + ',' + (p.y + 5) + ' ' + (p.x - 5) + ',' + p.y + '" fill="' + color + '"></polygon><text x="' + p.x + '" y="' + (p.y - 10 - ci % 2 * 12) + '" text-anchor="middle">' + pct.format(p.rate) + '</text>').join('');
     });
     const axis = dates.map((date, i) => '<text class="qc-ir-multi-date" x="' + xAt(i) + '" y="' + (h - 8) + '" text-anchor="middle">' + dateLabel(date) + '</text>').join('');
-    const legend = companies.map((c, i) => '<span><i style="--legend-color:' + companyColors[i % companyColors.length] + '"></i>' + esc(c.name) + '</span>').join('');
+    const legend = companies.map((c, i) => '<span><i style="--legend-color:' + companyColor(i) + '"></i>' + esc(c.name) + '</span>').join('');
     return '<div class="qc-ir-multi-wrap"><div class="qc-ir-legend">' + legend + '</div><svg class="qc-ir-multi-trend" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"><path d="M' + left + ',' + bottom + ' H' + right + '" stroke="#d9e0e7"></path>' + lines + axis + '</svg></div>';
   }
 
@@ -262,5 +271,5 @@ window.QCInternalReportView = (() => {
   function dateLabel(value) { const m = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] : value; }
   function esc(value) { return String(value ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-  return {summarize, render};
+  return {version, summarize, render};
 })();

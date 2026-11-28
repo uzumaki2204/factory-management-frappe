@@ -8,7 +8,8 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
 };
 
 async function initializeQcInternalReport(wrapper) {
-  const assetVersion = '20261128c';
+  const assetVersion = '20261128e';
+  wrapper.classList.add('qc-ir-page-wrapper');
   const stylesheetBase = '/assets/factory_management/css/qc_internal_report.css';
   const stylesheet = stylesheetBase + '?v=' + assetVersion;
   document.querySelectorAll('link[href^="' + stylesheetBase + '"]').forEach((el) => {
@@ -26,11 +27,35 @@ async function initializeQcInternalReport(wrapper) {
     title: __('Báo cáo QC nội bộ'),
     single_column: true,
   });
+  if (page.page_head && page.page_head.length) {
+    page.page_head.removeClass('sticky-top');
+  }
   const today = frappe.datetime.get_today();
   const state = {active: 'summary', request: 0, rows: [], datasetKey: ''};
-  const rendererReady = frappe.require('/assets/factory_management/js/qc_internal_report_view.js');
+  const rendererReady = loadViewScript(assetVersion);
   const root = document.createElement('section');
   root.className = 'qc-internal-report';
+
+  function loadViewScript(version) {
+    if (window.QCInternalReportView && window.QCInternalReportView.version === version) {
+      return Promise.resolve();
+    }
+    const src = '/assets/factory_management/js/qc_internal_report_view.js?v=' + version;
+    const existing = document.querySelector('script[src="' + src + '"]');
+    if (existing) {
+      return new Promise((resolve, reject) => {
+        existing.addEventListener('load', () => resolve(), {once: true});
+        existing.addEventListener('error', () => reject(new Error('Failed to load QC report view script')), {once: true});
+      });
+    }
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load QC report view script'));
+      document.head.append(script);
+    });
+  }
 
   const tabDefinitions = [
     {key: 'company', label: 'Công ty', title: 'BÁO CÁO TÌNH HÌNH CHẤT LƯỢNG THEO CÔNG TY'},

@@ -1,3 +1,17 @@
+/* Keep the Desk page title ("Báo cáo QC nội bộ") scrolling with the page
+   instead of sticking and overlapping content underneath on scroll. */
+.qc-ir-page-wrapper .page-head,
+.qc-ir-page-wrapper .page-head.sticky-top,
+.qc-ir-page-wrapper .page-head-content,
+.qc-ir-page-wrapper .page-title,
+#page-qc-internal-report .page-head,
+[data-page-route="qc-internal-report"] .page-head {
+  position: relative !important;
+  top: auto !important;
+  inset-block-start: auto !important;
+  z-index: auto !important;
+}
+
 .qc-internal-report {
   --qc-blue: #0d4b84;
   --qc-header: #2447b2;
