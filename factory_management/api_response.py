@@ -11,6 +11,7 @@ MODULES = (
     "factory_management.qcbrother_reports.",
     "factory_management.uqqc.api.",
 )
+COMPRESSIBLE_BOOTSTRAPS = {"factory_management.api.bootstrap", "uqqc-bootstrap"}
 
 
 def direct_qc_response(response, request):
@@ -23,7 +24,7 @@ def direct_qc_response(response, request):
     if isinstance(payload, dict) and "message" in payload and not any(
             key in payload for key in ("exc", "exc_type", "exception")):
         response.set_data(frappe.as_json(payload["message"]))
-    if method != "uqqc-bootstrap" or response.headers.get("Content-Encoding"):
+    if method not in COMPRESSIBLE_BOOTSTRAPS or response.headers.get("Content-Encoding"):
         return
     accepted = getattr(request, "accept_encodings", None)
     if accepted is None or accepted.quality("gzip") <= 0:
