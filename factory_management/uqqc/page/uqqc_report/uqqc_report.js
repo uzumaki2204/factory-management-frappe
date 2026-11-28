@@ -174,11 +174,13 @@ async function initializeUqqcReport(wrapper, version) {
       if (state.active === tab) updateFilterOptions();
       return;
     }
-    state.filterLoading[tab] = frappe.call({
+    // frappe.call() returns a jQuery Deferred which lacks .finally().
+    // Wrapping in Promise.resolve() converts it to a native Promise so .finally() works.
+    state.filterLoading[tab] = Promise.resolve(frappe.call({
       method: 'factory_management.uqqc.report_filters.get_filter_options',
       type: 'GET',
       args: { report_type: tab },
-    }).then((response) => {
+    })).then((response) => {
       const payload = response && response.message ? response.message : {};
       state.filterRows[tab] = Array.isArray(payload.rows) ? payload.rows : [];
     }).catch((error) => {
