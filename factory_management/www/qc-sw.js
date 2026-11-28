@@ -1,6 +1,6 @@
-const CACHE = 'factory-qc-v59';
+const CACHE = 'factory-qc-v60';
 const QC_SCRIPT_PATH = '/assets/factory_management/js/qc.js';
-const SHELL = ['/assets/factory_management/js/qc-i18n.json?v=45', '/assets/factory_management/css/qc-layout.css?v=12', '/assets/factory_management/images/qc-logo.png', '/assets/factory_management/manifest.json'];
+const SHELL = ['/assets/factory_management/js/qc-i18n.json?v=46', '/assets/factory_management/css/qc-layout.css?v=12', '/assets/factory_management/images/qc-logo.png', '/assets/factory_management/manifest.json'];
 
 function qcScriptUrl(html) {
   const scripts = [...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)];

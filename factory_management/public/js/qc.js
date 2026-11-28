@@ -151,7 +151,7 @@
   }
   async function loadLanguage() {
     try {
-      const response = await fetch('/assets/factory_management/js/qc-i18n.json?v=45');
+      const response = await fetch('/assets/factory_management/js/qc-i18n.json?v=46');
       if (response.ok) {
         state.language = await response.json();
         save('language', state.language);
@@ -1151,6 +1151,16 @@
     const qty = overrideQty === null ? Number($('quantity').value) : Number(overrideQty);
     if (!product || !line) { notice('error.selection', true); return; }
     if (!Number.isInteger(qty) || qty <= 0) { notice('error.quantity', true); return; }
+    if (kind === 'received' && direction < 0) {
+      if (state.syncing) {
+        notice('error.sync_in_progress', true);
+        return;
+      }
+      if (qty > currentTotals().received) {
+        notice('error.received_subtract_exceeds', true);
+        return;
+      }
+    }
     const defect = kind === 'defect' ? defectId : null;
     if (kind === 'defect' && !defect) { notice('error.defect', true); return; }
     const event = {
