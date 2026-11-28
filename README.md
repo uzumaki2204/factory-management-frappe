@@ -105,6 +105,8 @@ Một bản ghi Trim ứng với cặp `Order No.` và `Revision No.`; mỗi dò
 
 `GET /api/method/factory_management.api.data_epoch` trả trực tiếp `{generation, resetAtUtc}`. Trước lần làm mới, `generation` rỗng. Sau lần làm mới, các lệnh ghi/đăng ký/kiểm tra thiết bị QC và UQQC cần header `X-Factory-Data-Epoch` bằng generation hiện tại; request cũ bị từ chối. Client QC/UQQC đọc generation trước khi đồng bộ và xóa queue, cache cũ khi generation đổi. DocType `Factory Data Epoch` chỉ lưu generation của site. Luồng làm mới do MigrationFrappe chạy cục bộ bằng Bench trong Docker; không có API HTTP để xóa dữ liệu.
 
+`GET /api/method/factory_management.api.bootstrap` trả danh mục QC cho thiết bị đã duyệt. Gửi `catalog_version` từ phản hồi trước để kiểm tra thay đổi. Nếu phiên bản khớp, API chỉ trả phiên bản, `unchanged` và đồng hồ máy chủ. Nếu phiên bản cũ hoặc bị bỏ trống, API trả danh mục đầy đủ. Client QC lưu danh mục và phiên bản để dùng offline. Client không gửi phiên bản vẫn nhận danh mục đầy đủ. Nếu client hỗ trợ `Accept-Encoding: gzip`, API nén phản hồi đầy đủ.
+
 Lần làm mới lấy master, thiết bị và `QCInspections` từ SQL Server .NET, dựng lại danh mục lỗi UQQC từ QC và để trống sự kiện UQQC. Cần backup và kiểm tra xung đột Link với app khác trước khi chạy. Không thay đổi dữ liệu QCBrother trong SQL Server.
 
 ## UQQC

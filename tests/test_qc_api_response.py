@@ -94,27 +94,46 @@ class QcResponseTests(unittest.TestCase):
             self.frappe.form_dict["cmd"] = "factory_management.api.bootstrap"
             self.assertEqual(self.apply(Response({"message": {"ready": True}}), path), {"ready": True})
 
-    def test_large_uqqc_bootstrap_uses_gzip_only_when_requested(self):
+    def test_large_bootstraps_use_gzip_only_when_requested(self):
         payload = {"catalogVersion": "version-1", "defectPositions": [
             {"id": str(index), "name": "Vị trí lỗi " + str(index)} for index in range(100)]}
-        response = Response({"message": payload})
-        request = types.SimpleNamespace(path="/api/method/uqqc-bootstrap",
+        paths = ("/api/method/uqqc-bootstrap", "/api/method/factory_management.api.bootstrap")
+        for path in paths:
+            with self.subTest(path=path):
+                response = Response({"message": payload})
+                request = types.SimpleNamespace(path=path,
+                    accept_encodings=types.SimpleNamespace(quality=lambda name: 1))
+                self.module.direct_qc_response(response, request)
+                self.assertEqual(response.headers["Content-Encoding"], "gzip")
+                self.assertEqual(response.headers["Vary"], "Accept-Encoding")
+                self.assertEqual(json.loads(gzip.decompress(response.data)), payload)
+                self.assertLess(len(response.data), len(json.dumps(payload).encode("utf-8")))
+
+                compact = Response({"message": {"catalogVersion": "version-1", "unchanged": True}})
+                self.module.direct_qc_response(compact, request)
+                self.assertNotIn("Content-Encoding", compact.headers)
+                self.assertEqual(json.loads(compact.data)["unchanged"], True)
+
+                not_accepted = Response({"message": payload})
+                request.accept_encodings.quality = lambda name: 0
+                self.module.direct_qc_response(not_accepted, request)
+                self.assertNotIn("Content-Encoding", not_accepted.headers)
+
+    def test_small_bootstrap_does_not_use_gzip(self):
+        response = Response({"message": {"catalog_version": "version-1", "unchanged": True}})
+        request = types.SimpleNamespace(path="/api/method/factory_management.api.bootstrap",
                                         accept_encodings=types.SimpleNamespace(quality=lambda name: 1))
         self.module.direct_qc_response(response, request)
-        self.assertEqual(response.headers["Content-Encoding"], "gzip")
-        self.assertEqual(response.headers["Vary"], "Accept-Encoding")
-        self.assertEqual(json.loads(gzip.decompress(response.data)), payload)
-        self.assertLess(len(response.data), len(json.dumps(payload).encode("utf-8")))
+        self.assertNotIn("Content-Encoding", response.headers)
 
-        compact = Response({"message": {"catalogVersion": "version-1", "unchanged": True}})
-        self.module.direct_qc_response(compact, request)
-        self.assertNotIn("Content-Encoding", compact.headers)
-        self.assertEqual(json.loads(compact.data)["unchanged"], True)
-
-        not_accepted = Response({"message": payload})
-        request.accept_encodings.quality = lambda name: 0
-        self.module.direct_qc_response(not_accepted, request)
-        self.assertNotIn("Content-Encoding", not_accepted.headers)
+    def test_gzip_appends_accept_encoding_to_vary(self):
+        payload = {"catalog": {"items": ["Áo"] * 300}}
+        response = Response({"message": payload})
+        response.headers["Vary"] = "Accept-Language"
+        request = types.SimpleNamespace(path="/api/method/factory_management.api.bootstrap",
+                                        accept_encodings=types.SimpleNamespace(quality=lambda name: 1))
+        self.module.direct_qc_response(response, request)
+        self.assertEqual(response.headers["Vary"], "Accept-Language, Accept-Encoding")
 
 
 class ContractMigrationTests(unittest.TestCase):

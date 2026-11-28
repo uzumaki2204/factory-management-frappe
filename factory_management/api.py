@@ -212,7 +212,8 @@ def check_device(id=None, device_id=None, deviceId=None):
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
-def bootstrap(id=None, device_id=None, deviceId=None):
+def bootstrap(id: str | None = None, device_id: str | None = None, deviceId: str | None = None,
+              catalog_version: str | None = None):
     _approved_device(id or device_id or deviceId)
     companies = _rows("Company", ["name", "company_code", "company_name", "active"], {"active": 1})
     factories = _rows("Factory", ["name", "factory_code", "factory_name", "company"], {"is_active": 1})
@@ -249,6 +250,8 @@ def bootstrap(id=None, device_id=None, deviceId=None):
         "defect_positions": [{"id": x.name, "code": x.code, "name": x.title, "position_group_id": x.position_group, "group_code": pm[x.position_group].code if x.position_group in pm else "", "group_name": pm[x.position_group].title if x.position_group in pm else ""} for x in positions],
     }
     version = hashlib.sha256(json.dumps(catalog, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")).hexdigest()
+    if catalog_version == version:
+        return {"catalog_version": version, "unchanged": True, **_clock()}
     return {"catalog": catalog, "catalog_version": version, **_clock()}
 
 

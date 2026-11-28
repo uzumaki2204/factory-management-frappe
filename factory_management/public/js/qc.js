@@ -24,6 +24,7 @@
     device: read('device', null),
     identityConflict: false,
     catalog: read('catalog', null),
+    catalogVersion: read('catalog_version', ''),
     queue: read('queue', []),
     favorites: read('favorites', []),
     favoritesDirty: read('favorites_dirty', false),
@@ -926,9 +927,19 @@
   async function loadBootstrap() {
     if (!state.pageUnlocked || !navigator.onLine || !statusReady()) return;
     try {
-      const result = await call('bootstrap', {id: state.device.id}, 'GET');
+      const requestedVersion = state.catalog ? state.catalogVersion : '';
+      const params = {id: state.device.id};
+      if (requestedVersion) params.catalog_version = requestedVersion;
+      let result = await call('bootstrap', params, 'GET');
+      if (result.unchanged) {
+        if (state.catalog && result.catalog_version === requestedVersion) return;
+        result = await call('bootstrap', {id: state.device.id}, 'GET');
+      }
+      if (!result.catalog) throw new Error(t('error.network'));
       state.catalog = result.catalog;
+      state.catalogVersion = result.catalog_version || '';
       save('catalog', state.catalog);
+      save('catalog_version', state.catalogVersion);
       renderCatalog();
     } catch (_) { if (!state.catalog) notice('error.network', true); }
   }
@@ -1372,7 +1383,15 @@
       button.setAttribute('aria-pressed', 'false');
     });
   }
+  function updateQcServiceWorker() {
+    if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
+    return navigator.serviceWorker.register('/qc-sw.js', {scope: '/', updateViaCache: 'none'})
+      .then(registration => {
+        if (navigator.onLine) return registration.update();
+      }).catch(() => {});
+  }
   async function init() {
+    updateQcServiceWorker();
     await loadLanguage();
     if (navigator.onLine) {
       try { await ensureDataEpoch(); } catch (_) { if (epochReloading) return; }
@@ -1395,9 +1414,6 @@
         notice('ui.cache_cleared');
       }
     } catch (_) {}
-    if ('serviceWorker' in navigator && window.isSecureContext) {
-      navigator.serviceWorker.register('/qc-sw.js', {scope: '/'}).catch(() => {});
-    }
     if (navigator.onLine) {
       if (state.device?.id) await check();
     }

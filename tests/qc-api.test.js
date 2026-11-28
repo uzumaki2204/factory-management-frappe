@@ -38,6 +38,21 @@ function createApi(fetch, generation = 'current') {
 
 function response(payload, status = 200) { return { ok: status === 200, status, json: async () => payload }; }
 
+function createBootstrapLoader({ catalog = null, version = '', responses = [], online = true }) {
+    const calls = [];
+    const items = new Map();
+    let renders = 0;
+    const state = { pageUnlocked: true, device: { id: 'device' }, catalog, catalogVersion: version };
+    const context = {
+        state, navigator: { onLine: online }, statusReady: () => true, t: key => key,
+        call: async (...args) => { calls.push(args); return responses.shift(); },
+        save: (key, value) => items.set(key, JSON.stringify(value)),
+        renderCatalog: () => { renders++; }, notice: () => {}
+    };
+    vm.runInNewContext([productionFunction('loadBootstrap', true), 'globalThis.load = loadBootstrap;'].join('\n'), context);
+    return { load: context.load, state, calls, items, get renders() { return renders; } };
+}
+
 for (const legacy of [false, true]) {
     test(`QC reads ${legacy ? 'legacy message' : 'direct JSON'} payloads and sends the current generation`, async () => {
         const wrap = data => legacy ? { message: data } : data;
@@ -67,6 +82,115 @@ test('QC direct data epoch fences writes before an obsolete queue can reach the 
     assert.equal(writes, 0);
     assert.equal(api.reloads, 1);
     assert.equal(api.items.get('factory.qc.v1.data_epoch'), 'new');
+});
+
+test('QC bootstrap GET encodes the cached catalog version in its query', async () => {
+    const calls = [];
+    const api = createApi(async (url, options) => {
+        if (url.endsWith('data_epoch')) return response({ generation: 'current' });
+        calls.push({ url, options });
+        return response({ unchanged: true });
+    });
+    await api.call('bootstrap', { id: 'device', catalog_version: 'version/one' }, 'GET');
+    assert.equal(calls[0].url, '/api/method/factory_management.api.bootstrap?id=device&catalog_version=version%2Fone');
+    assert.equal(calls[0].options.body, undefined);
+});
+
+test('QC bootstrap saves a full catalog and its version for offline use', async () => {
+    const catalog = { products: [{ id: 'product-1' }], product_variants: [{ product_id: 'product-1' }] };
+    const loader = createBootstrapLoader({ responses: [{ catalog, catalog_version: 'version-1' }] });
+    await loader.load();
+    assert.equal(loader.calls.length, 1);
+    assert.equal(loader.calls[0][0], 'bootstrap');
+    assert.equal(loader.calls[0][1].id, 'device');
+    assert.equal(Object.keys(loader.calls[0][1]).length, 1);
+    assert.equal(loader.state.catalog, catalog);
+    assert.equal(loader.state.catalogVersion, 'version-1');
+    assert.equal(loader.items.get('catalog'), JSON.stringify(catalog));
+    assert.equal(loader.items.get('catalog_version'), JSON.stringify('version-1'));
+    assert.equal(loader.renders, 1);
+});
+
+test('QC bootstrap keeps its cached catalog when the server reports it unchanged', async () => {
+    const catalog = { products: [{ id: 'product-1' }] };
+    const loader = createBootstrapLoader({ catalog, version: 'version-1', responses: [
+        { unchanged: true, catalog_version: 'version-1' }
+    ] });
+    await loader.load();
+    assert.equal(loader.calls.length, 1);
+    assert.equal(loader.calls[0][1].id, 'device');
+    assert.equal(loader.calls[0][1].catalog_version, 'version-1');
+    assert.equal(Object.keys(loader.calls[0][1]).length, 2);
+    assert.equal(loader.state.catalog, catalog);
+    assert.equal(loader.renders, 0);
+    assert.equal(loader.items.size, 0);
+});
+
+test('QC bootstrap replaces a stale catalog and version', async () => {
+    const oldCatalog = { products: [{ id: 'old' }] };
+    const newCatalog = { products: [{ id: 'new' }] };
+    const loader = createBootstrapLoader({ catalog: oldCatalog, version: 'version-1', responses: [
+        { catalog: newCatalog, catalog_version: 'version-2' }
+    ] });
+    await loader.load();
+    assert.equal(loader.calls[0][1].id, 'device');
+    assert.equal(loader.calls[0][1].catalog_version, 'version-1');
+    assert.equal(loader.state.catalog, newCatalog);
+    assert.equal(loader.state.catalogVersion, 'version-2');
+    assert.equal(loader.items.get('catalog'), JSON.stringify(newCatalog));
+    assert.equal(loader.items.get('catalog_version'), JSON.stringify('version-2'));
+    assert.equal(loader.renders, 1);
+});
+
+test('QC bootstrap retries without a version if an unchanged response has no local catalog', async () => {
+    const catalog = { products: [{ id: 'product-1' }] };
+    const loader = createBootstrapLoader({ responses: [
+        { unchanged: true, catalog_version: 'version-1' },
+        { catalog, catalog_version: 'version-1' }
+    ] });
+    await loader.load();
+    assert.equal(loader.calls.length, 2);
+    assert.equal(loader.calls[0][1].id, 'device');
+    assert.equal(loader.calls[1][1].id, 'device');
+    assert.equal(Object.keys(loader.calls[0][1]).length, 1);
+    assert.equal(Object.keys(loader.calls[1][1]).length, 1);
+    assert.equal(loader.state.catalog, catalog);
+    assert.equal(loader.renders, 1);
+});
+
+test('QC keeps the cached catalog without making a request while offline', async () => {
+    const catalog = { products: [{ id: 'product-1' }] };
+    const loader = createBootstrapLoader({ catalog, version: 'version-1', online: false });
+    await loader.load();
+    assert.equal(loader.calls.length, 0);
+    assert.equal(loader.state.catalog, catalog);
+    assert.equal(loader.state.catalogVersion, 'version-1');
+    assert.equal(loader.renders, 0);
+});
+
+test('QC checks for a service worker update on secure online startup', async () => {
+    const registrations = [];
+    let updates = 0;
+    const context = {
+        navigator: {
+            onLine: true,
+            serviceWorker: { register: async (...args) => {
+                registrations.push(args);
+                return { update: async () => { updates++; } };
+            } }
+        },
+        window: { isSecureContext: true }
+    };
+    vm.runInNewContext([
+        productionFunction('updateQcServiceWorker'),
+        'globalThis.update = updateQcServiceWorker;'
+    ].join('\n'), context);
+    await context.update();
+    assert.equal(registrations[0][0], '/qc-sw.js');
+    assert.equal(registrations[0][1].scope, '/');
+    assert.equal(registrations[0][1].updateViaCache, 'none');
+    assert.equal(updates, 1);
+    assert.doesNotMatch(productionFunction('updateQcServiceWorker'), /location\.reload/);
 });
 
 test('QC preserves localized authorization errors after the success contract change', async () => {
