@@ -642,19 +642,20 @@
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 
-@media (max-width: 1100px) {
+/* Tablet nhỏ / màn hình nhỏ hơn 780px: 3 cột filter, nút xuống dòng */
+@media (max-width: 780px) {
   .uqqc-report__filter-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  /* Nút run xuống dòng riêng, full-width khi wrap */
+  /* Nút run xuống dòng riêng, right-align */
   .uqqc-report__filter-row .uqqc-report__run {
     grid-column: 1 / -1;
     justify-self: end;
   }
 
   .uqqc-report__filter-row--detail {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .uqqc-report__metrics {
@@ -666,7 +667,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 600px) {
   .uqqc-report {
     gap: 8px;
     padding: 8px 10px;

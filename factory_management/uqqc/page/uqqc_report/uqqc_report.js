@@ -5,7 +5,7 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     single_column: true,
   });
 
-  const UQQC_RPT_VERSION = '20261128a';
+  const UQQC_RPT_VERSION = '20261128b';
 
   // Inject versioned CSS — xoá link cũ nếu khác version
   (function injectCss(v) {
@@ -154,8 +154,8 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
       <line x1="3" y1="10" x2="21" y2="10"></line>
     </svg>`;
 
-    // Chèn nút vào inputContainer (cùng vị trí với QC Internal Report)
-    const inputContainer = wrapper.querySelector('.input-with-feedback') || wrapper;
+    // Chèn nút vào inputContainer — dùng parentElement của $input (Frappe v16)
+    const inputContainer = (input && input.parentElement) || wrapper;
     inputContainer.style.position = 'relative';
     inputContainer.append(calBtn);
 
