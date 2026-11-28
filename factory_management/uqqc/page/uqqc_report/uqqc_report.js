@@ -1,11 +1,55 @@
 frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
+  const version = '20261128f';
+  loadFilterScript(version)
+    .then(() => initializeUqqcReport(wrapper, version))
+    .catch((error) => {
+      console.error('UQQC Report failed to load filters', error);
+      frappe.msgprint(__('Unable to load UQQC report filters.'));
+    });
+};
+
+function loadFilterScript(version) {
+  if (window.UQQCReportFilters && window.UQQCReportFilters.version === version) {
+    return Promise.resolve();
+  }
+  const base = '/assets/factory_management/js/uqqc_report_filters.js';
+  const src = `${base}?v=${version}`;
+  document.querySelectorAll(`script[src^="${base}"]`).forEach((el) => {
+    if (el.getAttribute('src') !== src) el.remove();
+  });
+  const existing = document.querySelector(`script[src="${src}"]`);
+  if (existing) {
+    if (existing.dataset.loading === '1') {
+      return new Promise((resolve, reject) => {
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error('Failed to load UQQC report filters')), { once: true });
+      });
+    }
+    existing.remove();
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.dataset.loading = '1';
+    script.onload = () => {
+      delete script.dataset.loading;
+      resolve();
+    };
+    script.onerror = () => {
+      delete script.dataset.loading;
+      script.remove();
+      reject(new Error('Failed to load UQQC report filters'));
+    };
+    document.head.append(script);
+  });
+}
+
+async function initializeUqqcReport(wrapper, version) {
   const page = frappe.ui.make_app_page({
     parent: wrapper,
     title: __('UQQC Report'),
     single_column: true,
   });
-
-  const UQQC_RPT_VERSION = '20261128d';
 
   // Inject versioned CSS — xoá link cũ (kể cả link app_include_css không có ?v=)
   (function injectCss(v) {
@@ -20,10 +64,15 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
       link.href = href;
       document.head.append(link);
     }
-  })(UQQC_RPT_VERSION);
+  })(version);
 
   const today = frappe.datetime.get_today();
-  const state = { active: 'summary', request: 0 };
+  const state = {
+    active: 'summary',
+    request: 0,
+    filterRows: { summary: null, device: null },
+    filterLoading: {},
+  };
   const root = document.createElement('section');
   root.className = 'uqqc-report';
 
@@ -32,16 +81,18 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
   filtersPanel.className = 'uqqc-report__panel uqqc-report__filters';
   const filterRow = document.createElement('div');
   filterRow.className = 'uqqc-report__filter-row';
+
+  const onFilterChange = (fieldname) => () => updateFilterOptions(fieldname);
   const controls = {
     from_date: makeDateControl('From Date', 'from_date', today),
     to_date: makeDateControl('To Date', 'to_date', today),
-    qc: makeControl('QC', 'qc', 'Select', '\nQC1\nQC2'),
-    company: makeControl('Company', 'company', 'Link', 'Company'),
-    product: makeControl('Product', 'product', 'Link', 'Product'),
-    device: makeControl('Device', 'device', 'Link', 'Factory Device'),
-    market: makeControl('Market', 'market', 'Link', 'Market'),
-    color: makeControl('Color', 'color', 'Link', 'Product Color'),
-    size: makeControl('Size', 'size', 'Link', 'ProductSize'),
+    qc: UQQCReportFilters.makeMultiControl('QC', 'qc', onFilterChange('qc')),
+    company: UQQCReportFilters.makeMultiControl('Company', 'company', onFilterChange('company')),
+    product: UQQCReportFilters.makeMultiControl('Product', 'product', onFilterChange('product')),
+    device: UQQCReportFilters.makeMultiControl('Device', 'device', onFilterChange('device')),
+    market: UQQCReportFilters.makeMultiControl('Market', 'market', onFilterChange('market')),
+    color: UQQCReportFilters.makeMultiControl('Color', 'color', onFilterChange('color')),
+    size: UQQCReportFilters.makeMultiControl('Size', 'size', onFilterChange('size')),
   };
 
   // Run button — cùng dòng với các filter (cột cuối)
@@ -104,9 +155,41 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
   runButton.addEventListener('click', runReport);
   summaryTab.addEventListener('click', () => selectTab('summary'));
   deviceTab.addEventListener('click', () => selectTab('device'));
-  Promise.all([controls.from_date.ready, controls.to_date.ready]).then(() => {
-    selectTab('summary');
-  });
+  await Promise.all([controls.from_date.ready, controls.to_date.ready]);
+  selectTab('summary');
+
+  function updateFilterOptions(changedField) {
+    const rows = state.filterRows[state.active];
+    if (!rows) return;
+    UQQCReportFilters.updateOptions(rows, state.active, controls, changedField);
+  }
+
+  async function ensureFilterOptions(tab) {
+    if (Array.isArray(state.filterRows[tab])) {
+      updateFilterOptions();
+      return;
+    }
+    if (state.filterLoading[tab]) {
+      await state.filterLoading[tab];
+      if (state.active === tab) updateFilterOptions();
+      return;
+    }
+    state.filterLoading[tab] = frappe.call({
+      method: 'factory_management.uqqc.report_filters.get_filter_options',
+      type: 'GET',
+      args: { report_type: tab },
+    }).then((response) => {
+      const payload = response && response.message ? response.message : {};
+      state.filterRows[tab] = Array.isArray(payload.rows) ? payload.rows : [];
+    }).catch((error) => {
+      console.error('Failed to load UQQC filter options', error);
+      state.filterRows[tab] = null;
+    }).finally(() => {
+      delete state.filterLoading[tab];
+    });
+    await state.filterLoading[tab];
+    if (state.active === tab) updateFilterOptions();
+  }
 
   function makeControl(label, fieldname, fieldtype, options = '', defaultValue = '') {
     const wrapper = document.createElement('div');
@@ -194,6 +277,7 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
       inputContainer.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        document.dispatchEvent(new CustomEvent('uqqc-filter-open', { detail: { owner: null } }));
         const shouldClose = wasOpenOnPress;
         wasOpenOnPress = false;
         if (input && document.activeElement === input) input.blur();
@@ -248,7 +332,9 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     }
     detailFilters.hidden = tab !== 'device';
     resultsPanel.id = 'uqqc-report-results';
-    runReport();
+    ensureFilterOptions(tab).then(() => {
+      if (state.active === tab) runReport();
+    });
   }
 
   async function runReport() {
@@ -275,31 +361,27 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     runButton.classList.add('is-loading');
     showSkeleton();
     try {
-      const filters = {
-        from_date: fromDate,
-        to_date: toDate,
-        qc: controls.qc.control.get_value() || '',
-        company: controls.company.control.get_value() || '',
-        product: controls.product.control.get_value() || '',
-      };
-      if (state.active === 'device') {
-        for (const key of ['device', 'market', 'color', 'size']) {
-          filters[key] = controls[key].control.get_value() || '';
-        }
+      const activeSpecs = UQQCReportFilters.fieldsForTab(state.active);
+      const filterValues = {};
+      for (const spec of activeSpecs) {
+        const values = controls[spec.fieldname].getValues();
+        if (values.length) filterValues[spec.fieldname] = values;
       }
       const response = await frappe.call({
-        method: 'frappe.desk.query_report.run',
+        method: 'factory_management.uqqc.report_filters.run_report',
+        type: 'POST',
         args: {
-          report_name: state.active === 'summary' ? 'UQQC Item Summary' : 'UQQC Device Details',
-          filters: JSON.stringify(filters),
-          are_default_filters: 0,
+          from_date: fromDate,
+          to_date: toDate,
+          report_type: state.active,
+          filters: JSON.stringify(filterValues),
         },
       });
       if (request !== state.request) return;
       const result = response.message || {};
       const columns = result.columns || [];
       const rows = result.result || [];
-      renderMetrics(columns, rows);
+      renderMetrics(rows);
       renderTable(columns, rows);
       resultsMeta.textContent = __('Rows: {0}', [rows.length]);
       showStatus('', '');
@@ -316,13 +398,11 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     }
   }
 
-  function renderMetrics(columns, rows) {
-    const names = state.active === 'summary'
-      ? { passed: 'Số lượng đạt', rework: 'Số lượng tái sửa', defect: 'Số lượng lỗi' }
-      : { passed: 'Đạt', rework: 'Tái sửa', defect: 'Lỗi' };
-    const passed = sumColumn(columns, rows, names.passed);
-    const rework = sumColumn(columns, rows, names.rework);
-    const defect = sumColumn(columns, rows, names.defect);
+  // renderMetrics uses fieldnames from new backend (pass, rework, defect — same in both report types).
+  function renderMetrics(rows) {
+    const passed = rows.reduce((s, r) => s + (Number(r.pass) || 0), 0);
+    const rework = rows.reduce((s, r) => s + (Number(r.rework) || 0), 0);
+    const defect = rows.reduce((s, r) => s + (Number(r.defect) || 0), 0);
     const inspected = passed + defect;
     const rate = inspected ? (defect * 100) / inspected : 0;
     const rateTone = rate > 5 ? 'danger' : rate > 2 ? 'warning' : 'neutral';
@@ -349,12 +429,6 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
       card.append(label, value);
       metrics.append(card);
     }
-  }
-
-  function sumColumn(columns, rows, label) {
-    const column = columns.find((item) => item.label === label);
-    if (!column) return 0;
-    return rows.reduce((total, row) => total + (Number(row[column.fieldname]) || 0), 0);
   }
 
   function renderTable(columns, rows) {

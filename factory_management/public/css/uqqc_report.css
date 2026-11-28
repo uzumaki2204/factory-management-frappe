@@ -190,6 +190,188 @@
   z-index: 1060 !important;
 }
 
+/* ── Multi-select filter dropdowns ──────────────────────────────────────── */
+
+.uqqc-rpt-multiselect {
+  position: relative;
+  z-index: 30;
+}
+
+.uqqc-rpt-multiselect.is-open {
+  z-index: 100;
+}
+
+.uqqc-rpt-multiselect-trigger {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  height: 36px !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--uqqc-report-input-border) !important;
+  border-radius: 8px !important;
+  background-color: var(--uqqc-report-input-bg) !important;
+  color: var(--text-color, #1e293b) !important;
+  font-size: 13px !important;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 140ms ease;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+.uqqc-rpt-multiselect-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.uqqc-rpt-multiselect-trigger::after {
+  content: '';
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translateY(-3px);
+  opacity: 0.6;
+}
+
+.uqqc-rpt-multiselect-trigger.is-placeholder {
+  color: var(--uqqc-report-muted) !important;
+}
+
+.uqqc-rpt-multiselect-trigger:hover {
+  border-color: #9ca3af !important;
+  background-color: #e9ecef !important;
+}
+
+.uqqc-rpt-multiselect.is-open .uqqc-rpt-multiselect-trigger {
+  border-color: var(--uqqc-report-accent) !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(25, 87, 128, 0.16) !important;
+}
+
+.uqqc-rpt-multiselect-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1060;
+  min-width: max(100%, 200px);
+  max-width: 300px;
+  padding: 6px;
+  border: 1px solid var(--uqqc-report-border);
+  border-radius: 8px;
+  background: var(--uqqc-report-surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.uqqc-rpt-multiselect-menu[hidden],
+.uqqc-rpt-multiselect-search[hidden] {
+  display: none !important;
+}
+
+.uqqc-rpt-multiselect-menu.is-align-right {
+  left: auto;
+  right: 0;
+}
+
+.uqqc-report__date-control .uqqc-rpt-multiselect-search {
+  display: block;
+  width: 100%;
+  height: 32px !important;
+  margin-bottom: 4px;
+  padding: 4px 8px !important;
+  border: 1px solid var(--uqqc-report-input-border) !important;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+  font-size: 12px !important;
+  box-shadow: none !important;
+}
+
+.uqqc-report__date-control .uqqc-rpt-multiselect-search:focus {
+  outline: none !important;
+  border-color: var(--uqqc-report-accent) !important;
+  box-shadow: 0 0 0 2px rgba(25, 87, 128, 0.14) !important;
+}
+
+.uqqc-rpt-multiselect-options {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.uqqc-rpt-multiselect-option {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  color: var(--text-color, #172033);
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.uqqc-rpt-multiselect-option:hover {
+  background: var(--uqqc-report-subtle);
+}
+
+.uqqc-rpt-multiselect-option span {
+  overflow-wrap: anywhere;
+}
+
+.uqqc-report__date-control .uqqc-rpt-multiselect-option input[type="checkbox"],
+.uqqc-report__date-control .uqqc-rpt-multiselect-option input[type="checkbox"]:hover,
+.uqqc-report__date-control .uqqc-rpt-multiselect-option input[type="checkbox"]:focus {
+  width: 15px !important;
+  height: 15px !important;
+  min-height: 15px !important;
+  margin: 0;
+  padding: 0 !important;
+  border: 1px solid #94a3b8 !important;
+  border-radius: 3px !important;
+  background-color: #ffffff !important;
+  box-shadow: none !important;
+  appearance: auto;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--uqqc-report-accent);
+}
+
+.uqqc-rpt-multiselect-empty {
+  padding: 8px 6px;
+  color: var(--uqqc-report-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.uqqc-rpt-multiselect-footer {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--uqqc-report-border);
+}
+
+.uqqc-rpt-multiselect-clear {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--uqqc-report-border);
+  border-radius: 6px;
+  background: var(--uqqc-report-subtle);
+  color: var(--uqqc-report-accent);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.uqqc-rpt-multiselect-clear:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* ── Date calendar icon button & readonly picker input ─────────────────── */
 
 .uqqc-report__control--date .control-input {
