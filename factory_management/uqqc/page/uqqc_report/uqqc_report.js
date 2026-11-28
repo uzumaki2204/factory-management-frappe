@@ -4,6 +4,22 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     title: __('UQQC Report'),
     single_column: true,
   });
+
+  const UQQC_RPT_VERSION = '20261128a';
+
+  // Inject versioned CSS — xoá link cũ nếu khác version
+  (function injectCss(v) {
+    const href = `/assets/factory_management/css/uqqc_report.css?v=${v}`;
+    const existing = document.querySelector('link[href*="uqqc_report.css"]');
+    if (existing && !existing.href.includes(`?v=${v}`)) existing.remove();
+    if (!document.querySelector(`link[href="${href}"]`)) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      document.head.append(link);
+    }
+  })(UQQC_RPT_VERSION);
+
   const today = frappe.datetime.get_today();
   const state = { active: 'summary', request: 0 };
   const root = document.createElement('section');
@@ -15,8 +31,8 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
   const filterRow = document.createElement('div');
   filterRow.className = 'uqqc-report__filter-row';
   const controls = {
-    from_date: makeControl('From Date', 'from_date', 'Date', '', `${today.slice(0, 8)}01`),
-    to_date: makeControl('To Date', 'to_date', 'Date', '', today),
+    from_date: makeDateControl('From Date', 'from_date', today),
+    to_date: makeDateControl('To Date', 'to_date', today),
     qc: makeControl('QC', 'qc', 'Select', '\nQC1\nQC2'),
     company: makeControl('Company', 'company', 'Link', 'Company'),
     product: makeControl('Product', 'product', 'Link', 'Product'),
@@ -25,25 +41,25 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     color: makeControl('Color', 'color', 'Link', 'Product Color'),
     size: makeControl('Size', 'size', 'Link', 'ProductSize'),
   };
+
+  // Run button — cùng dòng với các filter (cột cuối)
+  const runButton = document.createElement('button');
+  runButton.type = 'button';
+  runButton.className = 'btn btn-primary uqqc-report__run';
+  runButton.innerHTML = `<span class="uqqc-report__run-icon" aria-hidden="true">&#128269;</span>${__('View Report')}`;
+
   for (const key of ['from_date', 'to_date', 'qc', 'company', 'product']) {
     filterRow.append(controls[key].wrapper);
   }
+  filterRow.append(runButton);
+
   const detailFilters = document.createElement('div');
   detailFilters.className = 'uqqc-report__filter-row uqqc-report__filter-row--detail';
   for (const key of ['device', 'market', 'color', 'size']) {
     detailFilters.append(controls[key].wrapper);
   }
 
-  // Run button lives in its own actions row (separated from the filter grid)
-  const runButton = document.createElement('button');
-  runButton.type = 'button';
-  runButton.className = 'btn btn-primary uqqc-report__run';
-  runButton.innerHTML = `<span class="uqqc-report__run-icon" aria-hidden="true">&#128269;</span>${__('View Report')}`;
-  const actionsRow = document.createElement('div');
-  actionsRow.className = 'uqqc-report__actions';
-  actionsRow.append(runButton);
-
-  filtersPanel.append(filterRow, detailFilters, actionsRow);
+  filtersPanel.append(filterRow, detailFilters);
   root.append(filtersPanel);
 
   // ── Tabs ───────────────────────────────────────────────────────────────────
@@ -105,6 +121,70 @@ frappe.pages['uqqc-report'].on_page_load = function (wrapper) {
     });
     control.refresh();
     return { wrapper, control };
+  }
+
+  // Date control đặc biệt: icon lịch, bấm mở datepicker (không bàn phím), default = hôm nay
+  function makeDateControl(label, fieldname, defaultValue) {
+    const { wrapper, control } = makeControl(label, fieldname, 'Date', '', defaultValue);
+
+    // Set giá trị mặc định ngay sau render
+    control.set_value(defaultValue);
+
+    // Lấy phần tử input và tắt bàn phím hệ thống
+    const input = control.$input && control.$input[0];
+    if (input) {
+      input.setAttribute('readonly', 'readonly');
+      input.setAttribute('inputmode', 'none');
+      input.setAttribute('autocomplete', 'off');
+      input.setAttribute('tabindex', '-1');
+    }
+
+    // Tạo nút icon lịch
+    const calBtn = document.createElement('button');
+    calBtn.type = 'button';
+    calBtn.className = 'uqqc-rpt-cal-btn';
+    calBtn.setAttribute('tabindex', '-1');
+    calBtn.setAttribute('aria-label', __('Open calendar'));
+    calBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>`;
+
+    // Chèn nút vào inputContainer (cùng vị trí với QC Internal Report)
+    const inputContainer = wrapper.querySelector('.input-with-feedback') || wrapper;
+    inputContainer.style.position = 'relative';
+    inputContainer.append(calBtn);
+
+    // Mở datepicker khi bấm vào input container hoặc nút lịch
+    function openPicker(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dp = getDatepicker(control);
+      if (dp) dp.show();
+    }
+    inputContainer.addEventListener('touchstart', openPicker, { passive: false });
+    inputContainer.addEventListener('click', openPicker);
+
+    return { wrapper, control };
+  }
+
+  // Lazy-get Air Datepicker instance từ Frappe Date control
+  function getDatepicker(control) {
+    if (control.datepicker) return control.datepicker;
+    if (control.$input) {
+      const dp = control.$input.data('datepicker');
+      if (dp) return dp;
+      // Khởi tạo datepicker nếu chưa có
+      if (typeof control.set_datepicker === 'function') {
+        control.set_datepicker();
+        return control.$input.data('datepicker') || control.datepicker || null;
+      }
+    }
+    return null;
   }
 
   function makeTab(key, label, hint, iconHtml) {

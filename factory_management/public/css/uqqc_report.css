@@ -73,9 +73,15 @@
 
 .uqqc-report__filter-row {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
   align-items: end;
   gap: 12px;
+}
+
+/* Nút run khi nằm trong filter row — align với các input */
+.uqqc-report__filter-row .uqqc-report__run {
+  align-self: end;
+  min-width: 130px;
 }
 
 .uqqc-report__filter-row:first-child {
@@ -151,7 +157,7 @@
   position: relative;
 }
 
-.uqqc-report__date-control .awesomplete > ul,
+.uqqc-report__date-control .awesomplete>ul,
 .uqqc-report__date-control ul[role="listbox"] {
   position: absolute;
   top: 100% !important;
@@ -170,18 +176,37 @@
   z-index: 1050 !important;
 }
 
-/* ── Actions row (Nút View Report) ────────────────────────────────────────── */
+/* ── Calendar icon button (nằm bên phải trong input date) ─────────────────── */
 
-.uqqc-report__actions {
-  position: relative;
-  z-index: 1;
-  display: flex;
+.uqqc-rpt-cal-btn {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--uqqc-report-border);
-  margin-top: 2px;
+  justify-content: center;
+  width: 32px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  background: transparent;
+  color: var(--uqqc-report-muted);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  pointer-events: auto;
+  transition: color 120ms ease;
+}
+
+.uqqc-rpt-cal-btn:hover {
+  color: var(--uqqc-report-accent);
+}
+
+/* Thêm padding-right cho input để không che icon */
+.uqqc-report__date-control input[readonly] {
+  padding-right: 34px !important;
+  cursor: pointer;
+  caret-color: transparent;
 }
 
 .uqqc-report__run {
@@ -306,11 +331,11 @@
 }
 
 /* Fallback nếu trình duyệt còn lưu cache JS cũ */
-.uqqc-report__tab > .uqqc-report__tab-title {
+.uqqc-report__tab>.uqqc-report__tab-title {
   display: block;
 }
 
-.uqqc-report__tab > .uqqc-report__tab-hint {
+.uqqc-report__tab>.uqqc-report__tab-hint {
   display: block;
   margin-left: 6px;
 }
@@ -356,18 +381,22 @@
   --metric-color: #168452;
   background: color-mix(in srgb, #168452 5%, var(--uqqc-report-surface));
 }
+
 .uqqc-report__metric--warning {
   --metric-color: #c27a12;
   background: color-mix(in srgb, #c27a12 5%, var(--uqqc-report-surface));
 }
+
 .uqqc-report__metric--danger {
   --metric-color: #d14343;
   background: color-mix(in srgb, #d14343 5%, var(--uqqc-report-surface));
 }
+
 .uqqc-report__metric--primary {
   --metric-color: var(--uqqc-report-accent);
   background: color-mix(in srgb, var(--uqqc-report-accent) 5%, var(--uqqc-report-surface));
 }
+
 .uqqc-report__metric--neutral {
   --metric-color: #64748b;
   background: var(--uqqc-report-surface);
@@ -451,8 +480,10 @@
 
 .uqqc-report__table-wrap {
   width: 100%;
-  overflow-x: auto; /* Cho phép cuộn ngang nếu màn hình nhỏ / nhiều cột */
-  overflow-y: visible !important; /* Không cuộn dọc - bảng dài bao nhiêu hiển thị bấy nhiêu */
+  overflow-x: auto;
+  /* Cho phép cuộn ngang nếu màn hình nhỏ / nhiều cột */
+  overflow-y: visible !important;
+  /* Không cuộn dọc - bảng dài bao nhiêu hiển thị bấy nhiêu */
   max-height: none !important;
 }
 
@@ -583,25 +614,30 @@
 /* Shimmer animation applied to all skeleton elements */
 .uqqc-report__skeleton-row,
 .uqqc-report__skeleton-metric {
-  background: linear-gradient(
-    90deg,
-    var(--uqqc-report-subtle) 25%,
-    color-mix(in srgb, var(--uqqc-report-subtle) 55%, var(--uqqc-report-surface)) 50%,
-    var(--uqqc-report-subtle) 75%
-  );
+  background: linear-gradient(90deg,
+      var(--uqqc-report-subtle) 25%,
+      color-mix(in srgb, var(--uqqc-report-subtle) 55%, var(--uqqc-report-surface)) 50%,
+      var(--uqqc-report-subtle) 75%);
   background-size: 200% 100%;
   animation: uqqc-report-shimmer 1.5s ease-in-out infinite;
 }
 
 @keyframes uqqc-report-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ── Animations ───────────────────────────────────────────────────────────── */
 
 @keyframes uqqc-report-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */
@@ -609,6 +645,12 @@
 @media (max-width: 1100px) {
   .uqqc-report__filter-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Nút run xuống dòng riêng, full-width khi wrap */
+  .uqqc-report__filter-row .uqqc-report__run {
+    grid-column: 1 / -1;
+    justify-self: end;
   }
 
   .uqqc-report__filter-row--detail {
@@ -693,6 +735,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .uqqc-report__tab,
   .uqqc-report__run,
   .uqqc-report__metric,
