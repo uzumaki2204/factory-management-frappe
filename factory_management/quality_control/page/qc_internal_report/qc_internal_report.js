@@ -8,7 +8,7 @@ frappe.pages['qc-internal-report'].on_page_load = function (wrapper) {
 };
 
 async function initializeQcInternalReport(wrapper) {
-  const assetVersion = '20261128e';
+  const assetVersion = '20261128f';
   wrapper.classList.add('qc-ir-page-wrapper');
   const stylesheetBase = '/assets/factory_management/css/qc_internal_report.css';
   const stylesheet = stylesheetBase + '?v=' + assetVersion;

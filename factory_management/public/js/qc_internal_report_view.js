@@ -1,8 +1,9 @@
 window.QCInternalReportView = (() => {
-  const version = '20261128e';
+  const version = '20261128f';
   const inspectTypes = new Set(['CumulativeSubtract', 'CumulativeAdd']);
   const num = new Intl.NumberFormat('vi-VN', {maximumFractionDigits: 0});
   const pct = new Intl.NumberFormat('vi-VN', {style: 'percent', maximumFractionDigits: 0});
+  const companyNameCollator = new Intl.Collator('vi', {numeric: true});
   const companyColors = [
     '#7b168c', '#1496ee', '#202ca6', '#f26435', '#00a878',
     '#d92662', '#c98a00', '#0f766e', '#6d4c41', '#475569',
@@ -99,7 +100,8 @@ window.QCInternalReportView = (() => {
 
   function overview(s, target) {
     if (!s.companies.length) return empty(target);
-    const rows = s.companies.map((c) =>
+    const companies = s.companies.slice().sort((a, b) => companyNameCollator.compare(a.name, b.name));
+    const rows = companies.map((c) =>
       '<div class="qc-ir-overview-row"><div class="qc-ir-company-name">' + esc(c.name) + '</div>' +
       '<div class="qc-ir-share"><strong>' + pct.format(c.share) + '</strong>' + dots(c.share) + '</div>' +
       '<div class="qc-ir-number">' + num.format(c.inspected) + '</div><div class="qc-ir-number qc-ir-danger">' + num.format(c.defects) + '</div>' +
